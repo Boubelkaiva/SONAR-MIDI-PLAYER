@@ -1,0 +1,3 @@
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/SonarMidiPlayer.dir
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/ALL_BUILD.dir
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/ZERO_CHECK.dir
