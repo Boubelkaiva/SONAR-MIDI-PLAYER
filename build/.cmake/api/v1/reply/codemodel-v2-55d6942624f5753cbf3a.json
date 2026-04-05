@@ -1,0 +1,372 @@
+{
+	"configurations" : 
+	[
+		{
+			"abstractTargets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GL::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GL-Debug-85a773fcd6357e676fd8.json",
+					"name" : "OpenGL::GL",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GLU::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GLU-Debug-3beaa98bddcfabd98824.json",
+					"name" : "OpenGL::GLU",
+					"projectIndex" : 0
+				}
+			],
+			"directories" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f040eec181a89de70dbe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.25"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SonarMidiPlayer",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Debug-fbadc13770e985c77af7.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SonarMidiPlayer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SonarMidiPlayer-Debug-a9630bbe526eb2ebd5a7.json",
+					"name" : "SonarMidiPlayer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Debug-e2e474cdf6c91da09a5f.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"abstractTargets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GL::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GL-Release-85a773fcd6357e676fd8.json",
+					"name" : "OpenGL::GL",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GLU::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GLU-Release-3beaa98bddcfabd98824.json",
+					"name" : "OpenGL::GLU",
+					"projectIndex" : 0
+				}
+			],
+			"directories" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-f040eec181a89de70dbe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.25"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SonarMidiPlayer",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Release-fbadc13770e985c77af7.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SonarMidiPlayer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SonarMidiPlayer-Release-69d07f5d3459d41ce753.json",
+					"name" : "SonarMidiPlayer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Release-e2e474cdf6c91da09a5f.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"abstractTargets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GL::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GL-MinSizeRel-85a773fcd6357e676fd8.json",
+					"name" : "OpenGL::GL",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GLU::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GLU-MinSizeRel-3beaa98bddcfabd98824.json",
+					"name" : "OpenGL::GLU",
+					"projectIndex" : 0
+				}
+			],
+			"directories" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"build" : ".",
+					"jsonFile" : "directory-.-MinSizeRel-f040eec181a89de70dbe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.25"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "MinSizeRel",
+			"projects" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SonarMidiPlayer",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-MinSizeRel-fbadc13770e985c77af7.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SonarMidiPlayer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SonarMidiPlayer-MinSizeRel-52d404aeb297a2cc2e03.json",
+					"name" : "SonarMidiPlayer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-MinSizeRel-e2e474cdf6c91da09a5f.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"abstractTargets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GL::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GL-RelWithDebInfo-85a773fcd6357e676fd8.json",
+					"name" : "OpenGL::GL",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "OpenGL::GLU::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-OpenGL__GLU-RelWithDebInfo-3beaa98bddcfabd98824.json",
+					"name" : "OpenGL::GLU",
+					"projectIndex" : 0
+				}
+			],
+			"directories" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"build" : ".",
+					"jsonFile" : "directory-.-RelWithDebInfo-f040eec181a89de70dbe.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.25"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "RelWithDebInfo",
+			"projects" : 
+			[
+				{
+					"abstractTargetIndexes" : 
+					[
+						0,
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "SonarMidiPlayer",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-RelWithDebInfo-fbadc13770e985c77af7.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "SonarMidiPlayer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-SonarMidiPlayer-RelWithDebInfo-8f15d4255baf2fd0a356.json",
+					"name" : "SonarMidiPlayer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-RelWithDebInfo-e2e474cdf6c91da09a5f.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/C++/SONAR MIDI PLAYER/build",
+		"source" : "D:/C++/SONAR MIDI PLAYER"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 10
+	}
+}
