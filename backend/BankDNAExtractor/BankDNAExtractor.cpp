@@ -1,10 +1,7 @@
 /*
   ==============================================================================
     COMPONENT: BankDNAExtractor.cpp
-    MODULE: backend/BankDNAExtractor/BankDNAExtractor.cpp
-    DESCRIPTION: Implementation of the DNA Extraction logic.
-                 FIXED: Handling "incomplete type tsf" without duplicate symbols.
-    AUTHOR: Iva
+    HYBRIDNÍ EXTRAKCE: Inteligentní rozlišení Roland vs. Yamaha
   ==============================================================================
 */
 
@@ -12,9 +9,6 @@
 #include <fstream>
 #include <iostream>
 
-// AI: Tady je ten trik. Potřebujeme vidět STRUKTURY, ale nechceme FUNKCE (ty jsou v MidiPlayeru).
-// Většina single-header knihoven (včetně TSF) při běžném include bez
-// TSF_IMPLEMENTATION ukáže jen veřejné API a struktury nechá "nekompletní".
 extern "C"
 {
 #include "../MidiPlayer/tsf.h"
@@ -25,74 +19,78 @@ bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
     if (!sf2File.existsAsFile())
         return false;
 
-    // 1. Načtení banky
-    // Používáme pouze veřejné API (funkce), abychom se vyhnuli problémům s typem.
     tsf *tempFont = tsf_load_filename(sf2File.getFullPathName().toRawUTF8());
-
-    if (tempFont == nullptr)
-    {
-        std::cerr << "[BankDNAExtractor] Chyba: SF2 nelze načíst." << std::endl;
+    if (!tempFont)
         return false;
-    }
 
-    // 2. Příprava JSONu
-    juce::File jsonFile = sf2File.withFileExtension(".json");
+    juce::File jsonFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                              .getChildFile("SonarMidiPlayer")
+                              .getChildFile("bank_settings")
+                              .getChildFile(sf2File.getFileNameWithoutExtension() + ".json");
+
     std::ofstream outFile(jsonFile.getFullPathName().toRawUTF8());
-
-    if (!outFile.is_open())
+    if (outFile.is_open())
     {
-        tsf_close(tempFont);
-        return false;
-    }
+        int count = tsf_get_presetcount(tempFont);
+        juce::String fileName = sf2File.getFileName().toLowerCase();
 
-    // Abychom se vyhnuli chybě "nekompletní typ tsf" u tempFont->presets,
-    // musíme použít pouze VEŘEJNÉ FUNKCE, které TSF nabízí.
+        outFile << "{\n  \"bank_info\": {\n";
+        outFile << "    \"totalInstruments\": " << count << "\n  },\n";
+        outFile << "  \"instruments\": [\n";
 
-    int presetCount = tsf_get_presetcount(tempFont);
-
-    outFile << "{\n";
-    outFile << "  \"bank_info\": {\n";
-    outFile << "    \"fileName\": \"" << sf2File.getFileName().toRawUTF8() << "\",\n";
-    outFile << "    \"totalInstruments\": " << presetCount << "\n";
-    outFile << "  },\n";
-    outFile << "  \"instruments\": [\n";
-
-    for (int i = 0; i < presetCount; ++i)
-    {
-        const char *name = tsf_get_presetname(tempFont, i);
-
-        // TSF nemá tsf_get_preset_bank(f, index), ale má tsf_get_presetindex(f, bank, preset).
-        // Protože potřebujeme opačný směr a struktura tsf je v tomto souboru nekompletní,
-        // musíme se podívat na vnitřní strukturu tsf_preset, která je v tsf.h definovaná.
-        struct tsf_internal
+        for (int i = 0; i < count; ++i)
         {
-            struct
+            const char *name = tsf_get_presetname(tempFont, i);
+            juce::String instrName = juce::String(name ? name : "Empty");
+
+            int b = 0; // Banka
+            int p = 0; // Program
+
+            // --- HYBRIDNÍ LOGIKA ---
+
+            // 1. Detekce BICÍCH (Platí pro oba výrobce)
+            if (instrName.containsIgnoreCase("Kit") || instrName.containsIgnoreCase("Drum") || instrName.containsIgnoreCase("Perc"))
             {
-                int bank, preset;
-                const char *name;
-            } *presets;
-        };
-        int bank = ((struct tsf_internal *)tempFont)->presets[i].bank;
-        int prog = ((struct tsf_internal *)tempFont)->presets[i].preset;
+                b = 128;     // Tvoje výjimka pro Drums
+                p = i % 128; // Program v rámci bicí banky
+            }
+            // 2. Specifická logika pro YAMAHA (XG hybrid)
+            else if (fileName.contains("yamaha") || fileName.contains("_xg"))
+            {
+                // Yamaha XG často používá lineární indexování, které musíme rozsekat:
+                b = i / 128; // Každých 128 nástrojů nová banka
+                p = i % 128; // Program 0-127
+            }
+            // 3. Specifická logika pro ROLAND (GM/GS hybrid)
+            else
+            {
+                // Roland se většinou drží banky 0, pokud index nepřeleze limit
+                if (i < 128)
+                {
+                    b = 0;
+                    p = i;
+                }
+                else
+                {
+                    b = 1; // Variace u Rolanda
+                    p = i - 128;
+                }
+            }
 
-        juce::String cleanName = juce::String(name ? name : "Unknown");
-        cleanName = cleanName.replace("\"", "\\\"");
+            juce::String safeName = instrName.replace("\"", "\\\"");
 
-        outFile << "    {\n";
-        outFile << "      \"idx\": " << i << ",\n";
-        outFile << "      \"bank\": " << bank << ",\n";
-        outFile << "      \"prog\": " << prog << ",\n";
-        outFile << "      \"name\": \"" << cleanName.toRawUTF8() << "\"\n";
-        outFile << "    }";
-
-        if (i < presetCount - 1)
-            outFile << ",";
-        outFile << "\n";
+            outFile << "    {\n";
+            outFile << "      \"idx\": " << i << ",\n";
+            outFile << "      \"bank\": " << b << ",\n";
+            outFile << "      \"prog\": " << p << ",\n";
+            outFile << "      \"name\": \"" << safeName.toRawUTF8() << "\"\n";
+            outFile << "    }" << (i < count - 1 ? "," : "") << "\n";
+        }
+        outFile << "  ]\n}";
+        outFile.close();
     }
 
-    outFile << "  ]\n}";
-
-    outFile.close();
     tsf_close(tempFont);
+    std::cout << "[AI] Hybridni DNA ulozena pro: " << sf2File.getFileName() << std::endl;
     return true;
 }

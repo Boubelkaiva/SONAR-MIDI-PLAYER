@@ -2,16 +2,18 @@
   ==============================================================================
     FILE: MidiPlayer.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Clean Audio Engine with safety guards.
-    FIXED: Audio buffer overflow and nullptr safety to prevent crashes.
+    DESCRIPTION: Audio Engine with real-time TSF Index mapping.
+    UPDATED: Přidány detailní debug logy pro lokalizaci pádů.
   ==============================================================================
 */
 
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
 #include "MidiPlayer.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h"
 #include <iostream>
 #include <iomanip>
+#include <thread>
 
 MidiPlayer::MidiPlayer()
     : isPlaying(false), currentSampleRate(44100.0), masterVolume(1.0f),
@@ -24,6 +26,7 @@ MidiPlayer::MidiPlayer()
         currentBankMSB[i] = (i == 9) ? 128 : 0;
         currentBankLSB[i] = 0;
     }
+    std::cout << "[MidiPlayer] Konstruktor dokončen." << std::endl;
 }
 
 MidiPlayer::~MidiPlayer()
@@ -35,8 +38,6 @@ MidiPlayer::~MidiPlayer()
 void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
-
-    // POJISTKA: TSF interleaved potřebuje 2x tolik místa v jednom poli (L+R)
     renderBuffer.setSize(1, samplesPerBlockExpected * 2);
 
     if (g_tinyfont)
@@ -52,14 +53,12 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 {
     bufferToFill.clearActiveBufferRegion();
 
-    // KRITICKÁ POJISTKA: Pokud nemáme font nebo nehrajeme, okamžitě ven
     if (!isPlaying || g_tinyfont == nullptr || currentSampleRate <= 0)
         return;
 
     double blockDuration = (double)bufferToFill.numSamples / currentSampleRate;
     double nextPlayheadTime = playheadSeconds + blockDuration;
 
-    // 1. Zpracování MIDI zpráv pro tento blok
     for (int i = 0; i < midiSequence.getNumEvents(); ++i)
     {
         auto *event = midiSequence.getEventPointer(i);
@@ -102,21 +101,16 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
         }
     }
 
-    // 2. Renderování audia
     renderBuffer.clear();
-    // Musíme zajistit, že nečteme víc, než kolik má renderBuffer místa
     int samplesToRender = bufferToFill.numSamples;
     tsf_render_float(g_tinyfont, renderBuffer.getWritePointer(0), samplesToRender, 0);
 
-    // 3. Distribuce do výstupních kanálů (L/R)
     const float *tsfOut = renderBuffer.getReadPointer(0);
-
     for (int channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel)
     {
         float *deviceOut = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
         for (int i = 0; i < samplesToRender; ++i)
         {
-            // Indexování: i*2 je levý kanál, i*2 + 1 je pravý
             deviceOut[i] = tsfOut[i * 2 + (channel % 2)] * masterVolume;
         }
     }
@@ -128,39 +122,103 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 
 void MidiPlayer::loadMidiFile(const juce::File &midiFile)
 {
+    std::cout << "\n[CHECKPOINT 0] Start loadMidiFile: " << midiFile.getFileName() << std::endl;
     stop();
-    juce::MidiFile mf;
-    if (auto is = midiFile.createInputStream())
+
+    std::thread([this, midiFile]() mutable
+                {
+                    // --- KROK 1: MIDI LOAD ---
+                    juce::MidiFile mf;
+                    auto is = std::unique_ptr<juce::InputStream>(midiFile.createInputStream());
+                    if (is == nullptr || !mf.readFrom(*is))
+                        return;
+                    mf.convertTimestampTicksToSeconds();
+
+                    // --- KROK 2: SOUNDFONT CHECKPOINT ---
+                    // Čekáme, dokud g_tinyfont není validní (pokud se zrovna načítá jinde)
+                    int retryCount = 0;
+                    while (g_tinyfont == nullptr && retryCount < 20)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        retryCount++;
+                    }
+
+                    if (g_tinyfont != nullptr && mapper != nullptr)
+                    {
+                        // AKTUALIZACE MAPPERU - Teď máme jistotu, že g_tinyfont existuje
+                        mapper->updateTSFInstance(g_tinyfont);
+
+                        // BREAKPOINT LOG: Ověříme, že mapper není slepý
+                        std::cout << "[CHECKPOINT 1] Mapper připraven. Instance TSF: " << g_tinyfont << std::endl;
+
+                        // --- KROK 3: ANALÝZA ---
+                        MidiAnalyzer analyzer;
+                        auto results = analyzer.analyzeFile(midiFile, mapper.get());
+
+                        // KONTROLA VÝSLEDKŮ: Pokud jsou v results samé -1, víme, že je problém v mapperu
+                        bool analysisValid = false;
+                        for (auto &r : results)
+                            if (r.tsfIndex >= 0)
+                            {
+                                analysisValid = true;
+                                break;
+                            }
+
+                        if (analysisValid)
+                        {
+                            std::cout << "[CHECKPOINT 2] Analýza úspěšná (indexy nalezeny)." << std::endl;
+                        }
+                        else
+                        {
+                            std::cout << "[CHECKPOINT 2] VAROVÁNÍ: Analýza vrátila prázdné indexy (vše -1)." << std::endl;
+                        }
+
+                        // --- KROK 4: APLIKACE (Musí proběhnout v tomto pořadí!) ---
+                        applyAnalysisResults(results);
+                    }
+
+                    // --- KROK 5: FINÁLNÍ INSTANCE SEKVENCE ---
+                    juce::MidiMessageSequence tempSequence;
+                    for (int i = 0; i < mf.getNumTracks(); ++i)
+                        if (auto *track = mf.getTrack(i))
+                            tempSequence.addSequence(*track, 0, 0, mf.getLastTimestamp());
+
+                    tempSequence.updateMatchedPairs();
+
+                    // Odevzdání hotové práce hlavnímu vláknu
+                    juce::MessageManager::callAsync([this, tempSeq = std::move(tempSequence)]() mutable
+                                                    {
+            this->midiSequence = std::move(tempSeq);
+            std::cout << "[CHECKPOINT 3] Hotovo. Sekvence předána. Připraveno k přehrávání.\n" << std::endl; });
+                })
+        .detach();
+}
+
+void MidiPlayer::applyAnalysisResults(const std::vector<TrackData> &results)
+{
+    if (!g_tinyfont)
     {
-        mf.readFrom(*is);
-        mf.convertTimestampTicksToSeconds();
+        std::cout << "[MidiPlayer] Error: applyAnalysisResults voláno bez SoundFontu!" << std::endl;
+        return;
+    }
 
-        currentMode = MidiMode::GM;
-        for (int t = 0; t < mf.getNumTracks(); ++t)
+    std::cout << "[MidiPlayer] Nastavuji " << results.size() << " stop..." << std::endl;
+    for (const auto &data : results)
+    {
+        if (data.tsfIndex >= 0)
         {
-            auto *track = mf.getTrack(t);
-            for (int i = 0; i < track->getNumEvents(); ++i)
-            {
-                auto &msg = track->getEventPointer(i)->message;
-                if (msg.isSysEx())
-                    currentMode = MidiMapper::detectModeFromSysEx((const uint8_t *)msg.getSysExData(), msg.getSysExDataSize());
-                if (msg.getTimeStamp() > 0.5)
-                    break;
-            }
+            tsf_channel_set_presetindex(g_tinyfont, data.channel - 1, data.tsfIndex);
+            currentBankMSB[data.channel - 1] = data.bankMSB;
+            currentBankLSB[data.channel - 1] = data.bankLSB;
+            std::cout << "[MidiPlayer] Kanál " << data.channel << " -> Preset " << data.tsfIndex << std::endl;
         }
-
-        midiSequence.clear();
-        for (int i = 0; i < mf.getNumTracks(); ++i)
-            midiSequence.addSequence(*mf.getTrack(i), 0, 0, mf.getLastTimestamp());
-
-        midiSequence.updateMatchedPairs();
     }
 }
 
 void MidiPlayer::loadSoundFont(const juce::File &sf2File)
 {
-    // Před načtením raději stopneme audio
     isPlaying = false;
+    std::cout << "[MidiPlayer] Načítám SoundFont: " << sf2File.getFullPathName() << std::endl;
 
     if (g_tinyfont)
         tsf_close(g_tinyfont);
@@ -173,14 +231,21 @@ void MidiPlayer::loadSoundFont(const juce::File &sf2File)
         if (mapper)
             mapper->updateTSFInstance(g_tinyfont);
 
-        std::cout << "[MidiPlayer] Font naložen: " << sf2File.getFileName() << std::endl;
+        std::cout << "[MidiPlayer] SoundFont úspěšně naložen." << std::endl;
+    }
+    else
+    {
+        std::cout << "[MidiPlayer] ERROR: TSF nemohl načíst font!" << std::endl;
     }
 }
 
 void MidiPlayer::play()
 {
     if (g_tinyfont)
+    {
+        std::cout << "[MidiPlayer] Play..." << std::endl;
         isPlaying = true;
+    }
 }
 
 void MidiPlayer::stop()
@@ -188,7 +253,10 @@ void MidiPlayer::stop()
     isPlaying = false;
     playheadSeconds = 0.0;
     if (g_tinyfont)
+    {
         tsf_reset(g_tinyfont);
+        std::cout << "[MidiPlayer] Stop & Reset." << std::endl;
+    }
 }
 
 void MidiPlayer::pause() { isPlaying = false; }

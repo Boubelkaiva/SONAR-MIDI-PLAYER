@@ -3,7 +3,7 @@
     FILE: MasterPanel.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Implementation of the master control panel.
-                 ADDED: Visual feedback for loaded MIDI file.
+    UPDATED: Robustní asynchronní načítání a vizuální zpětná vazba.
   ==============================================================================
 */
 
@@ -29,17 +29,19 @@ MasterPanel::MasterPanel()
   addAndMakeVisible(loadMidiButton);
   addAndMakeVisible(headphonesButton);
 
-  // AI: Nastavení popisku pro název souboru
+  // Nastavení popisku pro název souboru
   addAndMakeVisible(currentMidiLabel);
   currentMidiLabel.setColour(juce::Label::textColourId, juce::Colours::cyan);
   currentMidiLabel.setFont(juce::Font(14.0f, juce::Font::bold));
+  currentMidiLabel.setText(u8"No file loaded", juce::dontSendNotification);
 
   // --- Load MIDI/KAR button ---
   loadMidiButton.onClick = [this]()
   {
+    // Vytvoření chooseru jako unique_ptr (v MasterPanel.h musí být std::unique_ptr<juce::FileChooser> midiChooser)
     midiChooser = std::make_unique<juce::FileChooser>(
         u8"Vyber MIDI nebo KAR soubor...",
-        juce::File{},
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
         "*.mid;*.kar");
 
     auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
@@ -47,13 +49,17 @@ MasterPanel::MasterPanel()
     midiChooser->launchAsync(flags, [this](const juce::FileChooser &fc)
                              {
             auto file = fc.getResult();
-            if (file.existsAsFile())
+            
+            if (file != juce::File() && file.existsAsFile())
             {
-                // AI: Aktualizace textu v panelu
-                currentMidiLabel.setText(u8"Loaded: " + file.getFileName(), juce::dontSendNotification);
+                // Okamžitá vizuální odezva na UI vlákně
+                currentMidiLabel.setText(u8"Loading: " + file.getFileName(), juce::dontSendNotification);
                 
+                // Vyvolání callbacku - MidiPlayer si to nyní převezme ve vlastním vlákně
                 if (onMidiFileSelected)
+                {
                     onMidiFileSelected(file);
+                }
             } });
   };
 
@@ -62,10 +68,14 @@ MasterPanel::MasterPanel()
   {
     headphonesOn = !headphonesOn;
     headphonesButton.setButtonText(headphonesOn ? u8"Headphones On" : u8"Headphones Off");
+    // Zde můžeš přidat onHeadphonesChanged(headphonesOn), pokud máš definováno
   };
 }
 
-MasterPanel::~MasterPanel() {}
+MasterPanel::~MasterPanel()
+{
+  // Chooser se zničí automaticky díky unique_ptr
+}
 
 void MasterPanel::paint(juce::Graphics &g)
 {
@@ -78,23 +88,24 @@ void MasterPanel::resized()
 {
   auto r = getLocalBounds().reduced(10);
 
-  // --- Slider nahoře ---
+  // Slider nahoře na celou šířku
   int sliderHeight = 30;
   masterVolume.setBounds(r.removeFromTop(sliderHeight));
   r.removeFromTop(5);
 
-  // --- Buttons & Label v jedné řadě ---
-  int buttonWidth = 110;
+  // Rozložení prvků v řadě
+  int buttonWidth = 120;
+  int spacing = 10;
 
   chooseFolderButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(10);
+  r.removeFromLeft(spacing);
 
   loadMidiButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(10);
+  r.removeFromLeft(spacing);
 
   headphonesButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(15); // Trochu větší mezera před textem
+  r.removeFromLeft(spacing + 5);
 
-  // AI: Zbytek místa vpravo využijeme pro název souboru
+  // Label zabere zbytek místa
   currentMidiLabel.setBounds(r.reduced(0, 5));
 }

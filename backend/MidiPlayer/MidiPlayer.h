@@ -3,6 +3,7 @@
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine using TinySoundFont with full MIDI mapping support.
+    UPDATED: Added MidiAnalyzer include for TrackData type safety.
   ==============================================================================
 */
 
@@ -10,6 +11,7 @@
 
 #include <JuceHeader.h>
 #include "../MidiMapper/MidiMapper.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h" // KLÍČOVÉ: Aby kompilátor znal strukturu TrackData
 
 struct tsf;
 
@@ -25,6 +27,10 @@ public:
 
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
+
+  // Nyní je TrackData správně rozpoznán díky includu výše
+  void applyAnalysisResults(const std::vector<TrackData> &results);
+
   void play();
   void stop();
   void pause();
@@ -39,13 +45,13 @@ private:
   struct tsf *g_tinyfont = nullptr;
   double currentSampleRate = 44100.0;
 
-  // --- OPRAVA CHYB: Deklarace chybějících členů ---
-  juce::AudioBuffer<float> renderBuffer; // Pro vnitřní výpočet TSF
+  // Pomocný buffer pro renderování TSF (stereo interleaved)
+  juce::AudioBuffer<float> renderBuffer;
 
-  // MIDI stav
-  int currentBankMSB[16]; // Sledování bank pro každý kanál
+  // MIDI stav pro každý z 16 kanálů
+  int currentBankMSB[16];
   int currentBankLSB[16];
-  MidiMode currentMode = MidiMode::GM; // Výchozí mód
+  MidiMode currentMode = MidiMode::GM;
 
   // Časování a sekvence
   juce::MidiMessageSequence midiSequence;

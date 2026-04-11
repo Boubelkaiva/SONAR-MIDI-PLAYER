@@ -3,31 +3,29 @@
     FILE: MidiAnalyzer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Deep Event List scanning with TSF Index verification.
-    UPDATED: Integration with MidiMapper for real-time index debugging.
+    UPDATED: Oprava getRawDataSize pro SysEx analýzu.
   ==============================================================================
 */
 
 #include "MidiAnalyzer.h"
-#include "../MidiMapper/MidiMapper.h" // Musíme vidět na Mapper
+#include "../MidiMapper/MidiMapper.h"
 #include <iostream>
 #include <iomanip>
-
-// Předpokládám, že máš v MidiAnalyzer přístup k instanci Mapperu,
-// nebo ho předáme v metodě. Pro tento výpis ho vytvoříme lokálně nebo použijeme externí.
 
 std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMapper *mapper)
 {
     std::vector<TrackData> results;
 
-    // 1. Inicializace 16 slotů (Kanály 1-16)
-    for (int i = 1; i <= 16; ++i)
+    // 1. Inicializace 16 slotů (Indexy 0-15 odpovídají MIDI kanálům 1-16)
+    for (int i = 0; i < 16; ++i)
     {
         TrackData d;
-        d.channel = i;
+        d.channel = i + 1;
         d.programNumber = 0;
         d.bankMSB = 0;
         d.bankLSB = 0;
-        d.instrumentName = (i == 10 ? "Standard Drums" : "Acoustic Piano");
+        d.tsfIndex = -1;
+        d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
         d.initialVolume = 100.0f;
         results.push_back(d);
     }
@@ -42,7 +40,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
     juce::MidiFile mf;
     if (mf.readFrom(inputStream))
     {
-        std::cout << "\n--- [START ANALÝZY EVENT LISTU] ---" << std::endl;
+        // --- 1. DETEKCE MÓDU (GM / GS / XG) ---
+        MidiMode detectedMode = MidiMode::GM;
 
         for (int t = 0; t < mf.getNumTracks(); ++t)
         {
@@ -50,11 +49,40 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             for (auto *m : *seq)
             {
                 auto &msg = m->message;
-                int ch = msg.getChannel();
-
-                if (ch >= 1 && ch <= 16)
+                if (msg.isSysEx())
                 {
-                    int chIdx = ch - 1;
+                    // OPRAVA: V JUCE používáme getRawData a getRawDataSize
+                    const uint8_t *data = msg.getRawData();
+                    int size = msg.getRawDataSize();
+
+                    MidiMode mMode = MidiMapper::detectModeFromSysEx(data, size);
+                    if (mMode != MidiMode::GM)
+                    {
+                        detectedMode = mMode;
+                        break;
+                    }
+                }
+            }
+            if (detectedMode != MidiMode::GM)
+                break;
+        }
+
+        std::cout << "\n--- [START ANALÝZY EVENT LISTU] ---" << std::endl;
+        std::cout << "[INFO] Detekovaný mód souboru: "
+                  << (detectedMode == MidiMode::XG ? "Yamaha XG" : (detectedMode == MidiMode::GS ? "Roland GS" : "General MIDI")) << std::endl;
+
+        // --- 2. PRŮCHOD TRACKY A DEEP SCAN ---
+        for (int t = 0; t < mf.getNumTracks(); ++t)
+        {
+            auto *seq = mf.getTrack(t);
+            for (auto *m : *seq)
+            {
+                auto &msg = m->message;
+                int chRaw = msg.getChannel();
+
+                if (chRaw >= 1 && chRaw <= 16)
+                {
+                    int chIdx = chRaw - 1;
 
                     if (msg.isController())
                     {
@@ -62,13 +90,11 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                         int val = msg.getControllerValue();
 
                         if (ctrl == 0)
-                        {
                             results[chIdx].bankMSB = val;
-                        }
+                        else if (ctrl == 32)
+                            results[chIdx].bankLSB = val;
                         else if (ctrl == 7)
-                        {
                             results[chIdx].initialVolume = (float)val;
-                        }
                     }
                     else if (msg.isProgramChange())
                     {
@@ -79,18 +105,18 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                         int tsfIdx = -1;
                         if (mapper != nullptr)
                         {
-                            // Simulujeme GM mód pro analýzu
-                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, MidiMode::GM);
+                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
                         }
 
-                        bool isDrum = (ch == 10 || results[chIdx].bankMSB >= 126);
+                        results[chIdx].tsfIndex = tsfIdx;
+
+                        bool isDrum = (chRaw == 10 || results[chIdx].bankMSB >= 126);
                         results[chIdx].instrumentName = getGMName(prog, results[chIdx].bankMSB, isDrum);
 
-                        // FORMÁTOVANÝ VÝPIS PRO IVU (Vše na jednom řádku)
-                        std::cout << "[DEBUG] Ch " << std::setw(2) << ch
+                        std::cout << "[DEBUG] Ch " << std::setw(2) << chRaw
                                   << " | Prog: " << std::setw(3) << prog
                                   << " | Bank: " << std::setw(3) << results[chIdx].bankMSB
-                                  << " | TSF_Idx: " << std::setw(4) << tsfIdx // Tady uvidíš tu pravdu!
+                                  << " | TSF_Idx: " << std::setw(5) << tsfIdx
                                   << " | Instrument: " << results[chIdx].instrumentName << std::endl;
                     }
                 }

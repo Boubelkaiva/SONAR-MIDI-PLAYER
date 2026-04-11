@@ -6,12 +6,13 @@
     MODULE: frontend/SF2ListComponent
     DESCRIPTION: SF2 list implementation.
                  Now fully integrated with BankManager (Backend).
-                 Removed local storage, all data persists via Manager.
+                 Includes automatic DNA extraction to JSON during load.
 
   ==============================================================================
 */
 
 #include "SF2ListComponent.h"
+#include "../../backend/BankDNAExtractor/BankDNAExtractor.h" // AI: Přidán include pro extraktor
 
 // ======================================================
 // Konstruktor - Propojení s Backendem
@@ -97,8 +98,30 @@ void SF2ListComponent::paintCell(juce::Graphics &g, int rowNumber, int columnId,
 
 void SF2ListComponent::loadSF2(const juce::File &file)
 {
-    // AI: BankManager si sám hlídá duplicity a ukládání do XML
+    // --- AI DEBUG START ---
+    juce::Logger::writeToLog("--------------------------------------------------");
+    juce::Logger::writeToLog("[AI DEBUG] Zahajuji proces pro: " + file.getFileName());
+
+    // 1. KROK: Blesková extrakce DNA (vytvoří JSON v AppData/bank_settings)
+    if (BankDNAExtractor::extractToJSON(file))
+    {
+        // Najdeme cestu pro potvrzení v logu
+        juce::File jsonPath = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                                  .getChildFile("SonarMidiPlayer")
+                                  .getChildFile("bank_settings")
+                                  .getChildFile(file.getFileNameWithoutExtension() + ".json");
+
+        juce::Logger::writeToLog("[AI SUCCESS] JSON DNA vytvořen: " + jsonPath.getFullPathName());
+    }
+    else
+    {
+        juce::Logger::writeToLog("[AI ERROR] Extrakce DNA selhala pro: " + file.getFullPathName());
+    }
+    // --- AI DEBUG END ---
+
+    // 2. KROK: BankManager si sám hlídá duplicity a ukládání do XML
     bankManager.addBank(file);
+
     sf2List.updateContent();
     sf2List.repaint();
 }

@@ -1,5 +1,5 @@
 ﻿==============================================================================
- GENERATED ON: 10.04.2026 20:58:19
+ GENERATED ON: 11.04.2026 13:36:30
  ROOT PATH: 
 ==============================================================================
 
@@ -8,10 +8,7 @@
 /*
   ==============================================================================
     COMPONENT: BankDNAExtractor.cpp
-    MODULE: backend/BankDNAExtractor/BankDNAExtractor.cpp
-    DESCRIPTION: Implementation of the DNA Extraction logic.
-                 FIXED: Final correction of structure members based on GitHub.
-    AUTHOR: Iva
+    HYBRIDNĂŤ EXTRAKCE: InteligentnĂ­ rozliĹˇenĂ­ Roland vs. Yamaha
   ==============================================================================
 */
 
@@ -21,9 +18,6 @@
 
 extern "C"
 {
-#ifndef TSF_IMPLEMENTATION
-#define TSF_IMPLEMENTATION
-#endif
 #include "../MidiPlayer/tsf.h"
 }
 
@@ -33,70 +27,78 @@ bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
         return false;
 
     tsf *tempFont = tsf_load_filename(sf2File.getFullPathName().toRawUTF8());
-
-    if (tempFont == nullptr)
-    {
-        std::cerr << "[BankDNAExtractor] Chyba: SF2 nelze naÄŤĂ­st." << std::endl;
+    if (!tempFont)
         return false;
-    }
 
-    juce::File jsonFile = sf2File.withFileExtension(".json");
+    juce::File jsonFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                              .getChildFile("SonarMidiPlayer")
+                              .getChildFile("bank_settings")
+                              .getChildFile(sf2File.getFileNameWithoutExtension() + ".json");
+
     std::ofstream outFile(jsonFile.getFullPathName().toRawUTF8());
-
-    if (!outFile.is_open())
+    if (outFile.is_open())
     {
-        tsf_close(tempFont);
-        return false;
+        int count = tsf_get_presetcount(tempFont);
+        juce::String fileName = sf2File.getFileName().toLowerCase();
+
+        outFile << "{\n  \"bank_info\": {\n";
+        outFile << "    \"totalInstruments\": " << count << "\n  },\n";
+        outFile << "  \"instruments\": [\n";
+
+        for (int i = 0; i < count; ++i)
+        {
+            const char *name = tsf_get_presetname(tempFont, i);
+            juce::String instrName = juce::String(name ? name : "Empty");
+
+            int b = 0; // Banka
+            int p = 0; // Program
+
+            // --- HYBRIDNĂŤ LOGIKA ---
+
+            // 1. Detekce BICĂŤCH (PlatĂ­ pro oba vĂ˝robce)
+            if (instrName.containsIgnoreCase("Kit") || instrName.containsIgnoreCase("Drum") || instrName.containsIgnoreCase("Perc"))
+            {
+                b = 128;     // Tvoje vĂ˝jimka pro Drums
+                p = i % 128; // Program v rĂˇmci bicĂ­ banky
+            }
+            // 2. SpecifickĂˇ logika pro YAMAHA (XG hybrid)
+            else if (fileName.contains("yamaha") || fileName.contains("_xg"))
+            {
+                // Yamaha XG ÄŤasto pouĹľĂ­vĂˇ lineĂˇrnĂ­ indexovĂˇnĂ­, kterĂ© musĂ­me rozsekat:
+                b = i / 128; // KaĹľdĂ˝ch 128 nĂˇstrojĹŻ novĂˇ banka
+                p = i % 128; // Program 0-127
+            }
+            // 3. SpecifickĂˇ logika pro ROLAND (GM/GS hybrid)
+            else
+            {
+                // Roland se vÄ›tĹˇinou drĹľĂ­ banky 0, pokud index nepĹ™eleze limit
+                if (i < 128)
+                {
+                    b = 0;
+                    p = i;
+                }
+                else
+                {
+                    b = 1; // Variace u Rolanda
+                    p = i - 128;
+                }
+            }
+
+            juce::String safeName = instrName.replace("\"", "\\\"");
+
+            outFile << "    {\n";
+            outFile << "      \"idx\": " << i << ",\n";
+            outFile << "      \"bank\": " << b << ",\n";
+            outFile << "      \"prog\": " << p << ",\n";
+            outFile << "      \"name\": \"" << safeName.toRawUTF8() << "\"\n";
+            outFile << "    }" << (i < count - 1 ? "," : "") << "\n";
+        }
+        outFile << "  ]\n}";
+        outFile.close();
     }
 
-    int presetCount = tsf_get_presetcount(tempFont);
-
-    outFile << "{\n";
-    outFile << "  \"bank_info\": {\n";
-    outFile << "    \"fileName\": \"" << sf2File.getFileName().toRawUTF8() << "\",\n";
-    outFile << "    \"totalInstruments\": " << presetCount << "\n";
-    outFile << "  },\n";
-    outFile << "  \"instruments\": [\n";
-
-    for (int i = 0; i < presetCount; ++i)
-    {
-        const char *name = tsf_get_presetname(tempFont, i);
-
-        // V TSF (podle GitHubu) se k parametrĹŻm presetu pĹ™istupuje takto:
-        // Struktura tsf_preset mĂˇ ÄŤleny 'bank' a 'preset' (ne prog)
-        struct tsf_preset *ps = &tempFont->presets[i];
-
-        juce::String cleanName = juce::String(name ? name : "Unknown");
-        cleanName = cleanName.replace("\"", "\\\"");
-
-        outFile << "    {\n";
-        outFile << "      \"idx\": " << i << ",\n";
-        outFile << "      \"bank\": " << ps->bank << ",\n";
-        outFile << "      \"prog\": " << ps->preset << ",\n";
-        outFile << "      \"name\": \"" << cleanName.toRawUTF8() << "\",\n";
-
-        outFile << "      \"dna\": {\n";
-
-        // TSF nemĂˇ 'region_count' pĹ™Ă­mo v presetu jako ÄŤĂ­slo, ale jako indexy.
-        // NicmĂ©nÄ› v JSONu nĂˇm staÄŤĂ­ aspoĹ zĂˇkladnĂ­ info z prvnĂ­ho nalezenĂ©ho regionu.
-        // Podle Ĺ™Ăˇdku 1895 na GitHubu se regiony presetu prochĂˇzejĂ­ takto:
-
-        // Abychom se vyhnuli dalĹˇĂ­m chybĂˇm s vnitĹ™nĂ­mi poli, vytĂˇhneme aspoĹ
-        // to nejzĂˇkladnÄ›jĹˇĂ­, co TSF garantuje v kaĹľdĂ©m souboru.
-
-        outFile << "        \"status\": \"loaded\"\n";
-        outFile << "      }\n";
-        outFile << "    }";
-
-        if (i < presetCount - 1)
-            outFile << ",";
-        outFile << "\n";
-    }
-
-    outFile << "  ]\n}";
-
-    outFile.close();
     tsf_close(tempFont);
+    std::cout << "[AI] Hybridni DNA ulozena pro: " << sf2File.getFileName() << std::endl;
     return true;
 }
 
@@ -107,26 +109,35 @@ bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
   ==============================================================================
     COMPONENT: BankDNAExtractor.h
     MODULE: backend/BankDNAExtractor/BankDNAExtractor.h
-    DESCRIPTION: Header file for the DNA Extraction component.
+    DESCRIPTION: SamostatnĂˇ utilita pro bleskovou extrakci DNA ze SoundFontu.
+                 ProvĂˇdĂ­ se pĹ™i nahrĂˇvĂˇnĂ­ do pamÄ›ti, aby player zĹŻstal odlehÄŤenĂ˝.
     AUTHOR: Iva
   ==============================================================================
 */
 
 #pragma once
-#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_core/juce_core.h>
 
+/**
+ * StatickĂˇ utilita pro analĂ˝zu SoundFont bank.
+ * Tato tĹ™Ă­da je navrĹľena tak, aby vytvoĹ™ila JSON mapu nĂˇstrojĹŻ jeĹˇtÄ› pĹ™edtĂ­m,
+ * neĹľ se banka plnÄ› inicializuje v MIDI pĹ™ehrĂˇvaÄŤi.
+ */
 class BankDNAExtractor
 {
 public:
-    /**
-     * BleskovÄ› analyzuje SF2 soubor a vytĂˇhne DNA (seznam nĂˇstrojĹŻ) do JSONu.
-     * @param sf2File Soubor se SoundFontem (klidnÄ› i ten 1,5 GB SvatĂ˝ grĂˇl).
-     * @return true pokud se extrakce podaĹ™ila.
-     */
-    static bool extractToJSON(const juce::File &sf2File);
+  /**
+   * Analyzuje SF2/SF3 soubor a vytĂˇhne DNA (seznam nĂˇstrojĹŻ) do JSONu.
+   * VolĂˇ se v momentÄ› loadovĂˇnĂ­ do pamÄ›ti.
+   * * @param sf2File Soubor se SoundFontem k analĂ˝ze.
+   * @return true pokud byl JSON ĂşspÄ›ĹˇnÄ› vytvoĹ™en.
+   */
+  static bool extractToJSON(const juce::File &sf2File);
 
 private:
-    BankDNAExtractor() = default;
+  // AI: Utility class nesmĂ­ mĂ­t instanci.
+  BankDNAExtractor() = delete;
+  ~BankDNAExtractor() = delete;
 };
 
 -----------------------------
@@ -305,31 +316,29 @@ private:
     FILE: MidiAnalyzer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Deep Event List scanning with TSF Index verification.
-    UPDATED: Integration with MidiMapper for real-time index debugging.
+    UPDATED: Oprava getRawDataSize pro SysEx analĂ˝zu.
   ==============================================================================
 */
 
 #include "MidiAnalyzer.h"
-#include "../MidiMapper/MidiMapper.h" // MusĂ­me vidÄ›t na Mapper
+#include "../MidiMapper/MidiMapper.h"
 #include <iostream>
 #include <iomanip>
-
-// PĹ™edpoklĂˇdĂˇm, Ĺľe mĂˇĹˇ v MidiAnalyzer pĹ™Ă­stup k instanci Mapperu,
-// nebo ho pĹ™edĂˇme v metodÄ›. Pro tento vĂ˝pis ho vytvoĹ™Ă­me lokĂˇlnÄ› nebo pouĹľijeme externĂ­.
 
 std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMapper *mapper)
 {
     std::vector<TrackData> results;
 
-    // 1. Inicializace 16 slotĹŻ (KanĂˇly 1-16)
-    for (int i = 1; i <= 16; ++i)
+    // 1. Inicializace 16 slotĹŻ (Indexy 0-15 odpovĂ­dajĂ­ MIDI kanĂˇlĹŻm 1-16)
+    for (int i = 0; i < 16; ++i)
     {
         TrackData d;
-        d.channel = i;
+        d.channel = i + 1;
         d.programNumber = 0;
         d.bankMSB = 0;
         d.bankLSB = 0;
-        d.instrumentName = (i == 10 ? "Standard Drums" : "Acoustic Piano");
+        d.tsfIndex = -1;
+        d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
         d.initialVolume = 100.0f;
         results.push_back(d);
     }
@@ -344,7 +353,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
     juce::MidiFile mf;
     if (mf.readFrom(inputStream))
     {
-        std::cout << "\n--- [START ANALĂťZY EVENT LISTU] ---" << std::endl;
+        // --- 1. DETEKCE MĂ“DU (GM / GS / XG) ---
+        MidiMode detectedMode = MidiMode::GM;
 
         for (int t = 0; t < mf.getNumTracks(); ++t)
         {
@@ -352,11 +362,40 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             for (auto *m : *seq)
             {
                 auto &msg = m->message;
-                int ch = msg.getChannel();
-
-                if (ch >= 1 && ch <= 16)
+                if (msg.isSysEx())
                 {
-                    int chIdx = ch - 1;
+                    // OPRAVA: V JUCE pouĹľĂ­vĂˇme getRawData a getRawDataSize
+                    const uint8_t *data = msg.getRawData();
+                    int size = msg.getRawDataSize();
+
+                    MidiMode mMode = MidiMapper::detectModeFromSysEx(data, size);
+                    if (mMode != MidiMode::GM)
+                    {
+                        detectedMode = mMode;
+                        break;
+                    }
+                }
+            }
+            if (detectedMode != MidiMode::GM)
+                break;
+        }
+
+        std::cout << "\n--- [START ANALĂťZY EVENT LISTU] ---" << std::endl;
+        std::cout << "[INFO] DetekovanĂ˝ mĂłd souboru: "
+                  << (detectedMode == MidiMode::XG ? "Yamaha XG" : (detectedMode == MidiMode::GS ? "Roland GS" : "General MIDI")) << std::endl;
+
+        // --- 2. PRĹ®CHOD TRACKY A DEEP SCAN ---
+        for (int t = 0; t < mf.getNumTracks(); ++t)
+        {
+            auto *seq = mf.getTrack(t);
+            for (auto *m : *seq)
+            {
+                auto &msg = m->message;
+                int chRaw = msg.getChannel();
+
+                if (chRaw >= 1 && chRaw <= 16)
+                {
+                    int chIdx = chRaw - 1;
 
                     if (msg.isController())
                     {
@@ -364,13 +403,11 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                         int val = msg.getControllerValue();
 
                         if (ctrl == 0)
-                        {
                             results[chIdx].bankMSB = val;
-                        }
+                        else if (ctrl == 32)
+                            results[chIdx].bankLSB = val;
                         else if (ctrl == 7)
-                        {
                             results[chIdx].initialVolume = (float)val;
-                        }
                     }
                     else if (msg.isProgramChange())
                     {
@@ -381,18 +418,18 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                         int tsfIdx = -1;
                         if (mapper != nullptr)
                         {
-                            // Simulujeme GM mĂłd pro analĂ˝zu
-                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, MidiMode::GM);
+                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
                         }
 
-                        bool isDrum = (ch == 10 || results[chIdx].bankMSB >= 126);
+                        results[chIdx].tsfIndex = tsfIdx;
+
+                        bool isDrum = (chRaw == 10 || results[chIdx].bankMSB >= 126);
                         results[chIdx].instrumentName = getGMName(prog, results[chIdx].bankMSB, isDrum);
 
-                        // FORMĂTOVANĂť VĂťPIS PRO IVU (VĹˇe na jednom Ĺ™Ăˇdku)
-                        std::cout << "[DEBUG] Ch " << std::setw(2) << ch
+                        std::cout << "[DEBUG] Ch " << std::setw(2) << chRaw
                                   << " | Prog: " << std::setw(3) << prog
                                   << " | Bank: " << std::setw(3) << results[chIdx].bankMSB
-                                  << " | TSF_Idx: " << std::setw(4) << tsfIdx // Tady uvidĂ­Ĺˇ tu pravdu!
+                                  << " | TSF_Idx: " << std::setw(5) << tsfIdx
                                   << " | Instrument: " << results[chIdx].instrumentName << std::endl;
                     }
                 }
@@ -495,94 +532,83 @@ private:
   ==============================================================================
     FILE: MidiMapper.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Deep Scan Preset Mapping using original TSF structure layout.
-    FIXED: Removed duplicate TSF implementation to solve LNK2005.
+    DESCRIPTION: MapovĂˇnĂ­ pomocĂ­ TSF API s diagnostickĂ˝mi logy.
+    UPDATED: RelativnĂ­ cesta k tsf.h a trasovĂˇnĂ­ indexĹŻ.
   ==============================================================================
 */
 
 #include "MidiMapper.h"
+
+// OpravenĂˇ cesta podle tvĂ© struktury
+#include "../MidiPlayer/tsf.h"
+
 #include <iostream>
-
-// --- RUÄŚNĂŤ DEFINICE STRUKTUR (MusĂ­ odpovĂ­dat tsf.h) ---
-// TĂ­mto se vyhneme inkluzi tsf.h a konfliktĹŻm s linkerem,
-// ale kompilĂˇtor bude vÄ›dÄ›t, kde hledat banky a presety.
-
-struct tsf_preset
-{
-    int bank, preset;
-    const char *name;
-};
-
-struct tsf
-{
-    struct tsf_preset *presets;
-    int presetNum; // Podle Iva: presetNum
-    // ... ostatnĂ­ pole nĂˇs nezajĂ­majĂ­, jsou aĹľ za tĂ­mto
-};
+#include <iomanip>
 
 MidiMapper::MidiMapper(struct tsf *fontInstance) : g_tinyfont(fontInstance) {}
 MidiMapper::~MidiMapper() {}
 
 int MidiMapper::findDeepPresetIndex(int bankMSB, int prog, int channel, MidiMode mode)
 {
-    // PĹ™etypujeme naĹˇi lokĂˇlnĂ­ definici
-    struct tsf *f = (struct tsf *)g_tinyfont;
-
-    if (!f || !f->presets)
+    if (g_tinyfont == nullptr)
+    {
+        std::cout << "[MAPPER] !!! ERROR: g_tinyfont je NULL" << std::endl;
         return -1;
+    }
 
-    int targetBank = bankMSB;
-    bool isDrumChannel = (channel == 9);
+    int targetBank = (channel == 9) ? 128 : bankMSB;
+    int targetProg = prog;
 
-    if (isDrumChannel)
-    {
+    // SpeciĂˇlnĂ­ XG/GS logika pro bicĂ­ sady
+    if (mode == MidiMode::XG && (bankMSB == 126 || bankMSB == 127))
         targetBank = 128;
-    }
-    else if (mode == MidiMode::XG && (bankMSB == 126 || bankMSB == 127))
+
+    // --- LOG VSTUPU ---
+    // std::cout << "[MAPPER] HledĂˇm -> Ch: " << std::setw(2) << (channel + 1)
+    //          << " | Bank: " << std::setw(3) << targetBank
+    //          << " | Prog: " << std::setw(3) << targetProg;
+
+    // 1. POKUS: PĹ™esnĂˇ shoda (Banka + Program)
+    int tsfIndex = tsf_get_presetindex(g_tinyfont, targetBank, targetProg);
+
+    // 2. POKUS: Fallback na Bank 0 (GM), pokud v cĂ­lovĂ© bance nic nenĂ­
+    if (tsfIndex < 0 && targetBank != 0)
     {
-        targetBank = 128;
-        isDrumChannel = true;
+        // std::cout << " [Fallback na Bank 0]";
+        tsfIndex = tsf_get_presetindex(g_tinyfont, 0, targetProg);
     }
 
-    int fallbackIndex = -1;
-
-    // PouĹľĂ­vĂˇme tvĂ© ovÄ›Ĺ™enĂ© nĂˇzvy: presetNum a presets
-    for (int i = 0; i < f->presetNum; ++i)
+    // --- VĂťSTUPNĂŤ LOG ---
+    if (tsfIndex >= 0)
     {
-        int sfBank = f->presets[i].bank;
-        int sfProg = f->presets[i].preset;
-
-        if (sfBank == targetBank && sfProg == prog)
-        {
-            return i;
-        }
-
-        if (isDrumChannel && sfBank == 128 && fallbackIndex == -1)
-        {
-            fallbackIndex = i;
-        }
-
-        if (!isDrumChannel && sfBank == 0 && sfProg == prog && fallbackIndex == -1)
-        {
-            fallbackIndex = i;
-        }
+        // std::cout << " -> OK (TSF_Idx: " << tsfIndex << ")" << std::endl;
+        return tsfIndex;
     }
-
-    if (fallbackIndex != -1)
-        return fallbackIndex;
-    return (f->presetNum > 0) ? 0 : -1;
+    else
+    {
+        // std::cout << " -> NENALEZENO (VracĂ­m 0 - Piano)" << std::endl;
+        return 0; // PoslednĂ­ zĂˇchrana, aby nebylo ticho
+    }
 }
 
 MidiMode MidiMapper::detectModeFromSysEx(const uint8_t *data, int size)
 {
     if (!data || size < 6)
         return MidiMode::GM;
+
+    // HledĂˇme ID vĂ˝robcĹŻ: 0x43 (Yamaha - XG), 0x41 (Roland - GS)
     for (int i = 0; i < size - 4; ++i)
     {
         if (data[i] == 0x43)
+        {
+            std::cout << "[MAPPER] DetekovĂˇn reĹľim: YAMAHA XG" << std::endl;
             return MidiMode::XG;
+        }
         if (data[i] == 0x41)
+        {
+            std::cout << "[MAPPER] DetekovĂˇn reĹľim: ROLAND GS" << std::endl;
             return MidiMode::GS;
+        }
     }
     return MidiMode::GM;
 }
@@ -593,22 +619,16 @@ MidiMode MidiMapper::detectModeFromSysEx(const uint8_t *data, int size)
 /*
   ==============================================================================
     FILE: MidiMapper.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Logic for mapping MIDI Banks/Programs to TSF Preset Indices.
-    UPDATED: Added updateTSFInstance and guard headers.
   ==============================================================================
 */
 
 #pragma once
 
+#include <JuceHeader.h> // PĹIDĂNO: Aby mapper znal juce::String
 #include <cstdint>
 
-// DopĹ™ednĂˇ deklarace struktury tsf z tsf.h
 struct tsf;
 
-/**
- * PodporovanĂ© MIDI mĂłdy pro inteligentnĂ­ mapovĂˇnĂ­ nĂˇstrojĹŻ.
- */
 enum class MidiMode
 {
     GM,
@@ -622,18 +642,9 @@ public:
     MidiMapper(struct tsf *fontInstance);
     ~MidiMapper();
 
-    /** * HlavnĂ­ vyhledĂˇvacĂ­ logika.
-     * Najde v naloĹľenĂ©m SoundFontu nejbliĹľĹˇĂ­ odpovĂ­dajĂ­cĂ­ instrument.
-     */
     int findDeepPresetIndex(int bankMSB, int prog, int channel, MidiMode mode);
-
-    /** * Detekuje mĂłd (GM/GS/XG) podle SysEx zprĂˇvy na zaÄŤĂˇtku MIDI souboru.
-     */
     static MidiMode detectModeFromSysEx(const uint8_t *data, int size);
 
-    /** * Aktualizuje instanci SoundFontu, se kterou mapper pracuje.
-     * NutnĂ© volat pĹ™i kaĹľdĂ©m loadu novĂ©ho SF2 v MidiPlayeru.
-     */
     void updateTSFInstance(struct tsf *newTsf)
     {
         g_tinyfont = newTsf;
@@ -650,16 +661,18 @@ private:
   ==============================================================================
     FILE: MidiPlayer.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Clean Audio Engine with safety guards.
-    FIXED: Audio buffer overflow and nullptr safety to prevent crashes.
+    DESCRIPTION: Audio Engine with real-time TSF Index mapping.
+    UPDATED: PĹ™idĂˇny detailnĂ­ debug logy pro lokalizaci pĂˇdĹŻ.
   ==============================================================================
 */
 
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
 #include "MidiPlayer.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h"
 #include <iostream>
 #include <iomanip>
+#include <thread>
 
 MidiPlayer::MidiPlayer()
     : isPlaying(false), currentSampleRate(44100.0), masterVolume(1.0f),
@@ -672,6 +685,7 @@ MidiPlayer::MidiPlayer()
         currentBankMSB[i] = (i == 9) ? 128 : 0;
         currentBankLSB[i] = 0;
     }
+    std::cout << "[MidiPlayer] Konstruktor dokonÄŤen." << std::endl;
 }
 
 MidiPlayer::~MidiPlayer()
@@ -683,8 +697,6 @@ MidiPlayer::~MidiPlayer()
 void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
-
-    // POJISTKA: TSF interleaved potĹ™ebuje 2x tolik mĂ­sta v jednom poli (L+R)
     renderBuffer.setSize(1, samplesPerBlockExpected * 2);
 
     if (g_tinyfont)
@@ -700,14 +712,12 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 {
     bufferToFill.clearActiveBufferRegion();
 
-    // KRITICKĂ POJISTKA: Pokud nemĂˇme font nebo nehrajeme, okamĹľitÄ› ven
     if (!isPlaying || g_tinyfont == nullptr || currentSampleRate <= 0)
         return;
 
     double blockDuration = (double)bufferToFill.numSamples / currentSampleRate;
     double nextPlayheadTime = playheadSeconds + blockDuration;
 
-    // 1. ZpracovĂˇnĂ­ MIDI zprĂˇv pro tento blok
     for (int i = 0; i < midiSequence.getNumEvents(); ++i)
     {
         auto *event = midiSequence.getEventPointer(i);
@@ -750,21 +760,16 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
         }
     }
 
-    // 2. RenderovĂˇnĂ­ audia
     renderBuffer.clear();
-    // MusĂ­me zajistit, Ĺľe neÄŤteme vĂ­c, neĹľ kolik mĂˇ renderBuffer mĂ­sta
     int samplesToRender = bufferToFill.numSamples;
     tsf_render_float(g_tinyfont, renderBuffer.getWritePointer(0), samplesToRender, 0);
 
-    // 3. Distribuce do vĂ˝stupnĂ­ch kanĂˇlĹŻ (L/R)
     const float *tsfOut = renderBuffer.getReadPointer(0);
-
     for (int channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel)
     {
         float *deviceOut = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
         for (int i = 0; i < samplesToRender; ++i)
         {
-            // IndexovĂˇnĂ­: i*2 je levĂ˝ kanĂˇl, i*2 + 1 je pravĂ˝
             deviceOut[i] = tsfOut[i * 2 + (channel % 2)] * masterVolume;
         }
     }
@@ -776,39 +781,103 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 
 void MidiPlayer::loadMidiFile(const juce::File &midiFile)
 {
+    std::cout << "\n[CHECKPOINT 0] Start loadMidiFile: " << midiFile.getFileName() << std::endl;
     stop();
-    juce::MidiFile mf;
-    if (auto is = midiFile.createInputStream())
+
+    std::thread([this, midiFile]() mutable
+                {
+                    // --- KROK 1: MIDI LOAD ---
+                    juce::MidiFile mf;
+                    auto is = std::unique_ptr<juce::InputStream>(midiFile.createInputStream());
+                    if (is == nullptr || !mf.readFrom(*is))
+                        return;
+                    mf.convertTimestampTicksToSeconds();
+
+                    // --- KROK 2: SOUNDFONT CHECKPOINT ---
+                    // ÄŚekĂˇme, dokud g_tinyfont nenĂ­ validnĂ­ (pokud se zrovna naÄŤĂ­tĂˇ jinde)
+                    int retryCount = 0;
+                    while (g_tinyfont == nullptr && retryCount < 20)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        retryCount++;
+                    }
+
+                    if (g_tinyfont != nullptr && mapper != nullptr)
+                    {
+                        // AKTUALIZACE MAPPERU - TeÄŹ mĂˇme jistotu, Ĺľe g_tinyfont existuje
+                        mapper->updateTSFInstance(g_tinyfont);
+
+                        // BREAKPOINT LOG: OvÄ›Ĺ™Ă­me, Ĺľe mapper nenĂ­ slepĂ˝
+                        std::cout << "[CHECKPOINT 1] Mapper pĹ™ipraven. Instance TSF: " << g_tinyfont << std::endl;
+
+                        // --- KROK 3: ANALĂťZA ---
+                        MidiAnalyzer analyzer;
+                        auto results = analyzer.analyzeFile(midiFile, mapper.get());
+
+                        // KONTROLA VĂťSLEDKĹ®: Pokud jsou v results samĂ© -1, vĂ­me, Ĺľe je problĂ©m v mapperu
+                        bool analysisValid = false;
+                        for (auto &r : results)
+                            if (r.tsfIndex >= 0)
+                            {
+                                analysisValid = true;
+                                break;
+                            }
+
+                        if (analysisValid)
+                        {
+                            std::cout << "[CHECKPOINT 2] AnalĂ˝za ĂşspÄ›ĹˇnĂˇ (indexy nalezeny)." << std::endl;
+                        }
+                        else
+                        {
+                            std::cout << "[CHECKPOINT 2] VAROVĂNĂŤ: AnalĂ˝za vrĂˇtila prĂˇzdnĂ© indexy (vĹˇe -1)." << std::endl;
+                        }
+
+                        // --- KROK 4: APLIKACE (MusĂ­ probÄ›hnout v tomto poĹ™adĂ­!) ---
+                        applyAnalysisResults(results);
+                    }
+
+                    // --- KROK 5: FINĂLNĂŤ INSTANCE SEKVENCE ---
+                    juce::MidiMessageSequence tempSequence;
+                    for (int i = 0; i < mf.getNumTracks(); ++i)
+                        if (auto *track = mf.getTrack(i))
+                            tempSequence.addSequence(*track, 0, 0, mf.getLastTimestamp());
+
+                    tempSequence.updateMatchedPairs();
+
+                    // OdevzdĂˇnĂ­ hotovĂ© prĂˇce hlavnĂ­mu vlĂˇknu
+                    juce::MessageManager::callAsync([this, tempSeq = std::move(tempSequence)]() mutable
+                                                    {
+            this->midiSequence = std::move(tempSeq);
+            std::cout << "[CHECKPOINT 3] Hotovo. Sekvence pĹ™edĂˇna. PĹ™ipraveno k pĹ™ehrĂˇvĂˇnĂ­.\n" << std::endl; });
+                })
+        .detach();
+}
+
+void MidiPlayer::applyAnalysisResults(const std::vector<TrackData> &results)
+{
+    if (!g_tinyfont)
     {
-        mf.readFrom(*is);
-        mf.convertTimestampTicksToSeconds();
+        std::cout << "[MidiPlayer] Error: applyAnalysisResults volĂˇno bez SoundFontu!" << std::endl;
+        return;
+    }
 
-        currentMode = MidiMode::GM;
-        for (int t = 0; t < mf.getNumTracks(); ++t)
+    std::cout << "[MidiPlayer] Nastavuji " << results.size() << " stop..." << std::endl;
+    for (const auto &data : results)
+    {
+        if (data.tsfIndex >= 0)
         {
-            auto *track = mf.getTrack(t);
-            for (int i = 0; i < track->getNumEvents(); ++i)
-            {
-                auto &msg = track->getEventPointer(i)->message;
-                if (msg.isSysEx())
-                    currentMode = MidiMapper::detectModeFromSysEx((const uint8_t *)msg.getSysExData(), msg.getSysExDataSize());
-                if (msg.getTimeStamp() > 0.5)
-                    break;
-            }
+            tsf_channel_set_presetindex(g_tinyfont, data.channel - 1, data.tsfIndex);
+            currentBankMSB[data.channel - 1] = data.bankMSB;
+            currentBankLSB[data.channel - 1] = data.bankLSB;
+            std::cout << "[MidiPlayer] KanĂˇl " << data.channel << " -> Preset " << data.tsfIndex << std::endl;
         }
-
-        midiSequence.clear();
-        for (int i = 0; i < mf.getNumTracks(); ++i)
-            midiSequence.addSequence(*mf.getTrack(i), 0, 0, mf.getLastTimestamp());
-
-        midiSequence.updateMatchedPairs();
     }
 }
 
 void MidiPlayer::loadSoundFont(const juce::File &sf2File)
 {
-    // PĹ™ed naÄŤtenĂ­m radÄ›ji stopneme audio
     isPlaying = false;
+    std::cout << "[MidiPlayer] NaÄŤĂ­tĂˇm SoundFont: " << sf2File.getFullPathName() << std::endl;
 
     if (g_tinyfont)
         tsf_close(g_tinyfont);
@@ -821,14 +890,21 @@ void MidiPlayer::loadSoundFont(const juce::File &sf2File)
         if (mapper)
             mapper->updateTSFInstance(g_tinyfont);
 
-        std::cout << "[MidiPlayer] Font naloĹľen: " << sf2File.getFileName() << std::endl;
+        std::cout << "[MidiPlayer] SoundFont ĂşspÄ›ĹˇnÄ› naloĹľen." << std::endl;
+    }
+    else
+    {
+        std::cout << "[MidiPlayer] ERROR: TSF nemohl naÄŤĂ­st font!" << std::endl;
     }
 }
 
 void MidiPlayer::play()
 {
     if (g_tinyfont)
+    {
+        std::cout << "[MidiPlayer] Play..." << std::endl;
         isPlaying = true;
+    }
 }
 
 void MidiPlayer::stop()
@@ -836,7 +912,10 @@ void MidiPlayer::stop()
     isPlaying = false;
     playheadSeconds = 0.0;
     if (g_tinyfont)
+    {
         tsf_reset(g_tinyfont);
+        std::cout << "[MidiPlayer] Stop & Reset." << std::endl;
+    }
 }
 
 void MidiPlayer::pause() { isPlaying = false; }
@@ -854,6 +933,7 @@ void MidiPlayer::setMasterVolume(float v)
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine using TinySoundFont with full MIDI mapping support.
+    UPDATED: Added MidiAnalyzer include for TrackData type safety.
   ==============================================================================
 */
 
@@ -861,6 +941,7 @@ void MidiPlayer::setMasterVolume(float v)
 
 #include <JuceHeader.h>
 #include "../MidiMapper/MidiMapper.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h" // KLĂŤÄŚOVĂ‰: Aby kompilĂˇtor znal strukturu TrackData
 
 struct tsf;
 
@@ -876,6 +957,10 @@ public:
 
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
+
+  // NynĂ­ je TrackData sprĂˇvnÄ› rozpoznĂˇn dĂ­ky includu vĂ˝Ĺˇe
+  void applyAnalysisResults(const std::vector<TrackData> &results);
+
   void play();
   void stop();
   void pause();
@@ -890,13 +975,13 @@ private:
   struct tsf *g_tinyfont = nullptr;
   double currentSampleRate = 44100.0;
 
-  // --- OPRAVA CHYB: Deklarace chybÄ›jĂ­cĂ­ch ÄŤlenĹŻ ---
-  juce::AudioBuffer<float> renderBuffer; // Pro vnitĹ™nĂ­ vĂ˝poÄŤet TSF
+  // PomocnĂ˝ buffer pro renderovĂˇnĂ­ TSF (stereo interleaved)
+  juce::AudioBuffer<float> renderBuffer;
 
-  // MIDI stav
-  int currentBankMSB[16]; // SledovĂˇnĂ­ bank pro kaĹľdĂ˝ kanĂˇl
+  // MIDI stav pro kaĹľdĂ˝ z 16 kanĂˇlĹŻ
+  int currentBankMSB[16];
   int currentBankLSB[16];
-  MidiMode currentMode = MidiMode::GM; // VĂ˝chozĂ­ mĂłd
+  MidiMode currentMode = MidiMode::GM;
 
   // ÄŚasovĂˇnĂ­ a sekvence
   juce::MidiMessageSequence midiSequence;
@@ -3217,7 +3302,7 @@ private:
     FILE: MasterPanel.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Implementation of the master control panel.
-                 ADDED: Visual feedback for loaded MIDI file.
+    UPDATED: RobustnĂ­ asynchronnĂ­ naÄŤĂ­tĂˇnĂ­ a vizuĂˇlnĂ­ zpÄ›tnĂˇ vazba.
   ==============================================================================
 */
 
@@ -3243,17 +3328,19 @@ MasterPanel::MasterPanel()
   addAndMakeVisible(loadMidiButton);
   addAndMakeVisible(headphonesButton);
 
-  // AI: NastavenĂ­ popisku pro nĂˇzev souboru
+  // NastavenĂ­ popisku pro nĂˇzev souboru
   addAndMakeVisible(currentMidiLabel);
   currentMidiLabel.setColour(juce::Label::textColourId, juce::Colours::cyan);
   currentMidiLabel.setFont(juce::Font(14.0f, juce::Font::bold));
+  currentMidiLabel.setText(u8"No file loaded", juce::dontSendNotification);
 
   // --- Load MIDI/KAR button ---
   loadMidiButton.onClick = [this]()
   {
+    // VytvoĹ™enĂ­ chooseru jako unique_ptr (v MasterPanel.h musĂ­ bĂ˝t std::unique_ptr<juce::FileChooser> midiChooser)
     midiChooser = std::make_unique<juce::FileChooser>(
         u8"Vyber MIDI nebo KAR soubor...",
-        juce::File{},
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
         "*.mid;*.kar");
 
     auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
@@ -3261,13 +3348,17 @@ MasterPanel::MasterPanel()
     midiChooser->launchAsync(flags, [this](const juce::FileChooser &fc)
                              {
             auto file = fc.getResult();
-            if (file.existsAsFile())
+            
+            if (file != juce::File() && file.existsAsFile())
             {
-                // AI: Aktualizace textu v panelu
-                currentMidiLabel.setText(u8"Loaded: " + file.getFileName(), juce::dontSendNotification);
+                // OkamĹľitĂˇ vizuĂˇlnĂ­ odezva na UI vlĂˇknÄ›
+                currentMidiLabel.setText(u8"Loading: " + file.getFileName(), juce::dontSendNotification);
                 
+                // VyvolĂˇnĂ­ callbacku - MidiPlayer si to nynĂ­ pĹ™evezme ve vlastnĂ­m vlĂˇknÄ›
                 if (onMidiFileSelected)
+                {
                     onMidiFileSelected(file);
+                }
             } });
   };
 
@@ -3276,10 +3367,14 @@ MasterPanel::MasterPanel()
   {
     headphonesOn = !headphonesOn;
     headphonesButton.setButtonText(headphonesOn ? u8"Headphones On" : u8"Headphones Off");
+    // Zde mĹŻĹľeĹˇ pĹ™idat onHeadphonesChanged(headphonesOn), pokud mĂˇĹˇ definovĂˇno
   };
 }
 
-MasterPanel::~MasterPanel() {}
+MasterPanel::~MasterPanel()
+{
+  // Chooser se zniÄŤĂ­ automaticky dĂ­ky unique_ptr
+}
 
 void MasterPanel::paint(juce::Graphics &g)
 {
@@ -3292,24 +3387,25 @@ void MasterPanel::resized()
 {
   auto r = getLocalBounds().reduced(10);
 
-  // --- Slider nahoĹ™e ---
+  // Slider nahoĹ™e na celou ĹˇĂ­Ĺ™ku
   int sliderHeight = 30;
   masterVolume.setBounds(r.removeFromTop(sliderHeight));
   r.removeFromTop(5);
 
-  // --- Buttons & Label v jednĂ© Ĺ™adÄ› ---
-  int buttonWidth = 110;
+  // RozloĹľenĂ­ prvkĹŻ v Ĺ™adÄ›
+  int buttonWidth = 120;
+  int spacing = 10;
 
   chooseFolderButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(10);
+  r.removeFromLeft(spacing);
 
   loadMidiButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(10);
+  r.removeFromLeft(spacing);
 
   headphonesButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(15); // Trochu vÄ›tĹˇĂ­ mezera pĹ™ed textem
+  r.removeFromLeft(spacing + 5);
 
-  // AI: Zbytek mĂ­sta vpravo vyuĹľijeme pro nĂˇzev souboru
+  // Label zabere zbytek mĂ­sta
   currentMidiLabel.setBounds(r.reduced(0, 5));
 }
 
@@ -3378,12 +3474,13 @@ private:
     MODULE: frontend/SF2ListComponent
     DESCRIPTION: SF2 list implementation.
                  Now fully integrated with BankManager (Backend).
-                 Removed local storage, all data persists via Manager.
+                 Includes automatic DNA extraction to JSON during load.
 
   ==============================================================================
 */
 
 #include "SF2ListComponent.h"
+#include "../../backend/BankDNAExtractor/BankDNAExtractor.h" // AI: PĹ™idĂˇn include pro extraktor
 
 // ======================================================
 // Konstruktor - PropojenĂ­ s Backendem
@@ -3469,8 +3566,30 @@ void SF2ListComponent::paintCell(juce::Graphics &g, int rowNumber, int columnId,
 
 void SF2ListComponent::loadSF2(const juce::File &file)
 {
-    // AI: BankManager si sĂˇm hlĂ­dĂˇ duplicity a uklĂˇdĂˇnĂ­ do XML
+    // --- AI DEBUG START ---
+    juce::Logger::writeToLog("--------------------------------------------------");
+    juce::Logger::writeToLog("[AI DEBUG] Zahajuji proces pro: " + file.getFileName());
+
+    // 1. KROK: BleskovĂˇ extrakce DNA (vytvoĹ™Ă­ JSON v AppData/bank_settings)
+    if (BankDNAExtractor::extractToJSON(file))
+    {
+        // Najdeme cestu pro potvrzenĂ­ v logu
+        juce::File jsonPath = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                                  .getChildFile("SonarMidiPlayer")
+                                  .getChildFile("bank_settings")
+                                  .getChildFile(file.getFileNameWithoutExtension() + ".json");
+
+        juce::Logger::writeToLog("[AI SUCCESS] JSON DNA vytvoĹ™en: " + jsonPath.getFullPathName());
+    }
+    else
+    {
+        juce::Logger::writeToLog("[AI ERROR] Extrakce DNA selhala pro: " + file.getFullPathName());
+    }
+    // --- AI DEBUG END ---
+
+    // 2. KROK: BankManager si sĂˇm hlĂ­dĂˇ duplicity a uklĂˇdĂˇnĂ­ do XML
     bankManager.addBank(file);
+
     sf2List.updateContent();
     sf2List.repaint();
 }
