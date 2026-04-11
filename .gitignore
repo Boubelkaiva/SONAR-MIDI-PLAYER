@@ -1,0 +1,38 @@
+# --- Zvukové banky (Svatý grál) ---
+*.sf2
+*.SF2
+*.sf3
+*.SF3
+
+# --- CMake a Build smetí (To, co teď čistíme) ---
+build/
+bin/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+*.sln
+*.vcxproj
+*.filters
+*.user
+
+# --- Visual Studio & IDE ---
+.vs/
+.vscode/
+x64/
+Debug/
+Release/
+*.obj
+*.pdb
+*.tlog
+*.log
+
+# --- Knihovny a nástroje ---
+juce/
+vcpkg/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
