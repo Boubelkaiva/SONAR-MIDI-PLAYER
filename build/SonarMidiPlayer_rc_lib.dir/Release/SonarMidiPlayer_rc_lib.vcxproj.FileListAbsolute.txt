@@ -1,0 +1,1 @@
+D:\C++\SONAR MIDI PLAYER\build\SonarMidiPlayer_rc_lib.dir\Release\SonarMidiPlayer_rc_lib.lib

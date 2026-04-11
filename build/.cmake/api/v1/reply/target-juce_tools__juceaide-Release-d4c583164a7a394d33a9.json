@@ -1,0 +1,70 @@
+{
+	"abstract" : true,
+	"artifacts" : 
+	[
+		{
+			"path" : "juce/tools/extras/Build/juceaide/juceaide_artefacts/Custom/juceaide.exe"
+		}
+	],
+	"backtrace" : 4,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"_add_executable",
+			"add_executable",
+			"include"
+		],
+		"files" : 
+		[
+			"vcpkg/scripts/buildsystems/vcpkg.cmake",
+			"build/juce/tools/JUCEToolsExport.cmake",
+			"juce/extras/Build/juceaide/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 163,
+				"parent" : 0
+			},
+			{
+				"file" : 1,
+				"parent" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 50,
+				"parent" : 2
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 612,
+				"parent" : 3
+			}
+		]
+	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 10
+	},
+	"id" : "juce_tools::juceaide::@6493ffe39ae7b8f61634",
+	"imported" : true,
+	"local" : true,
+	"name" : "juce_tools::juceaide",
+	"nameOnDisk" : "juceaide.exe",
+	"paths" : 
+	{
+		"build" : "juce/extras/Build/juceaide",
+		"source" : "juce/extras/Build/juceaide"
+	},
+	"sources" : [],
+	"type" : "EXECUTABLE"
+}

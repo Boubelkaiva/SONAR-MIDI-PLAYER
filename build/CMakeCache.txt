@@ -15,7 +15,7 @@
 ########################
 
 //Path to a program.
-CMAKE_AR:FILEPATH=C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lib.exe
+CMAKE_AR:FILEPATH=C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lib.exe
 
 //Semicolon separated list of supported configuration types, only
 // supports Debug, Release, MinSizeRel, and RelWithDebInfo, anything
@@ -39,6 +39,24 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=/O2 /Ob1 /DNDEBUG
 
 //Libraries linked by default with all C++ applications.
 CMAKE_CXX_STANDARD_LIBRARIES:STRING=kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
+
+//Flags used by the C compiler during all build types.
+CMAKE_C_FLAGS:STRING=/DWIN32 /D_WINDOWS
+
+//Flags used by the C compiler during DEBUG builds.
+CMAKE_C_FLAGS_DEBUG:STRING=/Ob0 /Od /RTC1
+
+//Flags used by the C compiler during MINSIZEREL builds.
+CMAKE_C_FLAGS_MINSIZEREL:STRING=/O1 /Ob1 /DNDEBUG
+
+//Flags used by the C compiler during RELEASE builds.
+CMAKE_C_FLAGS_RELEASE:STRING=/O2 /Ob2 /DNDEBUG
+
+//Flags used by the C compiler during RELWITHDEBINFO builds.
+CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=/O2 /Ob1 /DNDEBUG
+
+//Libraries linked by default with all C applications.
+CMAKE_C_STANDARD_LIBRARIES:STRING=kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
 
 //Flags used by the linker during all build types.
 CMAKE_EXE_LINKER_FLAGS:STRING=/machine:x64
@@ -65,7 +83,7 @@ CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=D:/C++/SONAR MIDI PLAYER/build/CMakeFile
 CMAKE_INSTALL_PREFIX:PATH=C:/Program Files/SonarMidiPlayer
 
 //Path to a program.
-CMAKE_LINKER:FILEPATH=C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.exe
+CMAKE_LINKER:FILEPATH=C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.exe
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -104,6 +122,21 @@ CMAKE_PROJECT_NAME:STATIC=SonarMidiPlayer
 
 //Value Computed by CMake
 CMAKE_PROJECT_SPDX_LICENSE:STATIC=
+
+//Value Computed by CMake
+CMAKE_PROJECT_VERSION:STATIC=1.2.0
+
+//Value Computed by CMake
+CMAKE_PROJECT_VERSION_MAJOR:STATIC=1
+
+//Value Computed by CMake
+CMAKE_PROJECT_VERSION_MINOR:STATIC=2
+
+//Value Computed by CMake
+CMAKE_PROJECT_VERSION_PATCH:STATIC=0
+
+//Value Computed by CMake
+CMAKE_PROJECT_VERSION_TWEAK:STATIC=
 
 //RC compiler
 CMAKE_RC_COMPILER:FILEPATH=rc
@@ -170,8 +203,8 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 // during RELWITHDEBINFO builds.
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
-//The CMake toolchain file
-CMAKE_TOOLCHAIN_FILE:FILEPATH=D:/C++/SONAR MIDI PLAYER/vcpkg/scripts/buildsystems/vcpkg.cmake
+//No help, variable specified on the command line.
+CMAKE_TOOLCHAIN_FILE:UNINITIALIZED=D:\C++\SONAR MIDI PLAYER\vcpkg\scripts\buildsystems\vcpkg.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -179,11 +212,42 @@ CMAKE_TOOLCHAIN_FILE:FILEPATH=D:/C++/SONAR MIDI PLAYER/vcpkg/scripts/buildsystem
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
-//OpenGL library for win32
-OPENGL_gl_LIBRARY:STRING=opengl32
+//Value Computed by CMake
+JUCE_BINARY_DIR:STATIC=D:/C++/SONAR MIDI PLAYER/build/juce
 
-//GLU library for win32
-OPENGL_glu_LIBRARY:STRING=glu32
+//Add build targets for the DemoRunner and PIPs
+JUCE_BUILD_EXAMPLES:BOOL=OFF
+
+//Add build targets for the Projucer and other tools
+JUCE_BUILD_EXTRAS:BOOL=OFF
+
+//Whether or not plugins should be installed to the system after
+// building
+JUCE_COPY_PLUGIN_AFTER_BUILD:BOOL=OFF
+
+//Show all module sources in IDE projects
+JUCE_ENABLE_MODULE_SOURCE_GROUPS:BOOL=OFF
+
+//The location, relative to the install prefix, where the JUCE
+// config file will be installed
+JUCE_INSTALL_DESTINATION:STRING=lib/cmake/JUCE-8.0.12
+
+//Value Computed by CMake
+JUCE_IS_TOP_LEVEL:STATIC=OFF
+
+//Only configure the JUCE modules
+JUCE_MODULES_ONLY:BOOL=OFF
+
+//Value Computed by CMake
+JUCE_SOURCE_DIR:STATIC=D:/C++/SONAR MIDI PLAYER/juce
+
+//The location, relative to the install prefix, where juceaide
+// will be installed
+JUCE_TOOL_INSTALL_DIR:STRING=bin/JUCE-8.0.12
+
+//Location that overrides the default directory where our FindWebView2
+// script is looking for the *Microsoft.Web.WebView2* directory
+JUCE_WEBVIEW2_PACKAGE_LOCATION:BOOL=OFF
 
 //Value Computed by CMake
 SonarMidiPlayer_BINARY_DIR:STATIC=D:/C++/SONAR MIDI PLAYER/build
@@ -276,6 +340,18 @@ CMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 CMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_CXX_STANDARD_LIBRARIES
 CMAKE_CXX_STANDARD_LIBRARIES-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS
+CMAKE_C_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_DEBUG
+CMAKE_C_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_MINSIZEREL
+CMAKE_C_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_RELEASE
+CMAKE_C_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_FLAGS_RELWITHDEBINFO
+CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_C_STANDARD_LIBRARIES
+CMAKE_C_STANDARD_LIBRARIES-ADVANCED:INTERNAL=1
 //Executable file format
 CMAKE_EXECUTABLE_FORMAT:INTERNAL=Unknown
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS
@@ -293,7 +369,7 @@ CMAKE_EXTRA_GENERATOR:INTERNAL=
 //Name of generator.
 CMAKE_GENERATOR:INTERNAL=Visual Studio 18 2026
 //Generator instance identifier.
-CMAKE_GENERATOR_INSTANCE:INTERNAL=C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools
+CMAKE_GENERATOR_INSTANCE:INTERNAL=C:/Program Files/Microsoft Visual Studio/18/Enterprise
 //Name of generator platform.
 CMAKE_GENERATOR_PLATFORM:INTERNAL=x64
 //Name of generator toolset.
@@ -318,7 +394,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib
@@ -366,12 +442,18 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 CMAKE_TOOLCHAIN_FILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
-//Details about finding OpenGL
-FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[opengl32][ ][v()]
-//ADVANCED property for variable: OPENGL_gl_LIBRARY
-OPENGL_gl_LIBRARY-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: OPENGL_glu_LIBRARY
-OPENGL_glu_LIBRARY-ADVANCED:INTERNAL=1
+//The path to the folder holding this file and other resources
+JUCE_CMAKE_UTILS_DIR:INTERNAL=D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake
+//The name of the juceaide program
+JUCE_JUCEAIDE_NAME:INTERNAL=juceaide.exe
+//The path to JUCE modules
+JUCE_MODULES_DIR:INTERNAL=D:/C++/SONAR MIDI PLAYER/juce/modules
+//The target architecture, used to name internal folders in VST3
+// bundles, and to locate bundled libraries in modules
+JUCE_TARGET_ARCHITECTURE:INTERNAL=x86_64
+//Signals whether plugin related helper utilities can run on the
+// build machine
+JUCE_WINDOWS_HELPERS_CAN_RUN:INTERNAL=TRUE
 //Install the dependencies listed in your manifest:
 //\n    If this is off, you will have to manually install your dependencies.
 //\n    See https://github.com/microsoft/vcpkg/tree/master/docs/specifications/manifests.md
@@ -386,4 +468,6 @@ Z_VCPKG_CHECK_MANIFEST_MODE:INTERNAL=OFF
 Z_VCPKG_POWERSHELL_PATH:INTERNAL=C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 //Vcpkg root directory
 Z_VCPKG_ROOT_DIR:INTERNAL=D:/C++/SONAR MIDI PLAYER/vcpkg
+//Result of TRY_COMPILE
+compile_result:INTERNAL=FALSE
 

@@ -7,16 +7,27 @@
 		<BuildType Name="RelWithDebInfo"/>
 		<Platform Name="x64"/>
 	</Configurations>
-	<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a169d921-0084-3e7f-944b-c76d140247dd" DefaultStartup="true">
-		<BuildDependency Project="SonarMidiPlayer.vcxproj"/>
-		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
-		<Build Solution="Debug|*" Project="false"/>
-		<Build Solution="Release|*" Project="false"/>
-		<Build Solution="MinSizeRel|*" Project="false"/>
-		<Build Solution="RelWithDebInfo|*" Project="false"/>
-	</Project>
 	<Project Path="SonarMidiPlayer.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a5e08581-8d9d-3128-ab10-973f9a977221">
+		<BuildDependency Project="SonarMidiPlayer_rc_lib.vcxproj"/>
 		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
 	</Project>
-	<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3ac85574-1066-3279-8d90-255d5caea926"/>
+	<Project Path="SonarMidiPlayer_rc_lib.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="02371df9-09e2-331a-bc6e-257083b201f3">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Folder Name="/CMakePredefinedTargets/">
+		<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a169d921-0084-3e7f-944b-c76d140247dd" DefaultStartup="true">
+			<BuildDependency Project="SonarMidiPlayer.vcxproj"/>
+			<BuildDependency Project="SonarMidiPlayer_rc_lib.vcxproj"/>
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		</Project>
+		<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="57725aad-0130-3948-8a1a-e000516dd959">
+			<BuildDependency Project="ALL_BUILD.vcxproj"/>
+			<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+			<Build Solution="Debug|*" Project="false"/>
+			<Build Solution="Release|*" Project="false"/>
+			<Build Solution="MinSizeRel|*" Project="false"/>
+			<Build Solution="RelWithDebInfo|*" Project="false"/>
+		</Project>
+		<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3ac85574-1066-3279-8d90-255d5caea926"/>
+	</Folder>
 </Solution>

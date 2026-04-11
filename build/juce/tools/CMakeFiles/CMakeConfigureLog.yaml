@@ -1,0 +1,1734 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineSystem.cmake:212 (message)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      The system is: Windows - 10.0.26200 - AMD64
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:468 (find_file)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:506 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCCompilerId.c.in"
+    candidate_directories:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/"
+    found: "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCCompilerId.c.in"
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild verze 18.4.0+6e61e96ac pro .NET Framework
+      Vytváření sestavení bylo zahájeno 09.04.2026 20:31:35.
+      
+      Projekt D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.vcxproj v uzlu 1 (výchozí cíle).
+      PrepareForBuild:
+        Probíhá vytváření adresáře Debug\\.
+        Strukturovaný výstup je povolený. Formátování diagnostiky kompilátoru bude odrážet hierarchii chyb. Další podrobnosti najdete na https://aka.ms/cpp/structured-output.
+        Probíhá vytváření adresáře Debug\\CompilerIdC.tlog\\.
+      InitializeBuildStatus:
+        Probíhá vytváření souboru Debug\\CompilerIdC.tlog\\unsuccessfulbuild v důsledku zadání AlwaysCreate.
+        Probíhá aktualizace časového razítka pro Debug\\CompilerIdC.tlog\\unsuccessfulbuild.
+      VcpkgTripletSelection:
+        Using triplet "x64-windows" from "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\"
+        Using normalized configuration "Release"
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\CL.exe /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc145.pdb" /external:W0 /Gd /TC /FC /errorReport:queue CMakeCCompilerId.c
+        CMakeCCompilerId.c
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdC.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdC.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdC.lib" /MACHINE:X64 Debug\\CMakeCCompilerId.obj
+        CompilerIdC.vcxproj -> D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.exe
+      AppLocalFromInstalled:
+        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdC.tlog\\CompilerIdC.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+        'pwsh.exe' is not recognized as an internal or external command,
+        operable program or batch file.
+        Příkaz pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdC.tlog\\CompilerIdC.write.1u.tlog" "Debug\\vcpkg.applocal.log" byl ukončen s kódem 9009.
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdC.tlog\\CompilerIdC.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_C_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_C_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Probíhá odstraňování souboru Debug\\CompilerIdC.tlog\\unsuccessfulbuild.
+        Probíhá aktualizace časového razítka pro Debug\\CompilerIdC.tlog\\CompilerIdC.lastbuildstate.
+      Sestavení projektu D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdC\\CompilerIdC.vcxproj (s výchozími cíli) bylo dokončeno.
+      
+      Vytváření sestavení bylo úspěšně dokončeno.
+          0 upozornění
+          Počet chyb: 0
+      
+      Uplynulý čas 00:00:02.73
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.vcxproj"
+      
+      The C compiler identification is MSVC, found in:
+        D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/4.3.1/CompilerIdC/CompilerIdC.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:103 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.com"
+    found: "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link.com"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link.exe"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "C:/Program Files/nodejs/lld-link.com"
+      - "C:/Program Files/nodejs/lld-link.exe"
+      - "C:/Program Files/nodejs/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link.com"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link.exe"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/CMake/bin/lld-link.com"
+      - "C:/Program Files/CMake/bin/lld-link.exe"
+      - "C:/Program Files/CMake/bin/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link"
+      - "C:/Users/ivana/.cargo/bin/lld-link.com"
+      - "C:/Users/ivana/.cargo/bin/lld-link.exe"
+      - "C:/Users/ivana/.cargo/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link.com"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link.exe"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link.com"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link.exe"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link.com"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link.exe"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "CMAKE_LINKER"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.com"
+    found: "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/link.exe"
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "CMAKE_MT"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "mt"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/mt.com"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/mt.exe"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/mt"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/mt.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/mt.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/mt"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/mt.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/mt.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/mt"
+      - "C:/Windows/System32/mt.com"
+      - "C:/Windows/System32/mt.exe"
+      - "C:/Windows/System32/mt"
+      - "C:/Windows/mt.com"
+      - "C:/Windows/mt.exe"
+      - "C:/Windows/mt"
+      - "C:/Windows/System32/wbem/mt.com"
+      - "C:/Windows/System32/wbem/mt.exe"
+      - "C:/Windows/System32/wbem/mt"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/mt"
+      - "C:/Windows/System32/OpenSSH/mt.com"
+      - "C:/Windows/System32/OpenSSH/mt.exe"
+      - "C:/Windows/System32/OpenSSH/mt"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/mt"
+      - "C:/Program Files/nodejs/mt.com"
+      - "C:/Program Files/nodejs/mt.exe"
+      - "C:/Program Files/nodejs/mt"
+      - "C:/Program Files/Git/cmd/mt.com"
+      - "C:/Program Files/Git/cmd/mt.exe"
+      - "C:/Program Files/Git/cmd/mt"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/mt"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/mt.com"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/mt.exe"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/mt"
+      - "C:/Program Files/dotnet/mt.com"
+      - "C:/Program Files/dotnet/mt.exe"
+      - "C:/Program Files/dotnet/mt"
+      - "C:/Program Files/CMake/bin/mt.com"
+      - "C:/Program Files/CMake/bin/mt.exe"
+      - "C:/Program Files/CMake/bin/mt"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/mt.com"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/mt.exe"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/mt"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/mt"
+      - "C:/Users/ivana/.cargo/bin/mt.com"
+      - "C:/Users/ivana/.cargo/bin/mt.exe"
+      - "C:/Users/ivana/.cargo/bin/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/mt"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/mt.com"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/mt"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/mt.com"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/mt.exe"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/mt"
+      - "C:/Users/ivana/AppData/Roaming/npm/mt.com"
+      - "C:/Users/ivana/AppData/Roaming/npm/mt.exe"
+      - "C:/Users/ivana/AppData/Roaming/npm/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/mt"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/mt.com"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/mt.exe"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/mt"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/mt.com"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/mt.exe"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/mt"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/mt.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/mt.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/mt"
+      - "C:/Users/ivana/.lmstudio/bin/mt.com"
+      - "C:/Users/ivana/.lmstudio/bin/mt.exe"
+      - "C:/Users/ivana/.lmstudio/bin/mt"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "CMAKE_AR"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lib"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lib.com"
+    found: "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lib.exe"
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:468 (find_file)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:506 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCXXCompilerId.cpp.in"
+    candidate_directories:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/"
+    found: "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCXXCompilerId.cpp.in"
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      MSBuild verze 18.4.0+6e61e96ac pro .NET Framework
+      Vytváření sestavení bylo zahájeno 09.04.2026 20:31:38.
+      
+      Projekt D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.vcxproj v uzlu 1 (výchozí cíle).
+      PrepareForBuild:
+        Probíhá vytváření adresáře Debug\\.
+        Strukturovaný výstup je povolený. Formátování diagnostiky kompilátoru bude odrážet hierarchii chyb. Další podrobnosti najdete na https://aka.ms/cpp/structured-output.
+        Probíhá vytváření adresáře Debug\\CompilerIdCXX.tlog\\.
+      InitializeBuildStatus:
+        Probíhá vytváření souboru Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild v důsledku zadání AlwaysCreate.
+        Probíhá aktualizace časového razítka pro Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild.
+      VcpkgTripletSelection:
+        Using triplet "x64-windows" from "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\"
+        Using normalized configuration "Release"
+      ClCompile:
+        C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\CL.exe /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc145.pdb" /external:W0 /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        CMakeCXXCompilerId.cpp
+      Link:
+        C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib" /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.exe
+      AppLocalFromInstalled:
+        pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+        'pwsh.exe' is not recognized as an internal or external command,
+        operable program or batch file.
+        Příkaz pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log" byl ukončen s kódem 9009.
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\bin" "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.write.1u.tlog" "Debug\\vcpkg.applocal.log"
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Probíhá odstraňování souboru Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild.
+        Probíhá aktualizace časového razítka pro Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate.
+      Sestavení projektu D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\4.3.1\\CompilerIdCXX\\CompilerIdCXX.vcxproj (s výchozími cíli) bylo dokončeno.
+      
+      Vytváření sestavení bylo úspěšně dokončeno.
+          0 upozornění
+          Počet chyb: 0
+      
+      Uplynulý čas 00:00:04.09
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+      
+      The CXX compiler identification is MSVC, found in:
+        D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/4.3.1/CompilerIdCXX/CompilerIdCXX.exe
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:37 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:65 (__resolve_tool_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeFindBinUtils.cmake:104 (__resolve_linker_path)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCXXCompiler.cmake:206 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "_CMAKE_TOOL_WITH_PATH"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "lld-link"
+    candidate_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+    searched_directories:
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link.com"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link.exe"
+      - "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/lld-link"
+      - "C:/Windows/System32/lld-link.com"
+      - "C:/Windows/System32/lld-link.exe"
+      - "C:/Windows/System32/lld-link"
+      - "C:/Windows/lld-link.com"
+      - "C:/Windows/lld-link.exe"
+      - "C:/Windows/lld-link"
+      - "C:/Windows/System32/wbem/lld-link.com"
+      - "C:/Windows/System32/wbem/lld-link.exe"
+      - "C:/Windows/System32/wbem/lld-link"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/lld-link"
+      - "C:/Windows/System32/OpenSSH/lld-link.com"
+      - "C:/Windows/System32/OpenSSH/lld-link.exe"
+      - "C:/Windows/System32/OpenSSH/lld-link"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/lld-link"
+      - "C:/Program Files/nodejs/lld-link.com"
+      - "C:/Program Files/nodejs/lld-link.exe"
+      - "C:/Program Files/nodejs/lld-link"
+      - "C:/Program Files/Git/cmd/lld-link.com"
+      - "C:/Program Files/Git/cmd/lld-link.exe"
+      - "C:/Program Files/Git/cmd/lld-link"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/lld-link"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link.com"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link.exe"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/lld-link"
+      - "C:/Program Files/dotnet/lld-link.com"
+      - "C:/Program Files/dotnet/lld-link.exe"
+      - "C:/Program Files/dotnet/lld-link"
+      - "C:/Program Files/CMake/bin/lld-link.com"
+      - "C:/Program Files/CMake/bin/lld-link.exe"
+      - "C:/Program Files/CMake/bin/lld-link"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link.com"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link.exe"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/lld-link"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/lld-link"
+      - "C:/Users/ivana/.cargo/bin/lld-link.com"
+      - "C:/Users/ivana/.cargo/bin/lld-link.exe"
+      - "C:/Users/ivana/.cargo/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/lld-link"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/lld-link"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/lld-link"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link.com"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link.exe"
+      - "C:/Users/ivana/AppData/Roaming/npm/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/lld-link"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link.com"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link.exe"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/lld-link"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link.com"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link.exe"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/lld-link"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/lld-link"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link.com"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link.exe"
+      - "C:/Users/ivana/.lmstudio/bin/lld-link"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineRCCompiler.cmake:40 (find_program)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC.cmake:592 (enable_language)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC.cmake:565 (__windows_compiler_msvc_enable_rc)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC-C.cmake:5 (__windows_compiler_msvc)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCInformation.cmake:48 (include)"
+      - "CMakeLists.txt:35 (project)"
+    mode: "program"
+    variable: "CMAKE_RC_COMPILER"
+    description: "RC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "rc"
+    candidate_directories:
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/"
+      - "C:/Windows/System32/"
+      - "C:/Windows/"
+      - "C:/Windows/System32/wbem/"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/"
+      - "C:/Windows/System32/OpenSSH/"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/"
+      - "C:/Program Files/nodejs/"
+      - "C:/Program Files/Git/cmd/"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/"
+      - "C:/Program Files/dotnet/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/"
+      - "C:/Users/ivana/.cargo/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/"
+      - "C:/Users/ivana/AppData/Roaming/npm/"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/"
+      - "C:/Users/ivana/.lmstudio/bin/"
+      - "C:/Program Files/bin/"
+      - "C:/Program Files/sbin/"
+      - "C:/Program Files/"
+      - "C:/Program Files (x86)/bin/"
+      - "C:/Program Files (x86)/sbin/"
+      - "C:/Program Files (x86)/"
+      - "C:/Program Files/CMake/bin/"
+      - "C:/Program Files/CMake/sbin/"
+      - "C:/Program Files/CMake/"
+      - "C:/Program Files/SonarMidiPlayer/bin/"
+      - "C:/Program Files/SonarMidiPlayer/sbin/"
+      - "C:/Program Files/SonarMidiPlayer/"
+    searched_directories:
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/rc.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/rc.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/debugCommand/rc"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/rc.com"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/rc.exe"
+      - "C:/Users/ivana/AppData/Roaming/Code/User/globalStorage/github.copilot-chat/copilotCli/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/rc"
+      - "C:/Windows/System32/rc.com"
+      - "C:/Windows/System32/rc.exe"
+      - "C:/Windows/System32/rc"
+      - "C:/Windows/rc.com"
+      - "C:/Windows/rc.exe"
+      - "C:/Windows/rc"
+      - "C:/Windows/System32/wbem/rc.com"
+      - "C:/Windows/System32/wbem/rc.exe"
+      - "C:/Windows/System32/wbem/rc"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.com"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc.exe"
+      - "C:/Windows/System32/WindowsPowerShell/v1.0/rc"
+      - "C:/Windows/System32/OpenSSH/rc.com"
+      - "C:/Windows/System32/OpenSSH/rc.exe"
+      - "C:/Windows/System32/OpenSSH/rc"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.com"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc.exe"
+      - "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common/rc"
+      - "C:/Program Files/nodejs/rc.com"
+      - "C:/Program Files/nodejs/rc.exe"
+      - "C:/Program Files/nodejs/rc"
+      - "C:/Program Files/Git/cmd/rc.com"
+      - "C:/Program Files/Git/cmd/rc.exe"
+      - "C:/Program Files/Git/cmd/rc"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.com"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc.exe"
+      - "C:/Program Files/NVIDIA Corporation/NVIDIA App/NvDLISR/rc"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/rc.com"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/rc.exe"
+      - "C:/Program Files/GTK3-Runtime Win64/bin/rc"
+      - "C:/Program Files/dotnet/rc.com"
+      - "C:/Program Files/dotnet/rc.exe"
+      - "C:/Program Files/dotnet/rc"
+      - "C:/Program Files/CMake/bin/rc.com"
+      - "C:/Program Files/CMake/bin/rc.exe"
+      - "C:/Program Files/CMake/bin/rc"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/rc.com"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/rc.exe"
+      - "C:/Program Files/Microsoft SQL Server/170/Tools/Binn/rc"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc.com"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc.exe"
+      - "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.7.6-hotspot/bin/rc"
+      - "C:/Users/ivana/.cargo/bin/rc.com"
+      - "C:/Users/ivana/.cargo/bin/rc.exe"
+      - "C:/Users/ivana/.cargo/bin/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Launcher/rc"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/rc.com"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Microsoft/WindowsApps/rc"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/rc.com"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/rc.exe"
+      - "C:/Users/ivana/AppData/Local/GitHubDesktop/bin/rc"
+      - "C:/Users/ivana/AppData/Roaming/npm/rc.com"
+      - "C:/Users/ivana/AppData/Roaming/npm/rc.exe"
+      - "C:/Users/ivana/AppData/Roaming/npm/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Microsoft VS Code/bin/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/Scripts/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python310/python.exe/rc"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/rc.com"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/rc.exe"
+      - "C:/FFMPEG/ffmpeg-7.1.1-essentials_build/bin/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/Scripts/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python313/python.exe/rc"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/rc.com"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/rc.exe"
+      - "C:/Program Files/JetBrains/PyCharm Community Edition 2025.1.1.1/bin/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/Scripts/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Python/Python312/python.exe/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Eclipse Adoptium/jdk-11.0.27.6-hotspot/bin/java.exe/rc"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/rc.com"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/rc.exe"
+      - "C:/Users/ivana/AppData/Local/Programs/Antigravity/bin/rc"
+      - "C:/Users/ivana/.lmstudio/bin/rc.com"
+      - "C:/Users/ivana/.lmstudio/bin/rc.exe"
+      - "C:/Users/ivana/.lmstudio/bin/rc"
+      - "C:/Program Files/bin/rc.com"
+      - "C:/Program Files/bin/rc.exe"
+      - "C:/Program Files/bin/rc"
+      - "C:/Program Files/sbin/rc.com"
+      - "C:/Program Files/sbin/rc.exe"
+      - "C:/Program Files/sbin/rc"
+      - "C:/Program Files/rc.com"
+      - "C:/Program Files/rc.exe"
+      - "C:/Program Files/rc"
+      - "C:/Program Files (x86)/bin/rc.com"
+      - "C:/Program Files (x86)/bin/rc.exe"
+      - "C:/Program Files (x86)/bin/rc"
+      - "C:/Program Files (x86)/sbin/rc.com"
+      - "C:/Program Files (x86)/sbin/rc.exe"
+      - "C:/Program Files (x86)/sbin/rc"
+      - "C:/Program Files (x86)/rc.com"
+      - "C:/Program Files (x86)/rc.exe"
+      - "C:/Program Files (x86)/rc"
+      - "C:/Program Files/CMake/bin/rc.com"
+      - "C:/Program Files/CMake/bin/rc.exe"
+      - "C:/Program Files/CMake/bin/rc"
+      - "C:/Program Files/CMake/sbin/rc.com"
+      - "C:/Program Files/CMake/sbin/rc.exe"
+      - "C:/Program Files/CMake/sbin/rc"
+      - "C:/Program Files/CMake/rc.com"
+      - "C:/Program Files/CMake/rc.exe"
+      - "C:/Program Files/CMake/rc"
+      - "C:/Program Files/SonarMidiPlayer/bin/rc.com"
+      - "C:/Program Files/SonarMidiPlayer/bin/rc.exe"
+      - "C:/Program Files/SonarMidiPlayer/bin/rc"
+      - "C:/Program Files/SonarMidiPlayer/sbin/rc.com"
+      - "C:/Program Files/SonarMidiPlayer/sbin/rc.exe"
+      - "C:/Program Files/SonarMidiPlayer/sbin/rc"
+      - "C:/Program Files/SonarMidiPlayer/rc.com"
+      - "C:/Program Files/SonarMidiPlayer/rc.exe"
+      - "C:/Program Files/SonarMidiPlayer/rc"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\debugCommand"
+        - "c:\\Users\\ivana\\AppData\\Roaming\\Code\\User\\globalStorage\\github.copilot-chat\\copilotCli"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code"
+        - "C:\\Windows\\system32"
+        - "C:\\Windows"
+        - "C:\\Windows\\System32\\Wbem"
+        - "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\Windows\\System32\\OpenSSH\\"
+        - "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common"
+        - "C:\\WINDOWS\\system32"
+        - "C:\\WINDOWS"
+        - "C:\\WINDOWS\\System32\\Wbem"
+        - "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\"
+        - "C:\\WINDOWS\\System32\\OpenSSH\\"
+        - "C:\\Program Files\\nodejs\\"
+        - "C:\\Program Files\\Git\\cmd"
+        - "C:\\Program Files\\NVIDIA Corporation\\NVIDIA App\\NvDLISR"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\dotnet\\"
+        - "C:\\Program Files\\CMake\\bin"
+        - "C:\\Program Files\\Microsoft SQL Server\\170\\Tools\\Binn\\"
+        - "C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-21.0.7.6-hotspot\\bin"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Launcher\\"
+        - "C:\\Users\\ivana\\AppData\\Local\\Microsoft\\WindowsApps"
+        - "C:\\Users\\ivana\\AppData\\Local\\GitHubDesktop\\bin"
+        - "C:\\Users\\ivana\\AppData\\Roaming\\npm"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Microsoft VS Code\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python310\\python.exe"
+        - "C:\\FFMPEG\\ffmpeg-7.1.1-essentials_build\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+        - "C:\\Program Files\\GTK3-Runtime Win64\\bin"
+        - "C:\\Program Files\\JetBrains\\PyCharm Community Edition 2025.1.1.1\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\Scripts"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+        - "C:\\Users\\ivana\\.cargo\\bin"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-11.0.27.6-hotspot\\bin\\java.exe"
+        - "C:\\Users\\ivana\\AppData\\Local\\Programs\\Antigravity\\bin"
+        - "C:\\Users\\ivana\\.lmstudio\\bin"
+      CMAKE_INSTALL_PREFIX: "C:/Program Files/SonarMidiPlayer"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "C:/Program Files"
+        - "C:/Program Files (x86)"
+        - "C:/Program Files/CMake"
+        - "C:/Program Files/SonarMidiPlayer"
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-pfnn9m"
+      binary: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-pfnn9m"
+    cmakeVariables:
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
+      CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-pfnn9m'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_52b83.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        MSBuild verze 18.4.0+6e61e96ac pro .NET Framework
+        Vytváření sestavení bylo zahájeno 09.04.2026 20:31:44.
+        
+        Projekt D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\cmTC_52b83.vcxproj v uzlu 1 (výchozí cíle).
+        PrepareForBuild:
+          Strukturovaný výstup je povolený. Formátování diagnostiky kompilátoru bude odrážet hierarchii chyb. Další podrobnosti najdete na https://aka.ms/cpp/structured-output.
+          Probíhá vytváření adresáře D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\.
+          Probíhá vytváření adresáře cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\.
+        InitializeBuildStatus:
+          Probíhá vytváření souboru cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\unsuccessfulbuild v důsledku zadání AlwaysCreate.
+          Probíhá aktualizace časového razítka pro cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\unsuccessfulbuild.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\CL.exe /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_52b83.dir\\Debug\\\\" /Fd"cmTC_52b83.dir\\Debug\\vc145.pdb" /external:W1 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          Optimalizující kompilátor C/C++ společnosti Microsoft (R) verze 19.50.35728 pro procesory x64
+          Copyright (C) Microsoft Corporation. Všechna práva vyhrazena.
+          cl /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /RTC1 /MDd /Fo"cmTC_52b83.dir\\Debug\\\\" /Fd"cmTC_52b83.dir\\Debug\\vc145.pdb" /external:W1 /TC /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCCompilerABI.c"
+          CMakeCCompilerABI.c
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\cmTC_52b83.exe" /INCREMENTAL /ILK:"cmTC_52b83.dir\\Debug\\cmTC_52b83.ilk" /NOLOGO /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib" /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-pfnn9m/Debug/cmTC_52b83.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-pfnn9m/Debug/cmTC_52b83.lib" /MACHINE:X64  /machine:x64 cmTC_52b83.dir\\Debug\\CMakeCCompilerABI.obj
+          cmTC_52b83.vcxproj -> D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\cmTC_52b83.exe
+        AppLocalFromInstalled:
+          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\cmTC_52b83.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\cmTC_52b83.write.1u.tlog" "cmTC_52b83.dir\\Debug\\vcpkg.applocal.log"
+          'pwsh.exe' is not recognized as an internal or external command,
+          operable program or batch file.
+          Příkaz pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\cmTC_52b83.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\cmTC_52b83.write.1u.tlog" "cmTC_52b83.dir\\Debug\\vcpkg.applocal.log" byl ukončen s kódem 9009.
+          "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\Debug\\cmTC_52b83.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\cmTC_52b83.write.1u.tlog" "cmTC_52b83.dir\\Debug\\vcpkg.applocal.log"
+        FinalizeBuildStatus:
+          Probíhá odstraňování souboru cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\unsuccessfulbuild.
+          Probíhá aktualizace časového razítka pro cmTC_52b83.dir\\Debug\\cmTC_52b83.tlog\\cmTC_52b83.lastbuildstate.
+        Sestavení projektu D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-pfnn9m\\cmTC_52b83.vcxproj (s výchozími cíli) bylo dokončeno.
+        
+        Vytváření sestavení bylo úspěšně dokončeno.
+            0 upozornění
+            Počet chyb: 0
+        
+        Uplynulý čas 00:00:04.34
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'C': C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Running the C compiler's linker: "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.50.35728.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-979y32"
+      binary: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-979y32"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-979y32'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_92eee.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        MSBuild verze 18.4.0+6e61e96ac pro .NET Framework
+        Vytváření sestavení bylo zahájeno 09.04.2026 20:31:50.
+        
+        Projekt D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\cmTC_92eee.vcxproj v uzlu 1 (výchozí cíle).
+        PrepareForBuild:
+          Strukturovaný výstup je povolený. Formátování diagnostiky kompilátoru bude odrážet hierarchii chyb. Další podrobnosti najdete na https://aka.ms/cpp/structured-output.
+          Probíhá vytváření adresáře D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\.
+          Probíhá vytváření adresáře cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\.
+        InitializeBuildStatus:
+          Probíhá vytváření souboru cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\unsuccessfulbuild v důsledku zadání AlwaysCreate.
+          Probíhá aktualizace časového razítka pro cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\unsuccessfulbuild.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\CL.exe /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /Fo"cmTC_92eee.dir\\Debug\\\\" /Fd"cmTC_92eee.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          Optimalizující kompilátor C/C++ společnosti Microsoft (R) verze 19.50.35728 pro procesory x64
+          Copyright (C) Microsoft Corporation. Všechna práva vyhrazena.
+          cl /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /Fo"cmTC_92eee.dir\\Debug\\\\" /Fd"cmTC_92eee.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "C:\\Program Files\\CMake\\share\\cmake-4.3\\Modules\\CMakeCXXCompilerABI.cpp"
+          CMakeCXXCompilerABI.cpp
+        Link:
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\link.exe /OUT:"D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\cmTC_92eee.exe" /INCREMENTAL /ILK:"cmTC_92eee.dir\\Debug\\cmTC_92eee.ilk" /NOLOGO /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib" /LIBPATH:"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib\\manual-link" kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\lib\\*.lib" /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-979y32/Debug/cmTC_92eee.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /IMPLIB:"D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeScratch/TryCompile-979y32/Debug/cmTC_92eee.lib" /MACHINE:X64  /machine:x64 cmTC_92eee.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_92eee.vcxproj -> D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\cmTC_92eee.exe
+        AppLocalFromInstalled:
+          pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\cmTC_92eee.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\cmTC_92eee.write.1u.tlog" "cmTC_92eee.dir\\Debug\\vcpkg.applocal.log"
+          'pwsh.exe' is not recognized as an internal or external command,
+          operable program or batch file.
+          Příkaz pwsh.exe -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\cmTC_92eee.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\cmTC_92eee.write.1u.tlog" "cmTC_92eee.dir\\Debug\\vcpkg.applocal.log" byl ukončen s kódem 9009.
+          "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -ExecutionPolicy Bypass -noprofile -File "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\scripts\\buildsystems\\msbuild\\applocal.ps1" "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\Debug\\cmTC_92eee.exe" "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\debug\\bin" "cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\cmTC_92eee.write.1u.tlog" "cmTC_92eee.dir\\Debug\\vcpkg.applocal.log"
+        FinalizeBuildStatus:
+          Probíhá odstraňování souboru cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\unsuccessfulbuild.
+          Probíhá aktualizace časového razítka pro cmTC_92eee.dir\\Debug\\cmTC_92eee.tlog\\cmTC_92eee.lastbuildstate.
+        Sestavení projektu D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeScratch\\TryCompile-979y32\\cmTC_92eee.vcxproj (s výchozími cíli) bylo dokončeno.
+        
+        Vytváření sestavení bylo úspěšně dokončeno.
+            0 upozornění
+            Počet chyb: 0
+        
+        Uplynulý čas 00:00:03.11
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:35 (project)"
+    message: |
+      Running the CXX compiler's linker: "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.50.35717/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.50.35728.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "extras/Build/CMake/JUCEModuleSupport.cmake:63 (try_compile)"
+      - "extras/Build/CMake/JUCEModuleSupport.cmake:75 (_juce_find_target_architecture)"
+      - "CMakeLists.txt:50 (include)"
+    directories:
+      source: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeTmp"
+      binary: "D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
+      CMAKE_CXX_STDLIB_MODULES_JSON: ""
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "compile_result"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe" cmTC_4bb73.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=18.0 /v:n
+        MSBuild verze 18.4.0+6e61e96ac pro .NET Framework
+        Vytváření sestavení bylo zahájeno 09.04.2026 20:31:54.
+        
+        Projekt D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\cmTC_4bb73.vcxproj v uzlu 1 (výchozí cíle).
+        PrepareForBuild:
+          Strukturovaný výstup je povolený. Formátování diagnostiky kompilátoru bude odrážet hierarchii chyb. Další podrobnosti najdete na https://aka.ms/cpp/structured-output.
+          Probíhá vytváření adresáře D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\Debug\\.
+          Probíhá vytváření adresáře cmTC_4bb73.dir\\Debug\\cmTC_4bb73.tlog\\.
+        InitializeBuildStatus:
+          Probíhá vytváření souboru cmTC_4bb73.dir\\Debug\\cmTC_4bb73.tlog\\unsuccessfulbuild v důsledku zadání AlwaysCreate.
+          Probíhá aktualizace časového razítka pro cmTC_4bb73.dir\\Debug\\cmTC_4bb73.tlog\\unsuccessfulbuild.
+        VcpkgTripletSelection:
+          Using triplet "x64-windows" from "D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\"
+          Using normalized configuration "Debug"
+        ClCompile:
+          C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\CL.exe /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /Fo"cmTC_4bb73.dir\\Debug\\\\" /Fd"cmTC_4bb73.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\C++\\SONAR MIDI PLAYER\\juce\\extras\\Build\\CMake\\juce_runtime_arch_detection.cpp"
+          Optimalizující kompilátor C/C++ společnosti Microsoft (R) verze 19.50.35728 pro procesory x64
+          Copyright (C) Microsoft Corporation. Všechna práva vyhrazena.
+          cl /c /I"D:\\C++\\SONAR MIDI PLAYER\\vcpkg\\installed\\x64-windows\\include" /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D _MBCS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /Fo"cmTC_4bb73.dir\\Debug\\\\" /Fd"cmTC_4bb73.dir\\Debug\\vc145.pdb" /external:W1 /TP /errorReport:queue "D:\\C++\\SONAR MIDI PLAYER\\juce\\extras\\Build\\CMake\\juce_runtime_arch_detection.cpp"
+          juce_runtime_arch_detection.cpp
+        D:\\C++\\SONAR MIDI PLAYER\\juce\\extras\\Build\\CMake\\juce_runtime_arch_detection.cpp(56,1): error C1189: #error:  JUCE_ARCH x86_64 [D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\cmTC_4bb73.vcxproj]
+        Sestavení projektu D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\cmTC_4bb73.vcxproj (s výchozími cíli) bylo dokončeno: CHYBA.
+        
+        Sestavení SE NEZDAŘILO.
+        
+        "D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\cmTC_4bb73.vcxproj" (výchozí cíl) (1) ->
+        (cíl ClCompile) -> 
+          D:\\C++\\SONAR MIDI PLAYER\\juce\\extras\\Build\\CMake\\juce_runtime_arch_detection.cpp(56,1): error C1189: #error:  JUCE_ARCH x86_64 [D:\\C++\\SONAR MIDI PLAYER\\build\\juce\\tools\\CMakeFiles\\CMakeTmp\\cmTC_4bb73.vcxproj]
+        
+            0 upozornění
+            Počet chyb: 1
+        
+        Uplynulý čas 00:00:01.33
+        
+      exitCode: 1
+...

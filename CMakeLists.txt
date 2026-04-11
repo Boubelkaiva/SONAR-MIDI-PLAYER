@@ -1,90 +1,100 @@
+# ==============================================================================
+#
+#   FILE: CMakeLists.txt
+#   PROJECT: SONAR MIDI PLAYER
+#   DESCRIPTION: Central build configuration.
+#                UPDATED: Added BankDNAExtractor.cpp (v1.2.0).
+#                FIXED: Correct CMake comment syntax.
+#   AUTHOR: Iva
+#
+# ==============================================================================
+
 cmake_minimum_required(VERSION 3.25)
-project(SonarMidiPlayer LANGUAGES CXX)
+
+# AI: Verze 1.2.0 - Implementace Deep Scan Mapperu a DNA Extractoru
+project(SonarMidiPlayer VERSION 1.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --- RtMidi ---
-set(RTMIDI_INCLUDE_DIR "D:/C++/SONAR MIDI PLAYER/vcpkg/installed/x64-windows/include/rtmidi")
-set(RTMIDI_LIBRARY "D:/C++/SONAR MIDI PLAYER/vcpkg/installed/x64-windows/lib/rtmidi.lib")
-
-if(NOT EXISTS ${RTMIDI_INCLUDE_DIR})
-    message(FATAL_ERROR "RtMidi include directory neexistuje: ${RTMIDI_INCLUDE_DIR}")
-endif()
-if(NOT EXISTS ${RTMIDI_LIBRARY})
-    message(FATAL_ERROR "RtMidi lib neexistuje: ${RTMIDI_LIBRARY}")
+# --- UTF-8 source encoding ---
+if(MSVC)
+    add_compile_options(/utf-8 /wd4828)
+else()
+    add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
 endif()
 
-# --- FluidSynth ---
-set(FLUIDSYNTH_DIR "${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-windows")
-set(FLUIDSYNTH_INCLUDE_DIR "${FLUIDSYNTH_DIR}/include")
-set(FLUIDSYNTH_LIB_DIR     "${FLUIDSYNTH_DIR}/lib")
+# --- JUCE ---
+add_subdirectory(juce)
 
-file(GLOB FLUIDSYNTH_LIBS "${FLUIDSYNTH_LIB_DIR}/libfluidsynth*.lib")
-
-set(FLUIDSYNTH_LIB_DEBUG "")
-set(FLUIDSYNTH_LIB_RELEASE "")
-
-foreach(lib ${FLUIDSYNTH_LIBS})
-    if(lib MATCHES "-d\\.lib$")
-        set(FLUIDSYNTH_LIB_DEBUG ${lib})
-    else()
-        set(FLUIDSYNTH_LIB_RELEASE ${lib})
-    endif()
-endforeach()
-
-if(FLUIDSYNTH_LIB_DEBUG STREQUAL "")
-    set(FLUIDSYNTH_LIB_DEBUG ${FLUIDSYNTH_LIB_RELEASE})
-endif()
-
-# --- SDL3 ---
-set(SDL3_DIR "D:/C++/Libraries/SDL3-3.4.2")
-set(SDL3_INCLUDE_DIR "${SDL3_DIR}/include")
-set(SDL3_LIBRARY "${SDL3_DIR}/lib/x64/SDL3.lib")
-
-# --- ImGui ---
-set(IMGUI_DIR "D:/C++/Libraries/imgui-master")
-set(IMGUI_FILES
-    ${IMGUI_DIR}/imgui.cpp
-    ${IMGUI_DIR}/imgui_draw.cpp
-    ${IMGUI_DIR}/imgui_widgets.cpp
-    ${IMGUI_DIR}/imgui_tables.cpp
-    ${IMGUI_DIR}/imgui_demo.cpp
-    ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
-    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+# --- App Definition ---
+juce_add_gui_app(${PROJECT_NAME}
+    PRODUCT_NAME "SonarMidiPlayer"
+    VERSION ${PROJECT_VERSION}         # AI: Přebírá verzi 1.2.0 z příkazu project
+    COMPANY_NAME "Iva"
+    BUNDLE_ID "com.iva.sonarmidiplayer"
+    IS_CONTENT_PREVIEW_HELPER NO
 )
 
-# --- Executable ---
-add_executable(${PROJECT_NAME}
-    main.cpp
-    gui/GuiController.cpp
-    gui/GuiWorker.cpp
-    ${IMGUI_FILES}
+# --- Zdrojové soubory (Struktura: Složka/Soubor) ---
+target_sources(${PROJECT_NAME} PRIVATE
+    Main.cpp
+    
+    # --- Backend moduly ---
+    backend/MidiPlayer/MidiPlayer.cpp
+    backend/MidiPlayer/MidiPlayer.h
+    backend/BankManager/BankManager.cpp
+    backend/BankManager/BankManager.h
+    
+    # AI: Nový modul pro hloubkové mapování bank (vrtání do SF2) - v1.2.0
+    backend/MidiMapper/MidiMapper.cpp
+    backend/MidiMapper/MidiMapper.h
+
+    # AI: Samostatná komponenta pro extrakci DNA (názvy nástrojů) do JSONu
+    backend/BankDNAExtractor/BankDNAExtractor.cpp
+    backend/BankDNAExtractor/BankDNAExtractor.h
+
+    # AI: Modul pro analýzu MIDI metadat
+    backend/MidiAnalyzer/MidiAnalyzer.cpp
+    backend/MidiAnalyzer/MidiAnalyzer.h
+
+    # --- Frontend moduly ---
+    frontend/MainComponent/MainComponent.cpp
+    frontend/MainComponent/MainComponent.h
+    frontend/MasterPanel/MasterPanel.cpp
+    frontend/MasterPanel/MasterPanel.h
+    frontend/SF2ListComponent/SF2ListComponent.cpp
+    frontend/SF2ListComponent/SF2ListComponent.h
+    frontend/TrackPanelComponent/TrackPanelComponent.cpp
+    frontend/TrackPanelComponent/TrackPanelComponent.h
+    frontend/TransportComponent/TransportComponent.cpp
+    frontend/TransportComponent/TransportComponent.h
+    frontend/TrackComponent/TrackComponent.cpp
+    frontend/TrackComponent/TrackComponent.h
+)
+
+# --- Generování JuceHeader.h ---
+juce_generate_juce_header(${PROJECT_NAME})
+
+# --- Linkování JUCE modulů ---
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    juce::juce_core
+    juce::juce_data_structures
+    juce::juce_events
+    juce::juce_graphics
+    juce::juce_gui_basics
+    juce::juce_audio_basics
+    juce::juce_audio_utils
+    juce::juce_audio_devices
+    juce::juce_audio_formats
+    juce::juce_audio_processors
 )
 
 # --- Includes ---
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${RTMIDI_INCLUDE_DIR}
-    ${FLUIDSYNTH_INCLUDE_DIR}
-    ${SDL3_INCLUDE_DIR}
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
-)
-
-# --- OpenGL (FIX!) ---
-find_package(OpenGL REQUIRED)
-
-# --- Link ---
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${RTMIDI_LIBRARY}
-
-    $<$<CONFIG:Debug>:${FLUIDSYNTH_LIB_DEBUG}>
-    $<$<CONFIG:Release>:${FLUIDSYNTH_LIB_RELEASE}>
-
-    ${SDL3_LIBRARY}
-
-    OpenGL::GL     # ✅ hlavní fix
-    opengl32       # ✅ jistota na Windows
+    .
+    frontend
+    backend
 )
 
 # --- Output ---

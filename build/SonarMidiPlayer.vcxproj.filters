@@ -1,41 +1,153 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\main.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\gui\GuiController.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\gui\GuiWorker.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\imgui.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\imgui_draw.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\backend\BankDNAExtractor\BankDNAExtractor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\imgui_widgets.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\imgui_tables.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\imgui_demo.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\backends\imgui_impl_sdl3.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\C++\Libraries\imgui-master\backends\imgui_impl_opengl3.cpp">
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_core\juce_core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_core\juce_core_CompilationTime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_data_structures\juce_data_structures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_events\juce_events.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_graphics\juce_graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_graphics\juce_graphics_Harfbuzz.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_graphics\juce_graphics_Sheenbidi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_gui_basics\juce_gui_basics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_basics\juce_audio_basics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_utils\juce_audio_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_processors\juce_audio_processors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_gui_extra\juce_gui_extra.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_processors_headless\juce_audio_processors_headless.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_processors_headless\juce_audio_processors_headless_ara.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_processors_headless\juce_audio_processors_headless_lv2_libs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_formats\juce_audio_formats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\C++\SONAR MIDI PLAYER\juce\modules\juce_audio_devices\juce_audio_devices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\backend\BankDNAExtractor\BankDNAExtractor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\C++\SONAR MIDI PLAYER\build\SonarMidiPlayer_artefacts\JuceLibraryCode\JuceHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\C++\SONAR MIDI PLAYER\build\CMakeFiles\1a8328042b5ab1527e4c3b28fb2eefe3\JuceHeader.h.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
     <CustomBuild Include="D:\C++\SONAR MIDI PLAYER\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Object Include="D:\C++\SONAR MIDI PLAYER\build\SonarMidiPlayer_rc_lib.dir\$(Configuration)\SonarMidiPlayer_resources.res">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{41DF24B6-A5D8-3720-92F6-8D53AE07EDA3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{34E5B413-4EDB-3A74-8FCC-00BD7629FCB0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{3EB156F4-E4F0-34CB-9D18-5D5CDAE2BE9D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{5F9EED86-F4EE-3EB6-8053-836DB8781DC8}</UniqueIdentifier>
     </Filter>

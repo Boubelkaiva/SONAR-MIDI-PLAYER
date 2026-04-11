@@ -1,82 +1,80 @@
-/**
- * @file main.cpp
- * @brief Test přehrání tónu pomocí FluidSynth s více bankami
- * @description
- * Jednoduchá ukázka použití knihovny FluidSynth.
- * Program načte více SoundFont (.sf2/.sf3), zahraje jeden tón (C4) na 2 sekundy
- * a poté jej vypne.
- *
- * ⚠️ POZOR:
- * Uprav cesty k .sf2/.sf3 souborům podle svého systému.
- *
- * @author Ivana
- * @date 2026
- */
+/*
+  ==============================================================================
+    FILE: Main.cpp
+    PROJECT: SONAR MIDI PLAYER
+    MODULE: Main.cpp
+    DESCRIPTION: Root entry point for the AI-assisted MIDI application.
+                 Handles window lifecycle and content initialization.
+                 INTEGRATION: BankDNAExtractor included for bank analysis.
+    VERSION: 1.2.0 (Stable Memory Management)
+    AUTHOR: Iva
+  ==============================================================================
+*/
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <fluidsynth.h>
-#include <thread>
-#include <chrono>
-#include <windows.h> // pro nastavení UTF-8
+#include <JuceHeader.h>
+#include "frontend/MainComponent/MainComponent.h"
+#include "backend/BankDNAExtractor/BankDNAExtractor.h" // SOSÁK JE TADY
 
-void drawWindow()
+// ==============================================================================
+class MainAppWindow : public juce::DocumentWindow
 {
-    std::cout << "===============================" << std::endl;
-    std::cout << "|       SONAR MIDI PLAYER     |" << std::endl;
-    std::cout << "|                             |" << std::endl;
-    std::cout << "|  Přehraje se C4 tón na 2s   |" << std::endl;
-    std::cout << "|                             |" << std::endl;
-    std::cout << "===============================" << std::endl;
-}
-
-int main()
-{
-    // Nastavení konzole na UTF-8
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
-
-    drawWindow();
-
-    fluid_settings_t *settings = new_fluid_settings();
-    fluid_synth_t *synth = new_fluid_synth(settings);
-    fluid_audio_driver_t *adriver = new_fluid_audio_driver(settings, synth);
-
-    std::vector<std::string> sf_paths = {
-        "E:\\CAKEWALK\\SONAR 2024\\Roland_GM.sf2",
-        "E:\\CAKEWALK\\SONAR 2024\\Yamaha_XG.sf2"};
-
-    for (const auto &path : sf_paths)
+public:
+    MainAppWindow(juce::String name)
+        : DocumentWindow(name,
+                         juce::Colours::darkgrey,
+                         DocumentWindow::allButtons)
     {
-        int sfid = fluid_synth_sfload(synth, path.c_str(), 1);
-        if (sfid == -1)
-            std::cout << "Nepodařilo se načíst SF: " << path << std::endl;
-        else
-            std::cout << "SF načten úspěšně: " << path << std::endl;
+        setUsingNativeTitleBar(true);
+
+        // Inicializace hlavní komponenty
+        mainComponent = std::make_unique<MainComponent>();
+        setContentOwned(mainComponent.get(), true);
+
+        setResizable(true, true);
+        setResizeLimits(800, 600, 3840, 2160);
+
+        centreWithSize(getWidth(), getHeight());
+        setVisible(true);
     }
 
-    // zahraj tón
-    fluid_synth_noteon(synth, 0, 60, 100);
-    std::cout << "Přehrávání C4..." << std::endl;
-
-    // jednoduchý progress bar
-    for (int i = 0; i < 20; i++)
+    void closeButtonPressed() override
     {
-        std::cout << "#";
-        std::cout.flush();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        juce::JUCEApplication::getInstance()->systemRequestedQuit();
     }
-    std::cout << std::endl;
 
-    fluid_synth_noteoff(synth, 0, 60);
+private:
+    std::unique_ptr<MainComponent> mainComponent;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainAppWindow)
+};
 
-    delete_fluid_audio_driver(adriver);
-    delete_fluid_synth(synth);
-    delete_fluid_settings(settings);
+// ==============================================================================
+class MainApplication : public juce::JUCEApplication
+{
+public:
+    MainApplication() {}
 
-    std::cout << "Hotovo! Stiskni Enter pro ukončení..." << std::endl;
-    std::cin.get();
+    const juce::String getApplicationName() override { return "Sonar MIDI Player"; }
+    const juce::String getApplicationVersion() override { return "1.2.0"; }
+    bool moreThanOneInstanceAllowed() override { return false; }
 
-    return 0;
-}
+    void initialise(const juce::String &commandLine) override
+    {
+        mainWindow = std::make_unique<MainAppWindow>(getApplicationName());
+    }
+
+    void shutdown() override
+    {
+        mainWindow = nullptr;
+    }
+
+    void systemRequestedQuit() override
+    {
+        quit();
+    }
+
+private:
+    std::unique_ptr<MainAppWindow> mainWindow;
+};
+
+// ==============================================================================
+START_JUCE_APPLICATION(MainApplication)

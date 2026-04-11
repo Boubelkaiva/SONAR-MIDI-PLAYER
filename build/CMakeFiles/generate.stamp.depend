@@ -11,9 +11,6 @@ C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeSystemSpecificInitialize.cma
 C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/CMakeCommonCompilerMacros.cmake
 C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/MSVC-CXX.cmake
 C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/MSVC.cmake
-C:/Program Files/CMake/share/cmake-4.3/Modules/FindOpenGL.cmake
-C:/Program Files/CMake/share/cmake-4.3/Modules/FindPackageHandleStandardArgs.cmake
-C:/Program Files/CMake/share/cmake-4.3/Modules/FindPackageMessage.cmake
 C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeCXXLinkerInformation.cmake
 C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeCommonLinkerInformation.cmake
 C:/Program Files/CMake/share/cmake-4.3/Modules/Linker/MSVC-CXX.cmake
@@ -29,4 +26,5 @@ D:/C++/SONAR MIDI PLAYER/CMakeLists.txt
 D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/4.3.1/CMakeCXXCompiler.cmake
 D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/4.3.1/CMakeRCCompiler.cmake
 D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/4.3.1/CMakeSystem.cmake
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/cmake.verify_globs
 D:/C++/SONAR MIDI PLAYER/vcpkg/scripts/buildsystems/vcpkg.cmake

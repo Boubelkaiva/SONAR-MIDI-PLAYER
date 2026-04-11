@@ -1,7 +1,11 @@
 {
 	"InstallScripts" : 
 	[
-		"D:/C++/SONAR MIDI PLAYER/build/cmake_install.cmake"
+		"D:/C++/SONAR MIDI PLAYER/build/cmake_install.cmake",
+		"D:/C++/SONAR MIDI PLAYER/build/juce/cmake_install.cmake",
+		"D:/C++/SONAR MIDI PLAYER/build/juce/modules/cmake_install.cmake",
+		"D:/C++/SONAR MIDI PLAYER/build/juce/extras/Build/cmake_install.cmake",
+		"D:/C++/SONAR MIDI PLAYER/build/juce/extras/Build/juceaide/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\C++\SONAR MIDI PLAYER\build\juce\tools\CMakeFiles\7c852dc27aed9f2e13f8f289d8dd9de3\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{56F89131-9EA0-304D-848C-AF115C64A3E1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

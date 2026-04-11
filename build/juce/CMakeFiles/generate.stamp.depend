@@ -1,0 +1,27 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-4.3/Modules/BasicConfigVersion-ExactVersion.cmake.in
+C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCInformation.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeCommonLanguageInclude.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeDependentOption.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/CMakeLanguageInformation.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/CMakeCommonCompilerMacros.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Compiler/MSVC.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeCLinkerInformation.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Internal/CMakeCommonLinkerInformation.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Linker/MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Linker/MSVC.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Linker/Windows-MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Linker/Windows-MSVC.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/Platform/Windows-MSVC.cmake
+C:/Program Files/CMake/share/cmake-4.3/Modules/WriteBasicConfigVersionFile.cmake
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/4.3.1/CMakeCCompiler.cmake
+D:/C++/SONAR MIDI PLAYER/build/CMakeFiles/cmake.verify_globs
+D:/C++/SONAR MIDI PLAYER/juce/CMakeLists.txt
+D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake/JUCECheckAtomic.cmake
+D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake/JUCEConfig.cmake.in
+D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake/JUCEHelperTargets.cmake
+D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake/JUCEModuleSupport.cmake
+D:/C++/SONAR MIDI PLAYER/juce/extras/Build/CMake/JUCEUtils.cmake

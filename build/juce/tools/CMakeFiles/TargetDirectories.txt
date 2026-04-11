@@ -1,0 +1,7 @@
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/INSTALL.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/ALL_BUILD.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/CMakeFiles/ZERO_CHECK.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/modules/CMakeFiles/INSTALL.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/extras/Build/CMakeFiles/INSTALL.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/extras/Build/juceaide/CMakeFiles/juceaide.dir
+D:/C++/SONAR MIDI PLAYER/build/juce/tools/extras/Build/juceaide/CMakeFiles/INSTALL.dir
