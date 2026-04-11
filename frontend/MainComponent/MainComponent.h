@@ -1,13 +1,10 @@
 /*
   ==============================================================================
-
     FILE: MainComponent.h
     PROJECT: SONAR MIDI PLAYER
     MODULE: frontend/MainComponent
-    DESCRIPTION: Header for the main container.
-                 FIXED: Modular include paths and BankManager integration.
-                 UPDATED: Added MidiAnalyzer for metadata extraction.
-
+    DESCRIPTION: Main container - handling audio and UI layout.
+    UPDATED: Added ChangeListener for automatic audio hardware switching.
   ==============================================================================
 */
 
@@ -15,31 +12,35 @@
 
 #include <JuceHeader.h>
 
-// AI: Frontend komponenty
+// Frontend komponenty
 #include "../TrackPanelComponent/TrackPanelComponent.h"
 #include "../TransportComponent/TransportComponent.h"
 #include "../SF2ListComponent/SF2ListComponent.h"
 #include "../MasterPanel/MasterPanel.h"
 
-// AI: Backend moduly
+// Backend moduly
 #include "../../backend/MidiPlayer/MidiPlayer.h"
 #include "../../backend/BankManager/BankManager.h"
-#include "../../backend/MidiAnalyzer/MidiAnalyzer.h" // AI: Nový modul pro analýzu souborů
+#include "../../backend/MidiAnalyzer/MidiAnalyzer.h"
 
-class MainComponent : public juce::AudioAppComponent
+class MainComponent : public juce::AudioAppComponent,
+                      public juce::ChangeListener // Sleduje změny HW (sluchátka/repro)
 {
 public:
   MainComponent();
   ~MainComponent() override;
 
-  // --- Audio metody ---
+  // Audio metody
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
   void releaseResources() override;
 
-  // --- Grafické metody ---
+  // Grafické metody
   void paint(juce::Graphics &g) override;
   void resized() override;
+
+  // Callback pro automatickou detekci odpojení sluchátek
+  void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
 private:
   // AI: Audio engine a správa bank (Backend)

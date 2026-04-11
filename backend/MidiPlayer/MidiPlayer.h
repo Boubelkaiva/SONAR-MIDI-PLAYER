@@ -3,7 +3,7 @@
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine using TinySoundFont with full MIDI mapping support.
-    UPDATED: Added MidiAnalyzer include for TrackData type safety.
+    UPDATED: Přidán AudioDeviceManager a getter pro Modal okno nastavení.
   ==============================================================================
 */
 
@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 #include "../MidiMapper/MidiMapper.h"
-#include "../MidiAnalyzer/MidiAnalyzer.h" // KLÍČOVÉ: Aby kompilátor znal strukturu TrackData
+#include "../MidiAnalyzer/MidiAnalyzer.h"
 
 struct tsf;
 
@@ -28,7 +28,6 @@ public:
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
 
-  // Nyní je TrackData správně rozpoznán díky includu výše
   void applyAnalysisResults(const std::vector<TrackData> &results);
 
   void play();
@@ -36,10 +35,19 @@ public:
   void pause();
   void setMasterVolume(float vol);
 
+  // --- GETTERY PRO UI ---
   MidiMapper *getMapper() const { return mapper.get(); }
+
+  // TATO METODA VYŘEŠÍ CHYBU C/C++(135)
+  // Umožní Modal oknu ovládat hardware
+  juce::AudioDeviceManager &getDeviceManager() { return deviceManager; }
 
 private:
   void processMidiMessage(const juce::MidiMessage &m);
+
+  // --- AUDIO HARDWARE ---
+  // Držíme instanci zde, aby byla dostupná pro celý backend
+  juce::AudioDeviceManager deviceManager;
 
   // TSF Instance a Audio data
   struct tsf *g_tinyfont = nullptr;
