@@ -1,59 +1,62 @@
 /*
   ==============================================================================
-
     FILE: TrackComponent.h
     PROJECT: SONAR MIDI PLAYER
-    MODULE: frontend/TrackComponent
-    DESCRIPTION: Header for a single MIDI track row.
-                 FIXED: Explicitly declared updateVolume.
-
   ==============================================================================
 */
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <JuceHeader.h>
+#include <functional>
 
-namespace InstrumentType
+// --- ENUM ---
+enum class InstrumentType
 {
-    enum Type
-    {
-        Piano,
-        Guitar,
-        Bass,
-        Drums,
-        Synth,
-        Other
-    };
-}
+    Piano,
+    Guitar,
+    Bass,
+    Drums,
+    Synth,
+    Other
+};
 
 class TrackComponent : public juce::Component
 {
 public:
-    TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType::Type type);
+    TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
     ~TrackComponent() override;
 
-    // Metody pro aktualizaci obsahu
+    // --- CALLBACKY ---
+    std::function<void(int, bool)> onMuteChanged;
+    std::function<void(int, bool)> onSoloChanged;
+    std::function<void(int, float)> onVolumeChanged;
+    std::function<void(int, float)> onPanChanged;
+    std::function<void(int, float)> onReverbChanged;
+    std::function<void(int, float)> onChorusChanged;
+
+    void updateVolume(float newVolume);
     void setInstrument(const juce::String &name, juce::Colour colour);
     void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
-
-    // AI: Tato metoda musí být deklarována zde
-    void updateVolume(float newVolume);
 
     void paint(juce::Graphics &g) override;
     void resized() override;
 
 private:
+    void showFxPopup();
+
+    // --- DATA ---
     int trackNum;
     juce::String trackName;
-    InstrumentType::Type instrumentType;
+    InstrumentType instrType;
 
+    // --- UI ---
     juce::TextButton trackNumberButton;
     juce::Label nameLabel;
     juce::Slider volumeSlider;
-    juce::TextButton muteButton;
-    juce::TextButton soloButton;
-    juce::TextButton thirdButton;
+
+    juce::Slider panSlider, reverbSlider, chorusSlider;
+    juce::TextButton muteButton, soloButton, thirdButton, fxButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
 };
