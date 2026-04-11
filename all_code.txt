@@ -1,5 +1,5 @@
 ﻿==============================================================================
- GENERATED ON: 11.04.2026 17:08:54
+ GENERATED ON: 11.04.2026 17:54:03
  ROOT PATH: 
 ==============================================================================
 
@@ -742,7 +742,7 @@ private:
     FILE: MidiPlayer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine with real-time TSF Index mapping.
-    UPDATED: KompletnĂ­ verze s fixem pro notebookovĂ© reproduktory (48kHz).
+    UPDATED: Fixed Mute/Solo logic and real-time CC response.
   ==============================================================================
 */
 
@@ -764,6 +764,8 @@ MidiPlayer::MidiPlayer()
     {
         currentBankMSB[i] = (i == 9) ? 128 : 0;
         currentBankLSB[i] = 0;
+        channelMuted[i] = false; // Inicializace Mute
+        channelSolo[i] = false;  // Inicializace Solo
     }
     std::cout << "[MidiPlayer] Konstruktor dokonÄŤen. VĂ˝chozĂ­ frekvence: 48kHz." << std::endl;
 }
@@ -774,10 +776,27 @@ MidiPlayer::~MidiPlayer()
         tsf_close(g_tinyfont);
 }
 
+// PomocnĂˇ funkce pro vyhodnocenĂ­, zda mĂˇ kanĂˇl hrĂˇt
+bool MidiPlayer::isChannelAudible(int channel) const
+{
+    bool anySolo = false;
+    for (int i = 0; i < 16; ++i)
+    {
+        if (channelSolo[i])
+        {
+            anySolo = true;
+            break;
+        }
+    }
+
+    if (anySolo)
+        return channelSolo[channel];
+    return !channelMuted[channel];
+}
+
 void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
-    // Buffer musĂ­ bĂ˝t stereo (poÄŤet vzorkĹŻ * 2 kanĂˇly)
     renderBuffer.setSize(1, samplesPerBlockExpected * 2);
 
     if (g_tinyfont)
@@ -803,7 +822,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
     double blockDuration = (double)samplesToRender / currentSampleRate;
     double nextPlayheadTime = playheadSeconds + blockDuration;
 
-    // --- MIDI EVENTY ---
+    // --- MIDI EVENTY ZE SEKVENCE ---
     for (int i = 0; i < midiSequence.getNumEvents(); ++i)
     {
         auto *event = midiSequence.getEventPointer(i);
@@ -814,6 +833,10 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
             auto &msg = event->message;
             int chan = msg.getChannel() - 1;
             if (chan < 0 || chan > 15)
+                continue;
+
+            // FiltrovĂˇnĂ­ NoteOn podle Mute/Solo
+            if (msg.isNoteOn() && !isChannelAudible(chan))
                 continue;
 
             if (msg.isController())
@@ -846,24 +869,21 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
         }
     }
 
-    // --- AUDIO RENDERING (PROFI FIX PRO REPRODUKTORY) ---
+    // --- AUDIO RENDERING ---
     if (renderBuffer.getNumSamples() < samplesToRender * 2)
         renderBuffer.setSize(1, samplesToRender * 2);
 
     renderBuffer.clear();
-    // TSF renderuje stereo do renderBufferu (L, R, L, R...)
     tsf_render_float(g_tinyfont, renderBuffer.getWritePointer(0), samplesToRender, 0);
 
     const float *tsfOut = renderBuffer.getReadPointer(0);
     int numHardwareChannels = bufferToFill.buffer->getNumChannels();
 
-    // RozmĂ­stÄ›nĂ­ signĂˇlu do vĹˇech dostupnĂ˝ch kanĂˇlĹŻ reproduktorĹŻ
     for (int channel = 0; channel < numHardwareChannels; ++channel)
     {
         float *deviceOut = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
         for (int i = 0; i < samplesToRender; ++i)
         {
-            // Interleaved pĹ™Ă­stup: KanĂˇl 0 bere 0,2,4... KanĂˇl 1 bere 1,3,5...
             deviceOut[i] = tsfOut[i * 2 + (channel % 2)] * masterVolume;
         }
     }
@@ -875,9 +895,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 
 void MidiPlayer::loadMidiFile(const juce::File &midiFile)
 {
-    std::cout << "\n[CHECKPOINT 0] Start loadMidiFile: " << midiFile.getFileName() << std::endl;
     stop();
-
     std::thread([this, midiFile]() mutable
                 {
         juce::MidiFile mf;
@@ -885,7 +903,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         if (is == nullptr || !mf.readFrom(*is)) return;
         mf.convertTimestampTicksToSeconds();
 
-        // ÄŚekĂˇnĂ­ na naloĹľenĂ­ SoundFontu
         int retryCount = 0;
         while (g_tinyfont == nullptr && retryCount < 20)
         {
@@ -896,8 +913,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         if (g_tinyfont != nullptr && mapper != nullptr)
         {
             mapper->updateTSFInstance(g_tinyfont);
-            std::cout << "[CHECKPOINT 1] Mapper pĹ™ipraven." << std::endl;
-
             MidiAnalyzer analyzer;
             auto results = analyzer.analyzeFile(midiFile, mapper.get());
             applyAnalysisResults(results);
@@ -913,7 +928,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         juce::MessageManager::callAsync([this, tempSeq = std::move(tempSequence)]() mutable
         {
             this->midiSequence = std::move(tempSeq);
-            std::cout << "[CHECKPOINT 3] Sekvence pĹ™edĂˇna hlavnĂ­mu vlĂˇknu.\n" << std::endl;
         }); })
         .detach();
 }
@@ -922,7 +936,6 @@ void MidiPlayer::applyAnalysisResults(const std::vector<TrackData> &results)
 {
     if (!g_tinyfont)
         return;
-    std::cout << "[MidiPlayer] Aplikuji mapovĂˇnĂ­ z analĂ˝zy..." << std::endl;
     for (const auto &data : results)
     {
         if (data.tsfIndex >= 0)
@@ -939,20 +952,12 @@ void MidiPlayer::loadSoundFont(const juce::File &sf2File)
     isPlaying = false;
     if (g_tinyfont)
         tsf_close(g_tinyfont);
-
     g_tinyfont = tsf_load_filename(sf2File.getFullPathName().toRawUTF8());
-
     if (g_tinyfont)
     {
-        // OkamĹľitĂ© nastavenĂ­ vĂ˝stupu podle aktuĂˇlnĂ­ frekvence notebooku
         tsf_set_output(g_tinyfont, TSF_STEREO_INTERLEAVED, (float)currentSampleRate, 0.0f);
         if (mapper)
             mapper->updateTSFInstance(g_tinyfont);
-        std::cout << "[MidiPlayer] SoundFont naloĹľen (" << currentSampleRate << " Hz)." << std::endl;
-    }
-    else
-    {
-        std::cout << "[MidiPlayer] ERROR: TSF nemohl naÄŤĂ­st font!" << std::endl;
     }
 }
 
@@ -961,7 +966,6 @@ void MidiPlayer::play()
     if (g_tinyfont)
         isPlaying = true;
 }
-
 void MidiPlayer::stop()
 {
     isPlaying = false;
@@ -969,10 +973,48 @@ void MidiPlayer::stop()
     if (g_tinyfont)
         tsf_reset(g_tinyfont);
 }
-
 void MidiPlayer::pause() { isPlaying = false; }
-
 void MidiPlayer::setMasterVolume(float v) { masterVolume = v / 127.0f; }
+
+// --- SETTERY PRO MUTE / SOLO ---
+void MidiPlayer::setChannelMute(int trackIdx, bool mute)
+{
+    if (trackIdx >= 0 && trackIdx < 16)
+    {
+        channelMuted[trackIdx] = mute;
+        if (mute && g_tinyfont)
+            tsf_channel_sounds_off(g_tinyfont, trackIdx);
+    }
+}
+
+void MidiPlayer::setChannelSolo(int trackIdx, bool solo)
+{
+    if (trackIdx >= 0 && trackIdx < 16)
+    {
+        channelSolo[trackIdx] = solo;
+        if (g_tinyfont)
+        {
+            // Pokud zapneme solo, musĂ­me vypnout zvuky na ostatnĂ­ch (v DAW stylu)
+            for (int i = 0; i < 16; ++i)
+                if (!isChannelAudible(i))
+                    tsf_channel_sounds_off(g_tinyfont, i);
+        }
+    }
+}
+
+// --- REAL-TIME ZMÄšNY ---
+void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int value)
+{
+    if (g_tinyfont != nullptr)
+    {
+        int chan = trackNum - 1;
+        if (chan >= 0 && chan < 16)
+        {
+            tsf_channel_midi_control(g_tinyfont, chan, controller, value);
+            std::cout << "[LIVE MIDI] Track: " << trackNum << " | CC: " << controller << " | Val: " << value << std::endl;
+        }
+    }
+}
 
 -----------------------------
 
@@ -981,7 +1023,8 @@ void MidiPlayer::setMasterVolume(float v) { masterVolume = v / 127.0f; }
   ==============================================================================
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Audio Engine with Mute/Solo logic support.
+    DESCRIPTION: Audio Engine with Mute/Solo logic and Real-time CC support.
+    UPDATED: Integrated Mute/Solo state arrays and proper method signatures.
   ==============================================================================
 */
 
@@ -999,34 +1042,34 @@ public:
   MidiPlayer();
   ~MidiPlayer();
 
+  // --- AUDIO ZĂKLAD ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill);
   void releaseResources();
 
+  // --- SPRĂVA DAT ---
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
-
   void applyAnalysisResults(const std::vector<TrackData> &results);
 
+  // --- TRANSPORT ---
   void play();
   void stop();
   void pause();
   void setMasterVolume(float vol);
 
+  // --- REAL-TIME OVLĂDĂNĂŤ (TTS-1 STYLE) ---
+  /** PosĂ­lĂˇ CC zprĂˇvy pĹ™Ă­mo do syntĂ©zy (Volume=7, Pan=10, Reverb=91, Chorus=93) */
+  void sendRealTimeControlChange(int trackNum, int controller, int value);
+
   // --- OVLĂDĂNĂŤ MUTE / SOLO ---
-  void setChannelMute(int channel, bool shouldMute)
-  {
-    if (channel >= 0 && channel < 16)
-      channelMuted[channel] = shouldMute;
-  }
+  /** NastavĂ­ Mute pro kanĂˇl (0-15) a okamĹľitÄ› utne hrajĂ­cĂ­ hlasy v .cpp */
+  void setChannelMute(int trackIdx, bool shouldMute);
 
-  void setChannelSolo(int channel, bool shouldSolo)
-  {
-    if (channel >= 0 && channel < 16)
-      channelSolo[channel] = shouldSolo;
-  }
+  /** NastavĂ­ Solo pro kanĂˇl (0-15) */
+  void setChannelSolo(int trackIdx, bool shouldSolo);
 
-  // PomocnĂˇ funkce pro zjiĹˇtÄ›nĂ­, zda mĂˇ kanĂˇl hrĂˇt (pouĹľijeme v .cpp)
+  /** PomocnĂˇ funkce pro vyhodnocenĂ­, zda mĂˇ kanĂˇl produkovat zvuk (zohledĹuje Mute i Solo) */
   bool isChannelAudible(int channel) const;
 
   // --- GETTERY PRO UI ---
@@ -1039,10 +1082,10 @@ private:
   juce::AudioDeviceManager deviceManager;
 
   struct tsf *g_tinyfont = nullptr;
-  double currentSampleRate = 44100.0;
+  double currentSampleRate = 48000.0;
   juce::AudioBuffer<float> renderBuffer;
 
-  // MIDI stav pro kaĹľdĂ˝ z 16 kanĂˇlĹŻ
+  // MIDI stav pro kaĹľdĂ˝ z 16 kanĂˇlĹŻ (pro pĹ™epĂ­nĂˇnĂ­ bank)
   int currentBankMSB[16];
   int currentBankLSB[16];
 
@@ -3152,7 +3195,7 @@ TSFDEF float tsf_channel_get_tuning(tsf* f, int channel)
   ==============================================================================
     FILE: FxModal.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Fixed 3-row layout and TTS-1 style PAN logic.
+    DESCRIPTION: Implementation with rounded corners and correct MIDI 0-127 ranges.
   ==============================================================================
 */
 
@@ -3161,56 +3204,62 @@ TSFDEF float tsf_channel_get_tuning(tsf* f, int channel)
 FxModal::FxModal(int trackNumber, Listener l)
     : trackNum(trackNumber), listener(l)
 {
-    // FIX: VĂ˝Ĺˇka 220px zajistĂ­, Ĺľe uvidĂ­Ĺˇ Pan, Reverb i Chorus
+    // Velikost okna pro 3 Ĺ™Ăˇdky
     setSize(360, 220);
 
     // --- TITULEK ---
     addAndMakeVisible(title);
-    title.setText("TRACK " + juce::String(trackNum) + " - FX", juce::dontSendNotification);
+    title.setText("TRACK " + juce::String(trackNum) + " - FX SETTINGS", juce::dontSendNotification);
     title.setFont(juce::Font(15.0f, juce::Font::bold));
-    title.setColour(juce::Label::textColourId, juce::Colour(0xfffca503));
+    title.setColour(juce::Label::textColourId, juce::Colour(0xfffca503)); // OranĹľovĂˇ
 
     // --- CLOSE BUTTON ---
     addAndMakeVisible(closeButton);
     closeButton.setButtonText("X");
+    closeButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    closeButton.setColour(juce::TextButton::textColourOffId, juce::Colours::grey);
     closeButton.onClick = [this]
     { if (listener.onClose) listener.onClose(); };
 
-    // --- SLIDERY (PAN, REVERB, CHORUS) ---
-
-    // PAN: StĹ™ed 0, L jsou kladnĂ©, R jsou zĂˇpornĂ© (podle tvĂ©ho zadĂˇnĂ­)
+    // --- PAN SLIDER (0-127, Center 64) ---
     setupSlider(panSlider, panLabel, "PAN");
-    panSlider.setRange(-64, 64, 1);
-    panSlider.setValue(0);
+    panSlider.setRange(0, 127, 1);
+    panSlider.setValue(64);
     panSlider.textFromValueFunction = [](double v)
     {
-        if (v == 0)
-            return juce::String("0");
-        // L jsou plusovĂ©, R jsou mĂ­nusovĂ©
-        return (v > 0 ? "L" : "R") + juce::String(std::abs((int)v));
+        if (v == 64)
+            return juce::String("C");
+        if (v < 64)
+            return "L " + juce::String(64 - (int)v);
+        return "R " + juce::String((int)v - 64);
     };
 
+    // --- REVERB SLIDER (0-127) ---
     setupSlider(reverbSlider, reverbLabel, "REVERB");
     reverbSlider.setRange(0, 127, 1);
     reverbSlider.setValue(0);
+    reverbSlider.textFromValueFunction = [](double v)
+    { return juce::String((int)v); };
 
+    // --- CHORUS SLIDER (0-127) ---
     setupSlider(chorusSlider, chorusLabel, "CHORUS");
     chorusSlider.setRange(0, 127, 1);
     chorusSlider.setValue(0);
+    chorusSlider.textFromValueFunction = [](double v)
+    { return juce::String((int)v); };
 
     // --- CALLBACKS ---
     panSlider.onValueChange = [this]
     { if (listener.onPanChanged) listener.onPanChanged((int)panSlider.getValue()); };
+
     reverbSlider.onValueChange = [this]
     { if (listener.onReverbChanged) listener.onReverbChanged((int)reverbSlider.getValue()); };
+
     chorusSlider.onValueChange = [this]
     { if (listener.onChorusChanged) listener.onChorusChanged((int)chorusSlider.getValue()); };
 }
 
-// FIX: Destruktor musĂ­ bĂ˝t definovĂˇn, aby build nehĂˇzel LNK2019
-FxModal::~FxModal()
-{
-}
+FxModal::~FxModal() {}
 
 void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &name)
 {
@@ -3218,6 +3267,7 @@ void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &n
     l.setText(name, juce::dontSendNotification);
     l.setFont(juce::Font(12.0f, juce::Font::bold));
     l.setJustificationType(juce::Justification::centredRight);
+    l.setColour(juce::Label::textColourId, juce::Colours::white);
 
     addAndMakeVisible(s);
     s.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -3225,26 +3275,40 @@ void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &n
 
     s.setColour(juce::Slider::thumbColourId, juce::Colour(0xfffca503));
     s.setColour(juce::Slider::trackColourId, juce::Colours::black.withAlpha(0.3f));
+    s.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::white.withAlpha(0.1f));
 }
 
 void FxModal::paint(juce::Graphics &g)
 {
-    g.fillAll(juce::Colour(0xff2b2b2b));                   // TmavÄ› ĹˇedĂˇ jako Audio Settings
-    g.setColour(juce::Colour(0xfffca503).withAlpha(0.6f)); // OranĹľovĂ˝ rĂˇm
-    g.drawRect(getLocalBounds(), 1);
+    auto bounds = getLocalBounds().toFloat();
+    const float radius = 8.0f;
 
+    // --- POZADĂŤ ---
+    g.setColour(juce::Colour(0xff2b2b2b));
+    g.fillRoundedRectangle(bounds, radius);
+
+    // --- HORNĂŤ LIĹ TA ---
     g.setColour(juce::Colours::black.withAlpha(0.3f));
-    g.fillRect(0, 0, getWidth(), 30);
+    juce::Path headerPath;
+    headerPath.addRoundedRectangle(0.0f, 0.0f, (float)getWidth(), 35.0f,
+                                   radius, radius,
+                                   true, true, false, false);
+    g.fillPath(headerPath);
+
+    // --- ORANĹ˝OVĂť OBĹYS ---
+    g.setColour(juce::Colour(0xfffca503).withAlpha(0.6f));
+    g.drawRoundedRectangle(bounds, radius, 1.2f);
 }
 
 void FxModal::resized()
 {
     auto r = getLocalBounds();
-    auto header = r.removeFromTop(35).reduced(10, 0);
+
+    auto header = r.removeFromTop(35).reduced(15, 0);
     title.setBounds(header.removeFromLeft(200));
     closeButton.setBounds(getWidth() - 30, 7, 20, 20);
 
-    r.reduce(10, 5);
+    r.reduce(15, 10);
 
     auto layoutRow = [](juce::Label &l, juce::Slider &s, juce::Rectangle<int> area)
     {
@@ -3252,7 +3316,6 @@ void FxModal::resized()
         s.setBounds(area.reduced(0, 10));
     };
 
-    // VykreslĂ­me vĹˇechny 3 poloĹľky pod sebe
     layoutRow(panLabel, panSlider, r.removeFromTop(50));
     layoutRow(reverbLabel, reverbSlider, r.removeFromTop(50));
     layoutRow(chorusLabel, chorusSlider, r.removeFromTop(50));
@@ -3265,7 +3328,7 @@ void FxModal::resized()
   ==============================================================================
     FILE: FxModal.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Clean header for expanded FX Modal (3-row layout).
+    DESCRIPTION: Clean header with rounded corners declaration.
   ==============================================================================
 */
 
@@ -3284,8 +3347,6 @@ public:
     };
 
     FxModal(int trackNumber, Listener listener);
-
-    // Destruktor je zde deklarovĂˇn - musĂ­ bĂ˝t implementovĂˇn v .cpp jako FxModal::~FxModal() { }
     ~FxModal() override;
 
     void paint(juce::Graphics &) override;
@@ -3295,23 +3356,17 @@ private:
     int trackNum;
     Listener listener;
 
-    // TĹ™i slidery pro Pan, Reverb a Chorus
     juce::Slider panSlider;
     juce::Slider reverbSlider;
     juce::Slider chorusSlider;
 
-    // Popisky pro jednotlivĂ© Ĺ™Ăˇdky
-    juce::Label panLabel;
-    juce::Label reverbLabel;
-    juce::Label chorusLabel;
-
-    // HornĂ­ liĹˇta a zavĂ­racĂ­ tlaÄŤĂ­tko
+    juce::Label panLabel, reverbLabel, chorusLabel;
     juce::Label title;
     juce::TextButton closeButton;
 
-    // PomocnĂˇ metoda pro sjednocenĂ­ vzhledu sliderĹŻ
     void setupSlider(juce::Slider &s, juce::Label &l, const juce::String &name);
 
+    // StandardnĂ­ JUCE detektor ĂşnikĹŻ pamÄ›ti
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FxModal)
 };
 
@@ -3414,6 +3469,46 @@ MainComponent::MainComponent()
         };
     }
 
+    // --- PROPOJENĂŤ TRACK PANELU S MIDI PLAYEREM (REAL-TIME FX) ---
+    if (trackPanel)
+    {
+        trackPanel->onTrackVolumeChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 7, val);
+        };
+
+        trackPanel->onTrackPanChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 10, val);
+        };
+
+        trackPanel->onTrackReverbChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 91, val);
+        };
+
+        trackPanel->onTrackChorusChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 93, val);
+        };
+
+        trackPanel->onTrackMuteChanged = [this](int trk, bool muted)
+        {
+            if (midiPlayer)
+                midiPlayer->setChannelMute(trk, muted);
+        };
+
+        trackPanel->onTrackSoloChanged = [this](int trk, bool soloed)
+        {
+            if (midiPlayer)
+                midiPlayer->setChannelSolo(trk, soloed);
+        };
+    }
+
     // --- 4. AUTO-LOAD PRVNĂŤ BANKY ---
     const std::vector<juce::File> &foundBanks = bankManager->getLoadedBanks();
     if (!foundBanks.empty() && midiPlayer)
@@ -3502,7 +3597,7 @@ void MainComponent::resized()
     PROJECT: SONAR MIDI PLAYER
     MODULE: frontend/MainComponent
     DESCRIPTION: Main container - handling audio and UI layout.
-    UPDATED: Added ChangeListener for automatic audio hardware switching.
+    UPDATED: Full integration of Real-time FX and Audio HW switching.
   ==============================================================================
 */
 
@@ -3528,16 +3623,16 @@ public:
   MainComponent();
   ~MainComponent() override;
 
-  // Audio metody
+  // --- AUDIO METODY ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
   void releaseResources() override;
 
-  // GrafickĂ© metody
+  // --- GRAFICKĂ‰ METODY ---
   void paint(juce::Graphics &g) override;
   void resized() override;
 
-  // Callback pro automatickou detekci odpojenĂ­ sluchĂˇtek
+  // --- CALLBACK PRO AUDIO HW ---
   void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
 private:
@@ -4065,36 +4160,49 @@ TrackComponent::TrackComponent(int trackNumber,
     nameLabel.setText(trackName, juce::dontSendNotification);
     nameLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff333333));
 
+    // VOLUME SLIDER (CC 7)
     addAndMakeVisible(volumeSlider);
     volumeSlider.setRange(0, 127, 1);
-    volumeSlider.setValue(100);
+    volumeSlider.setValue(currentVolume);
     volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 18);
 
     volumeSlider.onValueChange = [this]
     {
+        currentVolume = (int)volumeSlider.getValue();
         if (onVolumeChanged)
-            onVolumeChanged(trackNum, (float)volumeSlider.getValue());
+            onVolumeChanged(trackNum, currentVolume);
     };
 
-    // ===== FX BUTTON =====
+    // FX BUTTON
     addAndMakeVisible(fxButton);
     fxButton.setButtonText("FX");
     fxButton.setLookAndFeel(&toggleButtonLF);
-
     fxButton.onClick = [this]
-    {
-        showFxPopup();
-    };
+    { showFxPopup(); };
 
+    // MUTE BUTTON
     addAndMakeVisible(muteButton);
     muteButton.setButtonText("M");
     muteButton.setClickingTogglesState(true);
     muteButton.setLookAndFeel(&toggleButtonLF);
+    muteButton.onClick = [this]
+    {
+        isMuted = muteButton.getToggleState();
+        if (onMuteChanged)
+            onMuteChanged(trackNum, isMuted);
+    };
 
+    // SOLO BUTTON
     addAndMakeVisible(soloButton);
     soloButton.setButtonText("S");
     soloButton.setClickingTogglesState(true);
     soloButton.setLookAndFeel(&toggleButtonLF);
+    soloButton.onClick = [this]
+    {
+        isSoloed = soloButton.getToggleState();
+        if (onSoloChanged)
+            onSoloChanged(trackNum, isSoloed);
+    };
 
     addAndMakeVisible(thirdButton);
     thirdButton.setButtonText("Vol");
@@ -4113,11 +4221,10 @@ TrackComponent::~TrackComponent()
 }
 
 // =======================================================
-// FX MODAL OPEN (OPRAVENĂ VERZE - PĹIDĂNO DO HLAVNĂŤHO OKNA)
+// FX MODAL OPEN (S PĹĂŤMĂťM NAPOJENĂŤM NA BE CALLBACKY)
 // =======================================================
 void TrackComponent::showFxPopup()
 {
-    // Najdeme hlavnĂ­ komponentu aplikace (rodiÄŤ rodiÄŤĹŻ), aby okno nebylo uĹ™Ă­znutĂ©
     juce::Component *topParent = getParentComponent();
     while (topParent != nullptr && topParent->getParentComponent() != nullptr)
         topParent = topParent->getParentComponent();
@@ -4125,38 +4232,41 @@ void TrackComponent::showFxPopup()
     if (topParent == nullptr)
         return;
 
-    // MusĂ­me pouĹľĂ­t SafePointer, aby callback mohl bezpeÄŤnÄ› smazat modal
     struct ModalContainer
     {
         FxModal *modal = nullptr;
     };
     auto *container = new ModalContainer();
 
+    // VytvoĹ™Ă­me modal a pĹ™edĂˇme mu aktuĂˇlnĂ­ stav
     container->modal = new FxModal(
         trackNum,
         FxModal::Listener{
-            // PAN
+            // PAN (CC 10)
             [this](int v)
             {
+                currentPan = v + 64; // PĹ™epoÄŤet z -64/64 na 0-127
                 if (onPanChanged)
-                    onPanChanged(trackNum, v);
+                    onPanChanged(trackNum, currentPan);
             },
 
-            // REVERB
+            // REVERB (CC 91)
             [this](int v)
             {
+                currentReverb = v + 64;
                 if (onReverbChanged)
-                    onReverbChanged(trackNum, v);
+                    onReverbChanged(trackNum, currentReverb);
             },
 
-            // CHORUS
+            // CHORUS (CC 93)
             [this](int v)
             {
+                currentChorus = v + 64;
                 if (onChorusChanged)
-                    onChorusChanged(trackNum, v);
+                    onChorusChanged(trackNum, currentChorus);
             },
 
-            // CLOSE (MazĂˇnĂ­ z topParent)
+            // CLOSE
             [topParent, container]()
             {
                 if (container->modal != nullptr)
@@ -4168,8 +4278,6 @@ void TrackComponent::showFxPopup()
             }});
 
     topParent->addAndMakeVisible(container->modal);
-
-    // VycentrovĂˇnĂ­ nad celou aplikacĂ­
     container->modal->setCentrePosition(topParent->getLocalBounds().getCentreX(),
                                         topParent->getLocalBounds().getCentreY());
 }
@@ -4204,11 +4312,31 @@ void TrackComponent::resized()
 }
 
 // =======================================================
-// FUNKCE
+// UPDATE FUNKCE Z BACKENDU
 // =======================================================
-void TrackComponent::updateVolume(float newVolume)
+void TrackComponent::updateVolume(int newVolume)
 {
+    currentVolume = newVolume;
     volumeSlider.setValue(newVolume, juce::dontSendNotification);
+}
+
+void TrackComponent::updateMuteState(bool isMutedState)
+{
+    isMuted = isMutedState;
+    muteButton.setToggleState(isMuted, juce::dontSendNotification);
+}
+
+void TrackComponent::updateSoloState(bool isSoloedState)
+{
+    isSoloed = isSoloedState;
+    soloButton.setToggleState(isSoloed, juce::dontSendNotification);
+}
+
+void TrackComponent::updateFxData(int pan, int reverb, int chorus)
+{
+    currentPan = pan;
+    currentReverb = reverb;
+    currentChorus = chorus;
 }
 
 void TrackComponent::setInstrument(const juce::String &name, juce::Colour colour)
@@ -4233,6 +4361,7 @@ void TrackComponent::setIcons(const juce::String &mute,
   ==============================================================================
     FILE: TrackComponent.h
     PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Complete Track UI header with real-time BE callbacks.
   ==============================================================================
 */
 
@@ -4244,52 +4373,68 @@ void TrackComponent::setIcons(const juce::String &mute,
 // --- ENUM ---
 enum class InstrumentType
 {
-    Piano,
-    Guitar,
-    Bass,
-    Drums,
-    Synth,
-    Other
+  Piano,
+  Guitar,
+  Bass,
+  Drums,
+  Synth,
+  Other
 };
 
 class TrackComponent : public juce::Component
 {
 public:
-    TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
-    ~TrackComponent() override;
+  TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
+  ~TrackComponent() override;
 
-    // --- CALLBACKY ---
-    std::function<void(int, bool)> onMuteChanged;
-    std::function<void(int, bool)> onSoloChanged;
-    std::function<void(int, float)> onVolumeChanged;
-    std::function<void(int, float)> onPanChanged;
-    std::function<void(int, float)> onReverbChanged;
-    std::function<void(int, float)> onChorusChanged;
+  // --- REAL-TIME CALLBACKY PRO BACKEND (BE) ---
+  // LogickĂ© stavy (True/False)
+  std::function<void(int track, bool isActive)> onMuteChanged;
+  std::function<void(int track, bool isActive)> onSoloChanged;
 
-    void updateVolume(float newVolume);
-    void setInstrument(const juce::String &name, juce::Colour colour);
-    void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
+  // MIDI KontrolĂ©ry (0-127) - OkamĹľitÄ› se posĂ­lajĂ­ do Synth v reĂˇlnĂ©m ÄŤase
+  std::function<void(int track, int value)> onVolumeChanged; // CC 7
+  std::function<void(int track, int value)> onPanChanged;    // CC 10
+  std::function<void(int track, int value)> onReverbChanged; // CC 91
+  std::function<void(int track, int value)> onChorusChanged; // CC 93
 
-    void paint(juce::Graphics &g) override;
-    void resized() override;
+  // --- FUNKCE PRO AKTUALIZACI STAVU Z BACKENDU ---
+  // PouĹľĂ­vĂˇ se pĹ™i analĂ˝ze MIDI metadat nebo pĹ™i dĂˇlkovĂ© zmÄ›nÄ›
+  void updateVolume(int newVolume);
+  void updateMuteState(bool isMuted);
+  void updateSoloState(bool isSoloed);
+  void updateFxData(int pan, int reverb, int chorus);
+
+  void setInstrument(const juce::String &name, juce::Colour colour);
+  void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
 
 private:
-    void showFxPopup();
+  void showFxPopup();
 
-    // --- DATA ---
-    int trackNum;
-    juce::String trackName;
-    InstrumentType instrType;
+  // --- INTERNĂŤ DATA (Pro synchronizaci UI) ---
+  int trackNum;
+  juce::String trackName;
+  InstrumentType instrType;
 
-    // --- UI ---
-    juce::TextButton trackNumberButton;
-    juce::Label nameLabel;
-    juce::Slider volumeSlider;
+  int currentVolume = 100;
+  int currentPan = 64;
+  int currentReverb = 0;
+  int currentChorus = 0;
 
-    juce::Slider panSlider, reverbSlider, chorusSlider;
-    juce::TextButton muteButton, soloButton, thirdButton, fxButton;
+  bool isMuted = false;
+  bool isSoloed = false;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
+  // --- UI KOMPONENTY ---
+  juce::TextButton trackNumberButton;
+  juce::Label nameLabel;
+  juce::Slider volumeSlider;
+
+  juce::TextButton muteButton, soloButton, thirdButton, fxButton;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
 };
 
 -----------------------------
@@ -4303,6 +4448,7 @@ private:
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Implementation of the main track list panel.
                  FIXED: Full implementation with updateTrackFromMetadata.
+                 ADDED: Real-time callback bridging for all 16 tracks.
 
   ==============================================================================
 */
@@ -4323,6 +4469,44 @@ TrackPanelComponent::TrackPanelComponent()
         // AI: NastavenĂ­ tvĂ˝ch ikon pro Mute, Solo a Volume tlaÄŤĂ­tka
         tracks[i]->setIcons("M", "S", "Vol");
 
+        // --- PROPOJENĂŤ CALLBACKĹ® Z JEDNOTLIVĂťCH TRACKĹ® DO PANELU ---
+        // PouĹľĂ­vĂˇme i (index 0-15) pro identifikaci tracku v panelu
+        tracks[i]->onVolumeChanged = [this](int trk, int val)
+        {
+            if (onTrackVolumeChanged)
+                onTrackVolumeChanged(trk - 1, val);
+        };
+
+        tracks[i]->onPanChanged = [this](int trk, int val)
+        {
+            if (onTrackPanChanged)
+                onTrackPanChanged(trk - 1, val);
+        };
+
+        tracks[i]->onReverbChanged = [this](int trk, int val)
+        {
+            if (onTrackReverbChanged)
+                onTrackReverbChanged(trk - 1, val);
+        };
+
+        tracks[i]->onChorusChanged = [this](int trk, int val)
+        {
+            if (onTrackChorusChanged)
+                onTrackChorusChanged(trk - 1, val);
+        };
+
+        tracks[i]->onMuteChanged = [this](int trk, bool muted)
+        {
+            if (onTrackMuteChanged)
+                onTrackMuteChanged(trk - 1, muted);
+        };
+
+        tracks[i]->onSoloChanged = [this](int trk, bool soloed)
+        {
+            if (onTrackSoloChanged)
+                onTrackSoloChanged(trk - 1, soloed);
+        };
+
         addAndMakeVisible(*tracks[i]);
     }
 }
@@ -4334,9 +4518,8 @@ void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String 
 {
     if (index >= 0 && index < numTracks)
     {
-        // ZmÄ›Ĺ juce::Colours::cyan na nÄ›co jinĂ©ho, napĹ™Ă­klad tmavÄ› Ĺˇedou nebo oranĹľovou
-        // tracks[index]->setInstrument(name, juce::Colours::darkgrey); // decentnĂ­ ĹˇedĂˇ
-        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastnĂ­ barva
+        // NastavenĂ­ barvy a jmĂ©na instrumentu
+        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastnĂ­ tmavÄ› ĹˇedĂˇ barva
 
         tracks[index]->updateVolume(volume);
     }
@@ -4387,6 +4570,7 @@ void TrackPanelComponent::paint(juce::Graphics &g)
                  RESTORED ORIGINAL STRUCTURE.
                  ADDED: Metadata update method for MIDI integration.
                  FIXED: Correct method signatures for TrackComponent access.
+                 ADDED: Real-time FX callbacks for MainComponent.
 
   ==============================================================================
 */
@@ -4395,6 +4579,7 @@ void TrackPanelComponent::paint(juce::Graphics &g)
 
 #include <JuceHeader.h>
 #include "../TrackComponent/TrackComponent.h"
+#include <functional>
 
 class TrackPanelComponent : public juce::Component
 {
@@ -4410,8 +4595,16 @@ public:
   /** StandardnĂ­ JUCE metoda pro rozvrĹľenĂ­ 16 Ĺ™ĂˇdkĹŻ (trackĹŻ) */
   void resized() override;
 
+  // --- CALLBACKY PRO MAIN COMPONENT (PĹEMOSTÄšNĂŤ SIGNĂLU) ---
+  std::function<void(int track, int value)> onTrackVolumeChanged;
+  std::function<void(int track, int value)> onTrackPanChanged;
+  std::function<void(int track, int value)> onTrackReverbChanged;
+  std::function<void(int track, int value)> onTrackChorusChanged;
+  std::function<void(int track, bool muted)> onTrackMuteChanged;
+  std::function<void(int track, bool soloed)> onTrackSoloChanged;
+
   /** * AI: Metoda pro hromadnou aktualizaci z analyzeru.
-   * Tato metoda v .cpp volĂˇ tracks[index]->setTrackVolume(volume).
+   * Tato metoda v .cpp volĂˇ tracks[index]->updateVolume(volume).
    */
   void updateTrackFromMetadata(int index, const juce::String &name, float volume);
 
@@ -4424,7 +4617,6 @@ private:
 
   /** * Pole s tracky.
    * AI: PouĹľĂ­vĂˇme std::array a std::unique_ptr pro bezpeÄŤnou sprĂˇvu pamÄ›ti.
-   * TrackComponent musĂ­ mĂ­t v public sekci metodu setTrackVolume(float).
    */
   std::array<std::unique_ptr<TrackComponent>, numTracks> tracks;
 

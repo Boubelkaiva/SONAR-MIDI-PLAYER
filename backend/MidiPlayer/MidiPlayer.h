@@ -2,7 +2,8 @@
   ==============================================================================
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Audio Engine with Mute/Solo logic support.
+    DESCRIPTION: Audio Engine with Mute/Solo logic and Real-time CC support.
+    UPDATED: Integrated Mute/Solo state arrays and proper method signatures.
   ==============================================================================
 */
 
@@ -20,34 +21,34 @@ public:
   MidiPlayer();
   ~MidiPlayer();
 
+  // --- AUDIO ZÁKLAD ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill);
   void releaseResources();
 
+  // --- SPRÁVA DAT ---
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
-
   void applyAnalysisResults(const std::vector<TrackData> &results);
 
+  // --- TRANSPORT ---
   void play();
   void stop();
   void pause();
   void setMasterVolume(float vol);
 
+  // --- REAL-TIME OVLÁDÁNÍ (TTS-1 STYLE) ---
+  /** Posílá CC zprávy přímo do syntézy (Volume=7, Pan=10, Reverb=91, Chorus=93) */
+  void sendRealTimeControlChange(int trackNum, int controller, int value);
+
   // --- OVLÁDÁNÍ MUTE / SOLO ---
-  void setChannelMute(int channel, bool shouldMute)
-  {
-    if (channel >= 0 && channel < 16)
-      channelMuted[channel] = shouldMute;
-  }
+  /** Nastaví Mute pro kanál (0-15) a okamžitě utne hrající hlasy v .cpp */
+  void setChannelMute(int trackIdx, bool shouldMute);
 
-  void setChannelSolo(int channel, bool shouldSolo)
-  {
-    if (channel >= 0 && channel < 16)
-      channelSolo[channel] = shouldSolo;
-  }
+  /** Nastaví Solo pro kanál (0-15) */
+  void setChannelSolo(int trackIdx, bool shouldSolo);
 
-  // Pomocná funkce pro zjištění, zda má kanál hrát (použijeme v .cpp)
+  /** Pomocná funkce pro vyhodnocení, zda má kanál produkovat zvuk (zohledňuje Mute i Solo) */
   bool isChannelAudible(int channel) const;
 
   // --- GETTERY PRO UI ---
@@ -60,10 +61,10 @@ private:
   juce::AudioDeviceManager deviceManager;
 
   struct tsf *g_tinyfont = nullptr;
-  double currentSampleRate = 44100.0;
+  double currentSampleRate = 48000.0;
   juce::AudioBuffer<float> renderBuffer;
 
-  // MIDI stav pro každý z 16 kanálů
+  // MIDI stav pro každý z 16 kanálů (pro přepínání bank)
   int currentBankMSB[16];
   int currentBankLSB[16];
 

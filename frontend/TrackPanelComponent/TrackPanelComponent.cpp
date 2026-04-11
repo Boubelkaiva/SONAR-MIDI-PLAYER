@@ -6,6 +6,7 @@
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Implementation of the main track list panel.
                  FIXED: Full implementation with updateTrackFromMetadata.
+                 ADDED: Real-time callback bridging for all 16 tracks.
 
   ==============================================================================
 */
@@ -26,6 +27,44 @@ TrackPanelComponent::TrackPanelComponent()
         // AI: Nastavení tvých ikon pro Mute, Solo a Volume tlačítka
         tracks[i]->setIcons("M", "S", "Vol");
 
+        // --- PROPOJENÍ CALLBACKŮ Z JEDNOTLIVÝCH TRACKŮ DO PANELU ---
+        // Používáme i (index 0-15) pro identifikaci tracku v panelu
+        tracks[i]->onVolumeChanged = [this](int trk, int val)
+        {
+            if (onTrackVolumeChanged)
+                onTrackVolumeChanged(trk - 1, val);
+        };
+
+        tracks[i]->onPanChanged = [this](int trk, int val)
+        {
+            if (onTrackPanChanged)
+                onTrackPanChanged(trk - 1, val);
+        };
+
+        tracks[i]->onReverbChanged = [this](int trk, int val)
+        {
+            if (onTrackReverbChanged)
+                onTrackReverbChanged(trk - 1, val);
+        };
+
+        tracks[i]->onChorusChanged = [this](int trk, int val)
+        {
+            if (onTrackChorusChanged)
+                onTrackChorusChanged(trk - 1, val);
+        };
+
+        tracks[i]->onMuteChanged = [this](int trk, bool muted)
+        {
+            if (onTrackMuteChanged)
+                onTrackMuteChanged(trk - 1, muted);
+        };
+
+        tracks[i]->onSoloChanged = [this](int trk, bool soloed)
+        {
+            if (onTrackSoloChanged)
+                onTrackSoloChanged(trk - 1, soloed);
+        };
+
         addAndMakeVisible(*tracks[i]);
     }
 }
@@ -37,9 +76,8 @@ void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String 
 {
     if (index >= 0 && index < numTracks)
     {
-        // Změň juce::Colours::cyan na něco jiného, například tmavě šedou nebo oranžovou
-        // tracks[index]->setInstrument(name, juce::Colours::darkgrey); // decentní šedá
-        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastní barva
+        // Nastavení barvy a jména instrumentu
+        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastní tmavě šedá barva
 
         tracks[index]->updateVolume(volume);
     }

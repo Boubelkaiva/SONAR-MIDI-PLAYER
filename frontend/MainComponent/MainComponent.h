@@ -4,7 +4,7 @@
     PROJECT: SONAR MIDI PLAYER
     MODULE: frontend/MainComponent
     DESCRIPTION: Main container - handling audio and UI layout.
-    UPDATED: Added ChangeListener for automatic audio hardware switching.
+    UPDATED: Full integration of Real-time FX and Audio HW switching.
   ==============================================================================
 */
 
@@ -30,16 +30,16 @@ public:
   MainComponent();
   ~MainComponent() override;
 
-  // Audio metody
+  // --- AUDIO METODY ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
   void releaseResources() override;
 
-  // Grafické metody
+  // --- GRAFICKÉ METODY ---
   void paint(juce::Graphics &g) override;
   void resized() override;
 
-  // Callback pro automatickou detekci odpojení sluchátek
+  // --- CALLBACK PRO AUDIO HW ---
   void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
 private:

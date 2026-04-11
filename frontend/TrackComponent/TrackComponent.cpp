@@ -3,6 +3,7 @@
     FILE: TrackComponent.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Track UI + FxModal integration (PAN / REVERB / CHORUS)
+    FIXED: Removed redundant +64 offsets to keep MIDI 0-127 range.
   ==============================================================================
 */
 
@@ -74,36 +75,49 @@ TrackComponent::TrackComponent(int trackNumber,
     nameLabel.setText(trackName, juce::dontSendNotification);
     nameLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff333333));
 
+    // VOLUME SLIDER (CC 7)
     addAndMakeVisible(volumeSlider);
     volumeSlider.setRange(0, 127, 1);
-    volumeSlider.setValue(100);
+    volumeSlider.setValue(currentVolume);
     volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 18);
 
     volumeSlider.onValueChange = [this]
     {
+        currentVolume = (int)volumeSlider.getValue();
         if (onVolumeChanged)
-            onVolumeChanged(trackNum, (float)volumeSlider.getValue());
+            onVolumeChanged(trackNum, currentVolume);
     };
 
-    // ===== FX BUTTON =====
+    // FX BUTTON
     addAndMakeVisible(fxButton);
     fxButton.setButtonText("FX");
     fxButton.setLookAndFeel(&toggleButtonLF);
-
     fxButton.onClick = [this]
-    {
-        showFxPopup();
-    };
+    { showFxPopup(); };
 
+    // MUTE BUTTON
     addAndMakeVisible(muteButton);
     muteButton.setButtonText("M");
     muteButton.setClickingTogglesState(true);
     muteButton.setLookAndFeel(&toggleButtonLF);
+    muteButton.onClick = [this]
+    {
+        isMuted = muteButton.getToggleState();
+        if (onMuteChanged)
+            onMuteChanged(trackNum, isMuted);
+    };
 
+    // SOLO BUTTON
     addAndMakeVisible(soloButton);
     soloButton.setButtonText("S");
     soloButton.setClickingTogglesState(true);
     soloButton.setLookAndFeel(&toggleButtonLF);
+    soloButton.onClick = [this]
+    {
+        isSoloed = soloButton.getToggleState();
+        if (onSoloChanged)
+            onSoloChanged(trackNum, isSoloed);
+    };
 
     addAndMakeVisible(thirdButton);
     thirdButton.setButtonText("Vol");
@@ -122,11 +136,10 @@ TrackComponent::~TrackComponent()
 }
 
 // =======================================================
-// FX MODAL OPEN (OPRAVENÁ VERZE - PŘIDÁNO DO HLAVNÍHO OKNA)
+// FX MODAL OPEN (OPRAVENO: PŘÍMÉ MIDI HODNOTY)
 // =======================================================
 void TrackComponent::showFxPopup()
 {
-    // Najdeme hlavní komponentu aplikace (rodič rodičů), aby okno nebylo uříznuté
     juce::Component *topParent = getParentComponent();
     while (topParent != nullptr && topParent->getParentComponent() != nullptr)
         topParent = topParent->getParentComponent();
@@ -134,7 +147,6 @@ void TrackComponent::showFxPopup()
     if (topParent == nullptr)
         return;
 
-    // Musíme použít SafePointer, aby callback mohl bezpečně smazat modal
     struct ModalContainer
     {
         FxModal *modal = nullptr;
@@ -144,28 +156,31 @@ void TrackComponent::showFxPopup()
     container->modal = new FxModal(
         trackNum,
         FxModal::Listener{
-            // PAN
+            // PAN (CC 10) - Hodnota v je 0-127 z FxModalu
             [this](int v)
             {
+                currentPan = v;
                 if (onPanChanged)
-                    onPanChanged(trackNum, v);
+                    onPanChanged(trackNum, currentPan);
             },
 
-            // REVERB
+            // REVERB (CC 91) - Hodnota v je 0-127
             [this](int v)
             {
+                currentReverb = v;
                 if (onReverbChanged)
-                    onReverbChanged(trackNum, v);
+                    onReverbChanged(trackNum, currentReverb);
             },
 
-            // CHORUS
+            // CHORUS (CC 93) - Hodnota v je 0-127
             [this](int v)
             {
+                currentChorus = v;
                 if (onChorusChanged)
-                    onChorusChanged(trackNum, v);
+                    onChorusChanged(trackNum, currentChorus);
             },
 
-            // CLOSE (Mazání z topParent)
+            // CLOSE
             [topParent, container]()
             {
                 if (container->modal != nullptr)
@@ -177,14 +192,12 @@ void TrackComponent::showFxPopup()
             }});
 
     topParent->addAndMakeVisible(container->modal);
-
-    // Vycentrování nad celou aplikací
     container->modal->setCentrePosition(topParent->getLocalBounds().getCentreX(),
                                         topParent->getLocalBounds().getCentreY());
 }
 
 // =======================================================
-// PAINT
+// PAINT / LAYOUT / UPDATES
 // =======================================================
 void TrackComponent::paint(juce::Graphics &g)
 {
@@ -193,13 +206,9 @@ void TrackComponent::paint(juce::Graphics &g)
     g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
 }
 
-// =======================================================
-// LAYOUT
-// =======================================================
 void TrackComponent::resized()
 {
     auto r = getLocalBounds().reduced(2);
-
     trackNumberButton.setBounds(r.removeFromLeft(45));
     nameLabel.setBounds(r.removeFromLeft(135));
 
@@ -212,12 +221,29 @@ void TrackComponent::resized()
     volumeSlider.setBounds(r.reduced(4, 2));
 }
 
-// =======================================================
-// FUNKCE
-// =======================================================
-void TrackComponent::updateVolume(float newVolume)
+void TrackComponent::updateVolume(int newVolume)
 {
+    currentVolume = newVolume;
     volumeSlider.setValue(newVolume, juce::dontSendNotification);
+}
+
+void TrackComponent::updateMuteState(bool isMutedState)
+{
+    isMuted = isMutedState;
+    muteButton.setToggleState(isMuted, juce::dontSendNotification);
+}
+
+void TrackComponent::updateSoloState(bool isSoloedState)
+{
+    isSoloed = isSoloedState;
+    soloButton.setToggleState(isSoloed, juce::dontSendNotification);
+}
+
+void TrackComponent::updateFxData(int pan, int reverb, int chorus)
+{
+    currentPan = pan;
+    currentReverb = reverb;
+    currentChorus = chorus;
 }
 
 void TrackComponent::setInstrument(const juce::String &name, juce::Colour colour)

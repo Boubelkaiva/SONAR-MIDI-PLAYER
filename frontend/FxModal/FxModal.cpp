@@ -2,7 +2,7 @@
   ==============================================================================
     FILE: FxModal.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Implementation with rounded corners (radius: 8.0f).
+    DESCRIPTION: Implementation with rounded corners and correct MIDI 0-127 ranges.
   ==============================================================================
 */
 
@@ -23,45 +23,62 @@ FxModal::FxModal(int trackNumber, Listener l)
     // --- CLOSE BUTTON ---
     addAndMakeVisible(closeButton);
     closeButton.setButtonText("X");
-    // Zprůhledníme tlačítko a uděláme ho šedé, aby nerušilo
     closeButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
     closeButton.setColour(juce::TextButton::textColourOffId, juce::Colours::grey);
     closeButton.onClick = [this]
     { if (listener.onClose) listener.onClose(); };
 
-    // --- SLIDERY SETUP (0 uprostřed) ---
-    auto setupBipolar = [](juce::Slider &s)
-    {
-        s.setRange(-64, 64, 1);
-        s.setValue(0);
-    };
-
+    // --- PAN SLIDER (0-127, Center 64) ---
     setupSlider(panSlider, panLabel, "PAN");
-    setupBipolar(panSlider);
+    panSlider.setRange(0, 127, 1);
+    panSlider.setValue(64);
     panSlider.textFromValueFunction = [](double v)
     {
-        if (v == 0)
-            return juce::String("0");
-        return (v > 0 ? "L" : "R") + juce::String(std::abs((int)v));
+        if (v == 64)
+            return juce::String("C");
+        if (v < 64)
+            return "L " + juce::String(64 - (int)v);
+        return "R " + juce::String((int)v - 64);
     };
 
+    // --- REVERB SLIDER (0-127) ---
     setupSlider(reverbSlider, reverbLabel, "REVERB");
-    setupBipolar(reverbSlider);
+    reverbSlider.setRange(0, 127, 1);
+    reverbSlider.setValue(0);
     reverbSlider.textFromValueFunction = [](double v)
     { return juce::String((int)v); };
 
+    // --- CHORUS SLIDER (0-127) ---
     setupSlider(chorusSlider, chorusLabel, "CHORUS");
-    setupBipolar(chorusSlider);
+    chorusSlider.setRange(0, 127, 1);
+    chorusSlider.setValue(0);
     chorusSlider.textFromValueFunction = [](double v)
     { return juce::String((int)v); };
 
-    // --- CALLBACKS ---
+    // --- CALLBACKS (S LOGOVÁNÍM DO TERMINÁLU) ---
     panSlider.onValueChange = [this]
-    { if (listener.onPanChanged) listener.onPanChanged((int)panSlider.getValue()); };
+    {
+        int val = (int)panSlider.getValue();
+        std::cout << "[FxModal] PAN slider changed: " << val << std::endl;
+        if (listener.onPanChanged)
+            listener.onPanChanged(val);
+    };
+
     reverbSlider.onValueChange = [this]
-    { if (listener.onReverbChanged) listener.onReverbChanged((int)reverbSlider.getValue()); };
+    {
+        int val = (int)reverbSlider.getValue();
+        std::cout << "[FxModal] REVERB slider changed: " << val << std::endl;
+        if (listener.onReverbChanged)
+            listener.onReverbChanged(val);
+    };
+
     chorusSlider.onValueChange = [this]
-    { if (listener.onChorusChanged) listener.onChorusChanged((int)chorusSlider.getValue()); };
+    {
+        int val = (int)chorusSlider.getValue();
+        std::cout << "[FxModal] CHORUS slider changed: " << val << std::endl;
+        if (listener.onChorusChanged)
+            listener.onChorusChanged(val);
+    };
 }
 
 FxModal::~FxModal() {}
@@ -78,7 +95,6 @@ void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &n
     s.setSliderStyle(juce::Slider::LinearHorizontal);
     s.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
 
-    // Styl slideru podle Audio Hardware Settings
     s.setColour(juce::Slider::thumbColourId, juce::Colour(0xfffca503));
     s.setColour(juce::Slider::trackColourId, juce::Colours::black.withAlpha(0.3f));
     s.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::white.withAlpha(0.1f));
@@ -87,41 +103,35 @@ void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &n
 void FxModal::paint(juce::Graphics &g)
 {
     auto bounds = getLocalBounds().toFloat();
-    const float radius = 8.0f; // Tady nastavujeme radius
+    const float radius = 8.0f;
 
-    // --- POZADÍ (Zaoblené) ---
-    g.setColour(juce::Colour(0xff2b2b2b)); // Tmavě šedá
+    // --- POZADÍ ---
+    g.setColour(juce::Colour(0xff2b2b2b));
     g.fillRoundedRectangle(bounds, radius);
 
-    // --- HORNÍ "LIŠTA" (Zaoblená nahoře) ---
-    // Musíme vykreslit černý obdélník a pak ho oříznout zaoblením
+    // --- HORNÍ LIŠTA ---
     g.setColour(juce::Colours::black.withAlpha(0.3f));
-
-    // Oprava: addRoundedRectangle bere Rectangle<float>, cornerSize, a volitelně bools pro rohy
     juce::Path headerPath;
     headerPath.addRoundedRectangle(0.0f, 0.0f, (float)getWidth(), 35.0f,
                                    radius, radius,
                                    true, true, false, false);
-
     g.fillPath(headerPath);
 
-    // --- ORANŽOVÝ OBŘYS (Zaoblený) ---
-    g.setColour(juce::Colour(0xfffca503).withAlpha(0.6f)); // Oranžová s průhledností
-    g.drawRoundedRectangle(bounds, radius, 1.2f);          // Tloušťka čáry 1.2px
+    // --- ORANŽOVÝ OBŘYS ---
+    g.setColour(juce::Colour(0xfffca503).withAlpha(0.6f));
+    g.drawRoundedRectangle(bounds, radius, 1.2f);
 }
 
 void FxModal::resized()
 {
     auto r = getLocalBounds();
 
-    // Titulek
     auto header = r.removeFromTop(35).reduced(15, 0);
     title.setBounds(header.removeFromLeft(200));
     closeButton.setBounds(getWidth() - 30, 7, 20, 20);
 
     r.reduce(15, 10);
 
-    // Layout řádků (každý má 50px výšku)
     auto layoutRow = [](juce::Label &l, juce::Slider &s, juce::Rectangle<int> area)
     {
         l.setBounds(area.removeFromLeft(80).withSizeKeepingCentre(80, 20));
