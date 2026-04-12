@@ -1,10 +1,23 @@
-# --- Zvukové banky (Svatý grál) ---
+# ==============================================================================
+# PROJECT: SONAR MIDI PLAYER - .gitignore
+# ==============================================================================
+
+# --- Automaticky generované skripty a výstupy ---
+all_code.txt
+*.log
+*.tlog
+
+# --- Zvukové banky (Nepatří do Gitu kvůli velikosti) ---
 *.sf2
 *.SF2
 *.sf3
 *.SF3
 
-# --- CMake a Build smetí (To, co teď čistíme) ---
+# --- MIDI soubory ---
+*.mid
+*.midi
+
+# --- CMake & Build Artifacts ---
 build/
 bin/
 out/
@@ -13,26 +26,33 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 *.cmake
+
+# --- Visual Studio / MSVC ---
 *.sln
 *.vcxproj
 *.filters
 *.user
-
-# --- Visual Studio & IDE ---
 .vs/
-.vscode/
 x64/
 Debug/
 Release/
 *.obj
 *.pdb
-*.tlog
-*.log
+*.idb
+*.ilk
+*.exp
+*.lib
 
-# --- Knihovny a nástroje ---
+# --- IDE (VS Code / CLion) ---
+.vscode/
+.idea/
+cmake-build-*/
+
+# --- JUCE & Externí knihovny ---
 juce/
 vcpkg/
+vcpkg_installed/
 
-# --- OS ---
+# --- OS specifické ---
 .DS_Store
 Thumbs.db
