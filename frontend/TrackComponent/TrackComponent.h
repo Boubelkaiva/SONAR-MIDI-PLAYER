@@ -1,59 +1,79 @@
 /*
   ==============================================================================
-
     FILE: TrackComponent.h
     PROJECT: SONAR MIDI PLAYER
-    MODULE: frontend/TrackComponent
-    DESCRIPTION: Header for a single MIDI track row.
-                 FIXED: Explicitly declared updateVolume.
-
+    DESCRIPTION: Complete Track UI header with real-time BE callbacks.
   ==============================================================================
 */
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <JuceHeader.h>
+#include <functional>
 
-namespace InstrumentType
+// --- ENUM ---
+enum class InstrumentType
 {
-    enum Type
-    {
-        Piano,
-        Guitar,
-        Bass,
-        Drums,
-        Synth,
-        Other
-    };
-}
+  Piano,
+  Guitar,
+  Bass,
+  Drums,
+  Synth,
+  Other
+};
 
 class TrackComponent : public juce::Component
 {
 public:
-    TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType::Type type);
-    ~TrackComponent() override;
+  TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
+  ~TrackComponent() override;
 
-    // Metody pro aktualizaci obsahu
-    void setInstrument(const juce::String &name, juce::Colour colour);
-    void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
+  // --- REAL-TIME CALLBACKY PRO BACKEND (BE) ---
+  // Logické stavy (True/False)
+  std::function<void(int track, bool isActive)> onMuteChanged;
+  std::function<void(int track, bool isActive)> onSoloChanged;
 
-    // AI: Tato metoda musí být deklarována zde
-    void updateVolume(float newVolume);
+  // MIDI Kontroléry (0-127) - Okamžitě se posílají do Synth v reálném čase
+  std::function<void(int track, int value)> onVolumeChanged; // CC 7
+  std::function<void(int track, int value)> onPanChanged;    // CC 10
+  std::function<void(int track, int value)> onReverbChanged; // CC 91
+  std::function<void(int track, int value)> onChorusChanged; // CC 93
 
-    void paint(juce::Graphics &g) override;
-    void resized() override;
+  // --- FUNKCE PRO AKTUALIZACI STAVU Z BACKENDU ---
+  // Používá se při analýze MIDI metadat nebo při dálkové změně
+  void updateVolume(int newVolume);
+  void updateMuteState(bool isMuted);
+  void updateSoloState(bool isSoloed);
+  void updateFxData(int pan, int reverb, int chorus);
+
+  void setInstrument(const juce::String &name, juce::Colour colour);
+  void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
 
 private:
-    int trackNum;
-    juce::String trackName;
-    InstrumentType::Type instrumentType;
+  void showFxPopup();
 
-    juce::TextButton trackNumberButton;
-    juce::Label nameLabel;
-    juce::Slider volumeSlider;
-    juce::TextButton muteButton;
-    juce::TextButton soloButton;
-    juce::TextButton thirdButton;
+  // --- INTERNÍ DATA (Pro synchronizaci UI) ---
+  int trackNum;
+  juce::String trackName;
+  InstrumentType instrType;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
+  int currentVolume = 100;
+  int currentPan = 64;
+  int currentReverb = 0;
+  int currentChorus = 0;
+
+  bool isMuted = false;
+  bool isSoloed = false;
+
+  // --- UI KOMPONENTY ---
+  juce::TextButton trackNumberButton;
+  juce::Label nameLabel;
+  juce::Slider volumeSlider;
+
+  juce::TextButton muteButton, soloButton, thirdButton, fxButton;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
 };

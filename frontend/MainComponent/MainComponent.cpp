@@ -94,6 +94,46 @@ MainComponent::MainComponent()
         };
     }
 
+    // --- PROPOJENÍ TRACK PANELU S MIDI PLAYEREM (REAL-TIME FX) ---
+    if (trackPanel)
+    {
+        trackPanel->onTrackVolumeChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 7, val);
+        };
+
+        trackPanel->onTrackPanChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 10, val);
+        };
+
+        trackPanel->onTrackReverbChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 91, val);
+        };
+
+        trackPanel->onTrackChorusChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 93, val);
+        };
+
+        trackPanel->onTrackMuteChanged = [this](int trk, bool muted)
+        {
+            if (midiPlayer)
+                midiPlayer->setChannelMute(trk, muted);
+        };
+
+        trackPanel->onTrackSoloChanged = [this](int trk, bool soloed)
+        {
+            if (midiPlayer)
+                midiPlayer->setChannelSolo(trk, soloed);
+        };
+    }
+
     // --- 4. AUTO-LOAD PRVNÍ BANKY ---
     const std::vector<juce::File> &foundBanks = bankManager->getLoadedBanks();
     if (!foundBanks.empty() && midiPlayer)
