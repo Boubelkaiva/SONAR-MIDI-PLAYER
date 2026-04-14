@@ -1,16 +1,16 @@
 /*
-  ==============================================================================
+  ==============================================================================
 
-    FILE: TrackPanelComponent.h
-    NAME: TrackPanelComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Header for the main track list panel (16 tracks).
-                 RESTORED ORIGINAL STRUCTURE.
-                 ADDED: Metadata update method for MIDI integration.
-                 FIXED: Correct method signatures for TrackComponent access.
-                 ADDED: Real-time FX callbacks for MainComponent.
+    FILE: TrackPanelComponent.h
+    NAME: TrackPanelComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Header for the main track list panel (16 tracks).
+                 RESTORED ORIGINAL STRUCTURE.
+                 ADDED: Metadata update method for MIDI integration.
+                 FIXED: Correct method signatures for TrackComponent access.
+                 ADDED: Real-time FX callbacks for MainComponent.
 
-  ==============================================================================
+  ==============================================================================
 */
 
 #pragma once
@@ -44,7 +44,11 @@ public:
   /** * AI: Metoda pro hromadnou aktualizaci z analyzeru.
    * Tato metoda v .cpp volá tracks[index]->updateVolume(volume).
    */
-  void updateTrackFromMetadata(int index, const juce::String &name, float volume);
+  void updateTrackFromMetadata(int index, const juce::String &name, int volume);
+
+  /** * AI: Synchronizace FX dat (Pan, Reverb, Chorus) z analyzeru do UI.
+   */
+  void setTrackFxData(int index, int pan, int reverb, int chorus);
 
   /** Nastavení instrumentu pro konkrétní track (0-15) */
   void setTrackInstrument(int index, const juce::String &name, juce::Colour colour);

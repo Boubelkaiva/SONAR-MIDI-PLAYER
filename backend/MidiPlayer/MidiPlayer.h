@@ -15,6 +15,10 @@
 
 struct tsf;
 
+// --- [EXT MODUL: TSF EFFECTS] ---
+extern "C" void tsf_channel_set_reverb(struct tsf *f, int channel, float level);
+extern "C" void tsf_channel_set_chorus(struct tsf *f, int channel, float level);
+
 class MidiPlayer
 {
 public:

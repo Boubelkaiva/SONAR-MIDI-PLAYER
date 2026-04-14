@@ -280,7 +280,39 @@ void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int val
         int chan = trackNum - 1;
         if (chan >= 0 && chan < 16)
         {
+            // --- 1. STANDARDNÍ TSF OBSLUHA ---
+            // Zpracuje základní MIDI CC (7=Volume, 10=Pan, atd.)
             tsf_channel_midi_control(g_tinyfont, chan, controller, value);
+
+            // --- 2. [EXT MODUL] RUČNÍ SMĚROVÁNÍ EFEKTŮ ---
+            // Protože standardní TSF CC 91/93 ignoruje, posíláme je do tsf_ext.cpp
+            if (controller == 91) // REVERB
+            {
+                float revLevel = (float)value / 127.0f;
+                tsf_channel_set_reverb(g_tinyfont, chan, revLevel);
+
+                // Diagnostický log pro externí modul
+                std::cout << "[EXT MODUL] Reverb Update -> Track: " << trackNum
+                          << " | Level: " << std::fixed << std::setprecision(2) << revLevel << std::endl;
+            }
+            else if (controller == 93) // CHORUS
+            {
+                float choLevel = (float)value / 127.0f;
+                tsf_channel_set_chorus(g_tinyfont, chan, choLevel);
+
+                // Diagnostický log pro externí modul
+                std::cout << "[EXT MODUL] Chorus Update -> Track: " << trackNum
+                          << " | Level: " << std::fixed << std::setprecision(2) << choLevel << std::endl;
+            }
+
+            // --- 3. SPECIÁLNÍ PŘÍPAD: MASTER VOLUME (CC 7) ---
+            // Pokud chceme, aby Master Slider ovládal globální hlasitost (volitelné)
+            if (controller == 7 && trackNum == 0)
+            {
+                setMasterVolume((float)value);
+            }
+
+            // Standardní logování pro každý MIDI event
             std::cout << "[LIVE MIDI] Track: " << trackNum << " | CC: " << controller << " | Val: " << value << std::endl;
         }
     }

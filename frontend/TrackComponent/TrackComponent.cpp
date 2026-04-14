@@ -3,7 +3,8 @@
     FILE: TrackComponent.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Track UI + FxModal integration (PAN / REVERB / CHORUS)
-    FIXED: Removed redundant +64 offsets to keep MIDI 0-127 range.
+    FIXED: Obnovena barva čísel tracků a opraveno předávání dat do modalu.
+    LOGGING: Přidáno podrobné sledování toku FX dat.
   ==============================================================================
 */
 
@@ -69,6 +70,13 @@ TrackComponent::TrackComponent(int trackNumber,
 {
     addAndMakeVisible(trackNumberButton);
     trackNumberButton.setButtonText(juce::String(trackNum));
+
+    // --- FIX: NASTAVENÍ BARVY ČÍSLA TRACKU ---
+    trackNumberButton.setColour(juce::TextButton::textColourOffId, trackNumberTextColor);
+    trackNumberButton.setColour(juce::TextButton::textColourOnId, trackNumberTextColor);
+    // Průhledné pozadí, aby vynikla barva čísla
+    trackNumberButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+
     trackNumberButton.setEnabled(false);
 
     addAndMakeVisible(nameLabel);
@@ -140,6 +148,10 @@ TrackComponent::~TrackComponent()
 // =======================================================
 void TrackComponent::showFxPopup()
 {
+    // LOGOVÁNÍ STAVU PŘED OTEVŘENÍM
+    std::cout << "[TrackComponent] Opening Modal for Track " << trackNum << std::endl;
+    std::cout << "    Current Internal State -> P: " << currentPan << " R: " << currentReverb << " C: " << currentChorus << std::endl;
+
     juce::Component *topParent = getParentComponent();
     while (topParent != nullptr && topParent->getParentComponent() != nullptr)
         topParent = topParent->getParentComponent();
@@ -156,7 +168,7 @@ void TrackComponent::showFxPopup()
     container->modal = new FxModal(
         trackNum,
         FxModal::Listener{
-            // PAN (CC 10) - Hodnota v je 0-127 z FxModalu
+            // PAN (CC 10)
             [this](int v)
             {
                 currentPan = v;
@@ -164,7 +176,7 @@ void TrackComponent::showFxPopup()
                     onPanChanged(trackNum, currentPan);
             },
 
-            // REVERB (CC 91) - Hodnota v je 0-127
+            // REVERB (CC 91)
             [this](int v)
             {
                 currentReverb = v;
@@ -172,7 +184,7 @@ void TrackComponent::showFxPopup()
                     onReverbChanged(trackNum, currentReverb);
             },
 
-            // CHORUS (CC 93) - Hodnota v je 0-127
+            // CHORUS (CC 93)
             [this](int v)
             {
                 currentChorus = v;
@@ -190,6 +202,9 @@ void TrackComponent::showFxPopup()
                     delete container;
                 }
             }});
+
+    // --- FIX: PŘEDÁNÍ DAT Z ANALÝZY DO MODALU PŘI OTEVŘENÍ ---
+    container->modal->setInitialValues(currentPan, currentReverb, currentChorus);
 
     topParent->addAndMakeVisible(container->modal);
     container->modal->setCentrePosition(topParent->getLocalBounds().getCentreX(),
@@ -241,6 +256,9 @@ void TrackComponent::updateSoloState(bool isSoloedState)
 
 void TrackComponent::updateFxData(int pan, int reverb, int chorus)
 {
+    // LOGOVÁNÍ PŘÍCHOZÍCH DAT Z ANALÝZY / PANELU
+    std::cout << "[TrackComponent] updateFxData for Track " << trackNum << ": P=" << pan << " R=" << reverb << " C=" << chorus << std::endl;
+
     currentPan = pan;
     currentReverb = reverb;
     currentChorus = chorus;

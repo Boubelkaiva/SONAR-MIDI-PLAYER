@@ -3,6 +3,7 @@
     FILE: TrackComponent.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Complete Track UI header with real-time BE callbacks.
+    UPDATED: Fix barev čísel tracků a synchronizace FX dat.
   ==============================================================================
 */
 
@@ -11,7 +12,6 @@
 #include <JuceHeader.h>
 #include <functional>
 
-// --- ENUM ---
 enum class InstrumentType
 {
   Piano,
@@ -28,19 +28,15 @@ public:
   TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
   ~TrackComponent() override;
 
-  // --- REAL-TIME CALLBACKY PRO BACKEND (BE) ---
-  // Logické stavy (True/False)
+  // --- CALLBACKY PRO BACKEND ---
   std::function<void(int track, bool isActive)> onMuteChanged;
   std::function<void(int track, bool isActive)> onSoloChanged;
+  std::function<void(int track, int value)> onVolumeChanged;
+  std::function<void(int track, int value)> onPanChanged;
+  std::function<void(int track, int value)> onReverbChanged;
+  std::function<void(int track, int value)> onChorusChanged;
 
-  // MIDI Kontroléry (0-127) - Okamžitě se posílají do Synth v reálném čase
-  std::function<void(int track, int value)> onVolumeChanged; // CC 7
-  std::function<void(int track, int value)> onPanChanged;    // CC 10
-  std::function<void(int track, int value)> onReverbChanged; // CC 91
-  std::function<void(int track, int value)> onChorusChanged; // CC 93
-
-  // --- FUNKCE PRO AKTUALIZACI STAVU Z BACKENDU ---
-  // Používá se při analýze MIDI metadat nebo při dálkové změně
+  // --- AKTUALIZACE STAVU ---
   void updateVolume(int newVolume);
   void updateMuteState(bool isMuted);
   void updateSoloState(bool isSoloed);
@@ -55,7 +51,7 @@ public:
 private:
   void showFxPopup();
 
-  // --- INTERNÍ DATA (Pro synchronizaci UI) ---
+  // --- DATA ---
   int trackNum;
   juce::String trackName;
   InstrumentType instrType;
@@ -68,11 +64,14 @@ private:
   bool isMuted = false;
   bool isSoloed = false;
 
+  // --- BARVA ČÍSLA ---
+  // Tady nastavíme tvou oranžovou/zlatou barvu pro text čísla
+  juce::Colour trackNumberTextColor = juce::Colour(0xffff9000);
+
   // --- UI KOMPONENTY ---
-  juce::TextButton trackNumberButton;
+  juce::TextButton trackNumberButton; // To je to tlačítko vlevo s číslem
   juce::Label nameLabel;
   juce::Slider volumeSlider;
-
   juce::TextButton muteButton, soloButton, thirdButton, fxButton;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)

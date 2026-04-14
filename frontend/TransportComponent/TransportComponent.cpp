@@ -71,7 +71,10 @@ TransportComponent::TransportComponent(MidiPlayer &player) : midiPlayer(player)
         dialogOptions.useNativeTitleBar = true;
         dialogOptions.resizable = false;
 
-        dialogOptions.launchAsync();
+        if (auto *dw = dialogOptions.launchAsync())
+        {
+            dw->setIcon(juce::Image()); // Odstraní výchozí JUCE ikonu z dialogu
+        }
     };
 }
 

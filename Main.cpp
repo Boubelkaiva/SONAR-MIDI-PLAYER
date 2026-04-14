@@ -13,7 +13,8 @@
 
 #include <JuceHeader.h>
 #include "frontend/MainComponent/MainComponent.h"
-#include "backend/BankDNAExtractor/BankDNAExtractor.h" // SOSÁK JE TADY
+#include "backend/BankDNAExtractor/BankDNAExtractor.h"
+#include "frontend/MainComponent/Icons.h" // <--- PŘIDÁNO: Inkluze s naší ikonou
 
 // ==============================================================================
 class MainAppWindow : public juce::DocumentWindow
@@ -25,6 +26,10 @@ public:
                          DocumentWindow::allButtons)
     {
         setUsingNativeTitleBar(true);
+
+        // --- NASTAVENÍ IKONY ---
+        // Načteme naši 16x16 ikonu a nastavíme ji oknu
+        setIcon(Icons::getSonarIcon());
 
         // Inicializace hlavní komponenty
         mainComponent = std::make_unique<MainComponent>();

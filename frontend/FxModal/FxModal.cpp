@@ -3,10 +3,12 @@
     FILE: FxModal.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Implementation with rounded corners and correct MIDI 0-127 ranges.
+    UPDATED: Přidán podrobný debug výpis pro kontrolu příchozích dat z analýzy.
   ==============================================================================
 */
 
 #include "FxModal.h"
+#include <iostream>
 
 FxModal::FxModal(int trackNumber, Listener l)
     : trackNum(trackNumber), listener(l)
@@ -55,11 +57,11 @@ FxModal::FxModal(int trackNumber, Listener l)
     chorusSlider.textFromValueFunction = [](double v)
     { return juce::String((int)v); };
 
-    // --- CALLBACKS (S LOGOVÁNÍM DO TERMINÁLU) ---
+    // --- CALLBACKS ---
     panSlider.onValueChange = [this]
     {
         int val = (int)panSlider.getValue();
-        std::cout << "[FxModal] PAN slider changed: " << val << std::endl;
+        std::cout << "[FxModal] UI Interaction - PAN changed: " << val << std::endl;
         if (listener.onPanChanged)
             listener.onPanChanged(val);
     };
@@ -67,7 +69,7 @@ FxModal::FxModal(int trackNumber, Listener l)
     reverbSlider.onValueChange = [this]
     {
         int val = (int)reverbSlider.getValue();
-        std::cout << "[FxModal] REVERB slider changed: " << val << std::endl;
+        std::cout << "[FxModal] UI Interaction - REVERB changed: " << val << std::endl;
         if (listener.onReverbChanged)
             listener.onReverbChanged(val);
     };
@@ -75,13 +77,31 @@ FxModal::FxModal(int trackNumber, Listener l)
     chorusSlider.onValueChange = [this]
     {
         int val = (int)chorusSlider.getValue();
-        std::cout << "[FxModal] CHORUS slider changed: " << val << std::endl;
+        std::cout << "[FxModal] UI Interaction - CHORUS changed: " << val << std::endl;
         if (listener.onChorusChanged)
             listener.onChorusChanged(val);
     };
 }
 
 FxModal::~FxModal() {}
+
+/** Nastaví počáteční hodnoty načtené z analýzy MIDI souboru */
+void FxModal::setInitialValues(int pan, int reverb, int chorus)
+{
+    // --- PODROBNÝ VÝPIS DO TERMINÁLU ---
+    std::cout << "--------------------------------------------------" << std::endl;
+    std::cout << "[FxModal] DATA RECEIVED FOR TRACK " << trackNum << ":" << std::endl;
+    std::cout << "   -> PAN:    " << pan << std::endl;
+    std::cout << "   -> REVERB: " << reverb << std::endl;
+    std::cout << "   -> CHORUS: " << chorus << std::endl;
+    std::cout << "--------------------------------------------------" << std::endl;
+
+    // Používáme dontSendNotification, abychom při otevírání okna
+    // nespustili zpětnou vazbu do Playeru, protože ty hodnoty už tam jsou.
+    panSlider.setValue(pan, juce::dontSendNotification);
+    reverbSlider.setValue(reverb, juce::dontSendNotification);
+    chorusSlider.setValue(chorus, juce::dontSendNotification);
+}
 
 void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &name)
 {

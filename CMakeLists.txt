@@ -46,6 +46,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     backend/BankManager/BankManager.h
     backend/MidiMapper/MidiMapper.cpp
     backend/MidiMapper/MidiMapper.h
+    backend/MidiPlayer/tsf_ext.cpp
     backend/BankDNAExtractor/BankDNAExtractor.cpp
     backend/BankDNAExtractor/BankDNAExtractor.h
     backend/MidiAnalyzer/MidiAnalyzer.cpp

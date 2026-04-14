@@ -39,8 +39,12 @@ public:
   void paint(juce::Graphics &g) override;
   void resized() override;
 
-  // --- CALLBACK PRO AUDIO HW ---
+  // --- CALLBACKY ---
   void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+
+  /** AI FIX: Vynutí inicializaci audia v momentě, kdy je komponenta vložena do okna.
+      Řeší problém s tichem po změně inicializace v Main.cpp. */
+  void parentHierarchyChanged() override;
 
 private:
   // AI: Audio engine a správa bank (Backend)

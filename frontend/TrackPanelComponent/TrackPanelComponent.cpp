@@ -41,12 +41,14 @@ TrackPanelComponent::TrackPanelComponent()
                 onTrackPanChanged(trk - 1, val);
         };
 
+        // Propojení Reverb slideru
         tracks[i]->onReverbChanged = [this](int trk, int val)
         {
             if (onTrackReverbChanged)
                 onTrackReverbChanged(trk - 1, val);
         };
 
+        // Propojení Chorus slideru
         tracks[i]->onChorusChanged = [this](int trk, int val)
         {
             if (onTrackChorusChanged)
@@ -72,7 +74,7 @@ TrackPanelComponent::TrackPanelComponent()
 /** * AI: Klíčová metoda pro propojení Backend Analyzeru s Frontend UI.
  * MainComponent volá tuhle metodu pro každý kanál po načtení MIDI.
  */
-void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String &name, float volume)
+void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String &name, int volume)
 {
     if (index >= 0 && index < numTracks)
     {
@@ -80,6 +82,20 @@ void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String 
         tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastní tmavě šedá barva
 
         tracks[index]->updateVolume(volume);
+    }
+}
+
+/** * AI: Synchronizace FX dat (Pan, Reverb, Chorus) z analyzeru do konkrétního tracku.
+ * Metoda, která chyběla a kterou volá MainComponent.
+ */
+void TrackPanelComponent::setTrackFxData(int index, int pan, int reverb, int chorus)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        if (tracks[index] != nullptr)
+        {
+            tracks[index]->updateFxData(pan, reverb, chorus);
+        }
     }
 }
 

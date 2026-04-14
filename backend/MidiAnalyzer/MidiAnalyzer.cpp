@@ -3,7 +3,7 @@
     FILE: MidiAnalyzer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Deep Event List scanning with TSF Index verification.
-    UPDATED: Oprava getRawDataSize pro SysEx analýzu.
+    UPDATED: Oprava volání kanálových zpráv a rekapitulace FX (Reverb/Chorus).
   ==============================================================================
 */
 
@@ -27,6 +27,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
         d.tsfIndex = -1;
         d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
         d.initialVolume = 100.0f;
+        d.initialReverb = 0;
+        d.initialChorus = 0;
         results.push_back(d);
     }
 
@@ -51,7 +53,6 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                 auto &msg = m->message;
                 if (msg.isSysEx())
                 {
-                    // OPRAVA: V JUCE používáme getRawData a getRawDataSize
                     const uint8_t *data = msg.getRawData();
                     int size = msg.getRawDataSize();
 
@@ -78,6 +79,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             for (auto *m : *seq)
             {
                 auto &msg = m->message;
+
+                // OPRAVA: V JUCE se kanálová zpráva pozná tak, že getChannel() vrátí > 0
                 int chRaw = msg.getChannel();
 
                 if (chRaw >= 1 && chRaw <= 16)
@@ -95,32 +98,37 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                             results[chIdx].bankLSB = val;
                         else if (ctrl == 7)
                             results[chIdx].initialVolume = (float)val;
+                        else if (ctrl == 91)
+                            results[chIdx].initialReverb = val;
+                        else if (ctrl == 93)
+                            results[chIdx].initialChorus = val;
                     }
                     else if (msg.isProgramChange())
                     {
                         int prog = msg.getProgramChangeNumber();
                         results[chIdx].programNumber = prog;
 
-                        // Zjištění TSF Indexu pomocí Mapperu
-                        int tsfIdx = -1;
                         if (mapper != nullptr)
                         {
-                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
+                            results[chIdx].tsfIndex = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
                         }
-
-                        results[chIdx].tsfIndex = tsfIdx;
 
                         bool isDrum = (chRaw == 10 || results[chIdx].bankMSB >= 126);
                         results[chIdx].instrumentName = getGMName(prog, results[chIdx].bankMSB, isDrum);
-
-                        std::cout << "[DEBUG] Ch " << std::setw(2) << chRaw
-                                  << " | Prog: " << std::setw(3) << prog
-                                  << " | Bank: " << std::setw(3) << results[chIdx].bankMSB
-                                  << " | TSF_Idx: " << std::setw(5) << tsfIdx
-                                  << " | Instrument: " << results[chIdx].instrumentName << std::endl;
                     }
                 }
             }
+        }
+
+        // --- 3. REKAPITULACE (Zde se ověří hodnoty proti Sonaru) ---
+        std::cout << "\n--- [FINÁLNÍ REKAPITULACE NASTAVENÍ KANÁLŮ] ---" << std::endl;
+        for (int i = 0; i < 16; ++i)
+        {
+            std::cout << "CH " << std::setw(2) << results[i].channel
+                      << " | INSTR: " << std::setw(16) << results[i].instrumentName
+                      << " | REV: " << std::setw(3) << results[i].initialReverb
+                      << " | CHO: " << std::setw(3) << results[i].initialChorus
+                      << " | VOL: " << std::setw(3) << (int)results[i].initialVolume << std::endl;
         }
         std::cout << "--- [KONEC ANALÝZY] ---\n"
                   << std::endl;

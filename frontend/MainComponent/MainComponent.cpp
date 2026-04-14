@@ -3,11 +3,12 @@
     FILE: MainComponent.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Main container - Async loading and Audio HW synchronization.
-    FIXED: Automatické přepínání výstupu při změně zařízení.
+    FIXED: Doplněno volání setTrackFxData a podrobné logování synchronizace FX.
   ==============================================================================
 */
 
 #include "MainComponent.h"
+#include "Icons.h"
 #include <iostream>
 
 MainComponent::MainComponent()
@@ -78,8 +79,29 @@ MainComponent::MainComponent()
 
                     juce::MessageManager::callAsync([this, trackMetadata]() 
                     {
+                        std::cout << "--- [Main] Syncing metadata to UI ---" << std::endl;
                         for (const auto &data : trackMetadata)
-                            trackPanel->updateTrackFromMetadata(data.channel - 1, data.instrumentName, data.initialVolume);
+                        {
+                            int trackIdx = data.channel - 1;
+
+                            // Logování toho, co MainComponent právě drží v ruce
+                            std::cout << "[Main] Track " << data.channel 
+                                      << " -> R:" << (int)data.initialReverb 
+                                      << " C:" << (int)data.initialChorus << std::endl;
+
+                            // Aktualizace základních info v UI
+                            trackPanel->updateTrackFromMetadata(trackIdx, data.instrumentName, data.initialVolume);
+                            
+                            // --- FIX: POSÍLÁME DATA DO TRACK PANELU (Aby o nich věděly TrackComponents) ---
+                            trackPanel->setTrackFxData(trackIdx, 64, (int)data.initialReverb, (int)data.initialChorus);
+
+                            // Synchronizace FX dat přímo do playeru (zvuk)
+                            if (midiPlayer) {
+                                midiPlayer->sendRealTimeControlChange(data.channel, 91, (int)data.initialReverb);
+                                midiPlayer->sendRealTimeControlChange(data.channel, 93, (int)data.initialChorus);
+                            }
+                        }
+                        std::cout << "--- [Main] Sync complete ---" << std::endl;
                     });
 
                     if (midiPlayer)
@@ -211,4 +233,15 @@ void MainComponent::resized()
 
     if (trackPanel)
         trackPanel->setBounds(area);
+}
+
+void MainComponent::parentHierarchyChanged()
+{
+    // Toto se zavolá v momentě, kdy je komponenta vložena do okna (Main.cpp)
+    // Tady vynutíme, aby si JUCE všimlo, že chceme hrát zvuk.
+    if (getParentComponent() != nullptr)
+    {
+        std::cout << "[SYSTEM] MainComponent připojen k oknu, restartuji audio..." << std::endl;
+        setAudioChannels(0, 2);
+    }
 }
