@@ -3,86 +3,76 @@
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine with Mute/Solo logic and Real-time CC support.
-    UPDATED: Integrated Mute/Solo state arrays and proper method signatures.
+    UPDATED: Překlopeno na FluidSynth při zachování původní logiky.
   ==============================================================================
 */
 
 #pragma once
 
 #include <JuceHeader.h>
+#include <fluidsynth.h> // Nové srdce
 #include "../MidiMapper/MidiMapper.h"
 #include "../MidiAnalyzer/MidiAnalyzer.h"
 
-struct tsf;
-
-// --- [EXT MODUL: TSF EFFECTS] ---
-extern "C" void tsf_channel_set_reverb(struct tsf *f, int channel, float level);
-extern "C" void tsf_channel_set_chorus(struct tsf *f, int channel, float level);
-
-class MidiPlayer
+class MidiPlayer : public juce::AudioSource // Přidáno pro standardní JUCE streaming
 {
 public:
-  MidiPlayer();
-  ~MidiPlayer();
+    MidiPlayer();
+    ~MidiPlayer();
 
-  // --- AUDIO ZÁKLAD ---
-  void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
-  void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill);
-  void releaseResources();
+    // --- AUDIO ZÁKLAD (Zachováno) ---
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
+    void releaseResources() override;
 
-  // --- SPRÁVA DAT ---
-  void loadSoundFont(const juce::File &sf2File);
-  void loadMidiFile(const juce::File &midiFile);
-  void applyAnalysisResults(const std::vector<TrackData> &results);
+    // --- SPRÁVA DAT (Zachováno) ---
+    void loadSoundFont(const juce::File &sf2File);
+    void loadMidiFile(const juce::File &midiFile);
+    void applyAnalysisResults(const std::vector<TrackData> &results);
 
-  // --- TRANSPORT ---
-  void play();
-  void stop();
-  void pause();
-  void setMasterVolume(float vol);
+    // --- TRANSPORT (Zachováno) ---
+    void play();
+    void stop();
+    void pause();
+    void setMasterVolume(float vol);
 
-  // --- REAL-TIME OVLÁDÁNÍ (TTS-1 STYLE) ---
-  /** Posílá CC zprávy přímo do syntézy (Volume=7, Pan=10, Reverb=91, Chorus=93) */
-  void sendRealTimeControlChange(int trackNum, int controller, int value);
+    // --- REAL-TIME OVLÁDÁNÍ (TTS-1 STYLE - Zachováno) ---
+    void sendRealTimeControlChange(int trackNum, int controller, int value);
 
-  // --- OVLÁDÁNÍ MUTE / SOLO ---
-  /** Nastaví Mute pro kanál (0-15) a okamžitě utne hrající hlasy v .cpp */
-  void setChannelMute(int trackIdx, bool shouldMute);
+    // --- OVLÁDÁNÍ MUTE / SOLO (Zachováno) ---
+    void setChannelMute(int trackIdx, bool shouldMute);
+    void setChannelSolo(int trackIdx, bool shouldSolo);
+    bool isChannelAudible(int channel) const;
 
-  /** Nastaví Solo pro kanál (0-15) */
-  void setChannelSolo(int trackIdx, bool shouldSolo);
-
-  /** Pomocná funkce pro vyhodnocení, zda má kanál produkovat zvuk (zohledňuje Mute i Solo) */
-  bool isChannelAudible(int channel) const;
-
-  // --- GETTERY PRO UI ---
-  MidiMapper *getMapper() const { return mapper.get(); }
-  juce::AudioDeviceManager &getDeviceManager() { return deviceManager; }
+    // --- GETTERY PRO UI (Zachováno) ---
+    MidiMapper *getMapper() const { return mapper.get(); }
+    juce::AudioDeviceManager &getDeviceManager() { return const_cast<juce::AudioDeviceManager &>(deviceManager); }
 
 private:
-  void processMidiMessage(const juce::MidiMessage &m);
+    void processMidiMessage(const juce::MidiMessage &m);
 
-  juce::AudioDeviceManager deviceManager;
+    // FluidSynth objekty místo tsf
+    fluid_settings_t *settings = nullptr;
+    fluid_synth_t *synth = nullptr;
 
-  struct tsf *g_tinyfont = nullptr;
-  double currentSampleRate = 48000.0;
-  juce::AudioBuffer<float> renderBuffer;
+    juce::AudioDeviceManager deviceManager;
+    double currentSampleRate = 48000.0;
 
-  // MIDI stav pro každý z 16 kanálů (pro přepínání bank)
-  int currentBankMSB[16];
-  int currentBankLSB[16];
+    // MIDI stav pro každý z 16 kanálů
+    int currentBankMSB[16];
+    int currentBankLSB[16];
 
-  // --- STAVY PRO MUTE A SOLO ---
-  bool channelMuted[16];
-  bool channelSolo[16];
+    // --- STAVY PRO MUTE A SOLO (Přesně podle tvého vzoru) ---
+    bool channelMuted[16];
+    bool channelSolo[16];
 
-  MidiMode currentMode = MidiMode::GM;
-  juce::MidiMessageSequence midiSequence;
-  double playheadSeconds = 0.0;
-  bool isPlaying = false;
-  float masterVolume = 1.0f;
+    MidiMode currentMode = MidiMode::GM;
+    juce::MidiMessageSequence midiSequence;
+    double playheadSeconds = 0.0;
+    bool isPlaying = false;
+    float masterVolume = 1.0f;
 
-  std::unique_ptr<MidiMapper> mapper;
+    std::unique_ptr<MidiMapper> mapper;
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPlayer)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPlayer)
 };

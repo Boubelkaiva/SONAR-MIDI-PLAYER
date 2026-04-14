@@ -1,17 +1,17 @@
 # ==============================================================================
 #
-#    FILE: CMakeLists.txt
-#    PROJECT: SONAR MIDI PLAYER
-#    DESCRIPTION: Central build configuration.
-#                 UPDATED: Přechod z TSF na FluidSynth engine (v2.0.0).
-#                 REMOVED: tsf_ext.cpp (již není potřeba).
-#    AUTHOR: Iva
+#   FILE: CMakeLists.txt
+#   PROJECT: SONAR MIDI PLAYER
+#   DESCRIPTION: Central build configuration.
+#                UPDATED: Added FxModal + BankDNAExtractor.cpp (v1.2.0).
+#                FIXED: Correct CMake comment syntax.
+#   AUTHOR: Iva
 #
 # ==============================================================================
 
 cmake_minimum_required(VERSION 3.25)
 
-project(SonarMidiPlayer VERSION 2.0.0 LANGUAGES CXX)
+project(SonarMidiPlayer VERSION 1.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,9 +22,6 @@ if(MSVC)
 else()
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
 endif()
-
-# --- FluidSynth Dependency (OPRAVENO PRO VCPKG) ---
-find_package(FluidSynth CONFIG REQUIRED)
 
 # --- JUCE ---
 add_subdirectory(juce)
@@ -49,7 +46,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     backend/BankManager/BankManager.h
     backend/MidiMapper/MidiMapper.cpp
     backend/MidiMapper/MidiMapper.h
-    # ODEBRÁNO: backend/MidiPlayer/tsf_ext.cpp (nahrazeno FluidSynthem)
+    backend/MidiPlayer/tsf_ext.cpp
     backend/BankDNAExtractor/BankDNAExtractor.cpp
     backend/BankDNAExtractor/BankDNAExtractor.h
     backend/MidiAnalyzer/MidiAnalyzer.cpp
@@ -69,20 +66,12 @@ target_sources(${PROJECT_NAME} PRIVATE
     frontend/TrackComponent/TrackComponent.cpp
     frontend/TrackComponent/TrackComponent.h
 
-    # FX MODAL
+    # ✅ FX MODAL (DŮLEŽITÉ – FIX LNK2019)
     frontend/FxModal/FxModal.cpp
     frontend/FxModal/FxModal.h
 )
 
 juce_generate_juce_header(${PROJECT_NAME})
-
-# --- Inclusion and Linking ---
-
-target_include_directories(${PROJECT_NAME} PRIVATE
-    .
-    frontend
-    backend
-)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_core
@@ -95,7 +84,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_audio_devices
     juce::juce_audio_formats
     juce::juce_audio_processors
-    FluidSynth::libfluidsynth    # Oficiální vcpkg target pro FluidSynth
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    .
+    frontend
+    backend
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

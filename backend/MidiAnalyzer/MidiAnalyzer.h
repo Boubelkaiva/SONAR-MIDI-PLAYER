@@ -2,8 +2,8 @@
   ==============================================================================
     FILE: MidiAnalyzer.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Logic for extracting metadata from MIDI/KAR files.
-    UPDATED: Integrated MidiMapper for TSF Index verification (v1.3.0).
+    DESCRIPTION: Logika pro extrakci metadat z MIDI/KAR souborů.
+    UPDATED: Přechod na FluidSynth – nahrazení TSF Indexu (v2.0.0).
   ==============================================================================
 */
 
@@ -11,40 +11,49 @@
 
 #include <JuceHeader.h>
 
-// Dopředná deklarace, abychom nemuseli vkládat celý header mapperu
+// Dopředná deklarace pro minimalizaci závislostí
 class MidiMapper;
 
-/** Struktura pro přenos informací o jednom MIDI kanálu do UI */
+/** * Struktura pro přenos informací o jednom MIDI kanálu do UI.
+ * Uchovává stav kanálu zjištěný hloubkovou analýzou MIDI eventů.
+ */
 struct TrackData
 {
-  int channel;                 // 1-16
-  int programNumber;           // 0-127 (GM Program)
-  int bankMSB;                 // CC 0 - Klíčové pro Yamaha 127 / Roland 128
-  int bankLSB;                 // CC 32 - Variace
-  int tsfIndex;                // SKUTEČNÝ index v SoundFontu (přidáno pro debug)
-  juce::String instrumentName; // Textový název nástroje
-  float initialVolume;         // Hlasitost 0-127 (podle CC 7)
-  juce::String trackName;      // Název tracku z Meta Eventů
+    int channel;       // 1-16
+    int programNumber; // 0-127 (MIDI Program Change)
+    int bankMSB;       // CC 0 (Klíčové pro Yamaha XG / Roland GS)
+    int bankLSB;       // CC 32 (Variace / Bank Select LSB)
 
-  // PŘIDÁNO PRO FX MODAL:
-  int initialReverb = 0; // CC 91 - Výchozí úroveň dozvuku
-  int initialChorus = 0; // CC 93 - Výchozí úroveň chorusu
+    // Změněno z tsfIndex na presetIndex pro kompatibilitu s FluidSynth
+    int presetIndex; // Skutečné ID nástroje v aktuálním SoundFontu
+
+    juce::String instrumentName; // Textový název nástroje (GM nebo SF2 název)
+    float initialVolume;         // Hlasitost 0-127 (z CC 7)
+    juce::String trackName;      // Název tracku z Meta Eventů (pokud existuje)
+
+    // Data pro tvůj FX MODAL:
+    int initialReverb = 0; // CC 91 - Výchozí úroveň Reverb sendu
+    int initialChorus = 0; // CC 93 - Výchozí úroveň Chorus sendu
+
+    // Zpětná kompatibilita (volitelné):
+    // Pokud máš v UI hodně odkazů na název tsfIndex, můžeš nechat alias:
+    int &tsfIndex = presetIndex;
 };
 
 class MidiAnalyzer
 {
 public:
-  MidiAnalyzer() = default;
-  ~MidiAnalyzer() = default;
+    MidiAnalyzer() = default;
+    ~MidiAnalyzer() = default;
 
-  /** * Otevře soubor a vrátí seznam dat pro všech 16 kanálů.
-   * @param file MIDI soubor k analýze
-   * @param mapper Ukazatel na instanci mapperu pro ověření TSF indexů
-   */
-  std::vector<TrackData> analyzeFile(const juce::File &file, MidiMapper *mapper);
+    /** * Otevře soubor a vrátí seznam dat pro všech 16 kanálů.
+     * @param file MIDI soubor k analýze
+     * @param mapper Ukazatel na instanci mapperu pro ověření FluidSynth bank
+     */
+    std::vector<TrackData> analyzeFile(const juce::File &file, MidiMapper *mapper);
 
 private:
-  /** * Pomocná metoda pro převod čísla programu na název.
-   */
-  juce::String getGMName(int p, int bank, bool isDrumChannel);
+    /** * Pomocná metoda pro převod čísla programu a banky na srozumitelný název.
+     */
+    juce::String getGMName(int p, int bank, bool isDrumChannel);
 };

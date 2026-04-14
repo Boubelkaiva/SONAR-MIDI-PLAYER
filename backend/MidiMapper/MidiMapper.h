@@ -1,15 +1,13 @@
 /*
   ==============================================================================
     FILE: MidiMapper.h
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
   ==============================================================================
 */
 
 #pragma once
-
-#include <JuceHeader.h> // PŘIDÁNO: Aby mapper znal juce::String
+#include <JuceHeader.h>
 #include <cstdint>
-
-struct tsf;
 
 enum class MidiMode
 {
@@ -18,20 +16,28 @@ enum class MidiMode
     XG
 };
 
+// Struktura pro přenos výsledku mapování
+struct InstrumentInfo
+{
+    int bank;
+    int program;
+    juce::String name;
+};
+
 class MidiMapper
 {
 public:
-    MidiMapper(struct tsf *fontInstance);
+    MidiMapper(); // Konstruktor bez TSF
     ~MidiMapper();
 
+    // Tato funkce musí existovat, protože ji volá MidiAnalyzer
     int findDeepPresetIndex(int bankMSB, int prog, int channel, MidiMode mode);
+
+    // Tuto funkci používáš v CPP pro získání detailů
+    InstrumentInfo getInstrumentInfo(int bankMSB, int prog, int channel, MidiMode mode);
+
     static MidiMode detectModeFromSysEx(const uint8_t *data, int size);
 
-    void updateTSFInstance(struct tsf *newTsf)
-    {
-        g_tinyfont = newTsf;
-    }
-
 private:
-    struct tsf *g_tinyfont;
+    // AI: FluidSynth nepotřebuje držet instanci fontu zde, řeší si to synth v MidiPlayeru
 };

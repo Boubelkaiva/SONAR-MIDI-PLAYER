@@ -2,8 +2,8 @@
   ==============================================================================
     FILE: MidiAnalyzer.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Deep Event List scanning s ověřením FluidSynth bank.
-    UPDATED: Přechod z TSF na FluidSynth engine (v2.0).
+    DESCRIPTION: Deep Event List scanning with TSF Index verification.
+    UPDATED: Oprava volání kanálových zpráv a rekapitulace FX (Reverb/Chorus).
   ==============================================================================
 */
 
@@ -24,7 +24,7 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
         d.programNumber = 0;
         d.bankMSB = 0;
         d.bankLSB = 0;
-        d.tsfIndex = -1; // AI: Ponecháno pro kompatibilitu s UI, nyní reprezentuje FluidSynth ID
+        d.tsfIndex = -1;
         d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
         d.initialVolume = 100.0f;
         d.initialReverb = 0;
@@ -68,7 +68,7 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                 break;
         }
 
-        std::cout << "\n--- [START ANALÝZY EVENT LISTU (FLUID EDITION)] ---" << std::endl;
+        std::cout << "\n--- [START ANALÝZY EVENT LISTU] ---" << std::endl;
         std::cout << "[INFO] Detekovaný mód souboru: "
                   << (detectedMode == MidiMode::XG ? "Yamaha XG" : (detectedMode == MidiMode::GS ? "Roland GS" : "General MIDI")) << std::endl;
 
@@ -80,7 +80,7 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             {
                 auto &msg = m->message;
 
-                // JUCE kanály jsou 1-16
+                // OPRAVA: V JUCE se kanálová zpráva pozná tak, že getChannel() vrátí > 0
                 int chRaw = msg.getChannel();
 
                 if (chRaw >= 1 && chRaw <= 16)
@@ -108,7 +108,6 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                         int prog = msg.getProgramChangeNumber();
                         results[chIdx].programNumber = prog;
 
-                        // AI: Klíčová změna – mapper nyní vrací ID pro FluidSynth
                         if (mapper != nullptr)
                         {
                             results[chIdx].tsfIndex = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
@@ -121,16 +120,18 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             }
         }
 
-        // --- 3. REKAPITULACE ---
-        std::cout << "\n--- [FINÁLNÍ ANALÝZA KANÁLŮ - OK] ---" << std::endl;
+        // --- 3. REKAPITULACE (Zde se ověří hodnoty proti Sonaru) ---
+        std::cout << "\n--- [FINÁLNÍ REKAPITULACE NASTAVENÍ KANÁLŮ] ---" << std::endl;
         for (int i = 0; i < 16; ++i)
         {
             std::cout << "CH " << std::setw(2) << results[i].channel
                       << " | INSTR: " << std::setw(16) << results[i].instrumentName
-                      << " | B: " << results[i].bankMSB
-                      << " | P: " << results[i].programNumber
-                      << " | FS_ID: " << results[i].tsfIndex << std::endl;
+                      << " | REV: " << std::setw(3) << results[i].initialReverb
+                      << " | CHO: " << std::setw(3) << results[i].initialChorus
+                      << " | VOL: " << std::setw(3) << (int)results[i].initialVolume << std::endl;
         }
+        std::cout << "--- [KONEC ANALÝZY] ---\n"
+                  << std::endl;
     }
 
     return results;
@@ -141,7 +142,6 @@ juce::String MidiAnalyzer::getGMName(int p, int bank, bool isDrumChannel)
     if (isDrumChannel || bank >= 126)
         return "Drum Kit (" + juce::String(p) + ")";
 
-    // Původní GM kategorizace zůstává stejná pro přehlednost v UI
     if (p >= 0 && p <= 7)
         return "Piano";
     if (p >= 8 && p <= 15)

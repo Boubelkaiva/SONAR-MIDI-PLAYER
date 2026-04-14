@@ -2,8 +2,9 @@
   ==============================================================================
     COMPONENT: BankDNAExtractor.h
     MODULE: backend/BankDNAExtractor/BankDNAExtractor.h
-    DESCRIPTION: Samostatná utilita pro bleskovou extrakci DNA ze SoundFontu.
-                 Provádí se při nahrávání do paměti, aby player zůstal odlehčený.
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
+    DESCRIPTION: Samostatná utilita pro precizní extrakci DNA (bank a presetů)
+                 ze SoundFontu pomocí FluidSynth API.
     AUTHOR: Iva
   ==============================================================================
 */
@@ -13,22 +14,24 @@
 
 /**
  * Statická utilita pro analýzu SoundFont bank.
- * Tato třída je navržena tak, aby vytvořila JSON mapu nástrojů ještě předtím,
- * než se banka plně inicializuje v MIDI přehrávači.
+ * Tato třída extrahuje reálná čísla bank a programů ze SF2 souboru a ukládá je
+ * do JSON mapy, kterou následně využívá UI pro zobrazení seznamů nástrojů.
  */
 class BankDNAExtractor
 {
 public:
-  /**
-   * Analyzuje SF2/SF3 soubor a vytáhne DNA (seznam nástrojů) do JSONu.
-   * Volá se v momentě loadování do paměti.
-   * * @param sf2File Soubor se SoundFontem k analýze.
-   * @return true pokud byl JSON úspěšně vytvořen.
-   */
-  static bool extractToJSON(const juce::File &sf2File);
+    /**
+     * Analyzuje SF2/SF3 soubor a vytáhne DNA (seznam nástrojů) do JSONu.
+     * FluidSynth verze prochází reálné presety a banky definované v souboru.
+     * * @param sf2File Soubor se SoundFontem k analýze.
+     * @return true pokud byl JSON úspěšně vytvořen.
+     */
+    static bool extractToJSON(const juce::File &sf2File);
 
 private:
-  // AI: Utility class nesmí mít instanci.
-  BankDNAExtractor() = delete;
-  ~BankDNAExtractor() = delete;
+    // Utility class – zakázání instance (podle tvého standardu).
+    BankDNAExtractor() = delete;
+    ~BankDNAExtractor() = delete;
+    BankDNAExtractor(const BankDNAExtractor &) = delete;
+    BankDNAExtractor &operator=(const BankDNAExtractor &) = delete;
 };
