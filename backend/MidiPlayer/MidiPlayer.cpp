@@ -3,7 +3,7 @@
     FILE: MidiPlayer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine s FluidSynth při zachování Mute/Solo a CC logiky.
-    UPDATED: Přechod z TSF na FluidSynth.
+    UPDATED: Implementace automatického restartu a znovunačtení SF2 při změně výstupu.
   ==============================================================================
 */
 
@@ -22,9 +22,10 @@ MidiPlayer::MidiPlayer()
     fluid_settings_setnum(settings, "synth.sample-rate", currentSampleRate);
     fluid_settings_setint(settings, "synth.polyphony", 256);
 
-    // Aktivace efektů přímo v jádru (místo tvého externího modulu v TSF)
+    // Aktivace efektů přímo v jádru
     fluid_settings_setstr(settings, "synth.reverb.active", "yes");
     fluid_settings_setstr(settings, "synth.chorus.active", "yes");
+    fluid_settings_setnum(settings, "synth.gain", 1.0);
 
     synth = new_fluid_synth(settings);
     mapper = std::make_unique<MidiMapper>();
@@ -47,7 +48,7 @@ MidiPlayer::~MidiPlayer()
         delete_fluid_settings(settings);
 }
 
-// --- LOGIKA MUTE / SOLO (Identická s tvým originálem) ---
+// --- LOGIKA MUTE / SOLO ---
 bool MidiPlayer::isChannelAudible(int channel) const
 {
     bool anySolo = false;
@@ -65,8 +66,41 @@ bool MidiPlayer::isChannelAudible(int channel) const
 
 void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-    currentSampleRate = sampleRate;
-    fluid_settings_setnum(settings, "synth.sample-rate", sampleRate);
+    // 1. POJISTKA: Pokud dostaneme neplatnou frekvenci, nic neděláme.
+    // O samotný reset hardware se teď stará AudioWatchdog v MainComponent.
+    if (sampleRate <= 0)
+        return;
+
+    // 2. RESTART ENGINE: Pokud se frekvence změnila (např. přepnutí na jiný HW),
+    // musíme FluidSynth restartovat s novou hodnotou.
+    if (synth == nullptr || std::abs(currentSampleRate - sampleRate) > 0.01)
+    {
+        std::cout << "[MidiPlayer] Inicializace synthu na frekvenci: " << sampleRate << " Hz" << std::endl;
+
+        // Korektní smazání starého synthu
+        if (synth != nullptr)
+        {
+            delete_fluid_synth(synth);
+            synth = nullptr;
+        }
+
+        currentSampleRate = sampleRate;
+
+        // Musíme nastavit frekvenci v settings dřív, než vytvoříme nový synth
+        fluid_settings_setnum(settings, "synth.sample-rate", currentSampleRate);
+        synth = new_fluid_synth(settings);
+
+        // Zapneme efekty v novém jádru
+        fluid_settings_setstr(settings, "synth.reverb.active", "yes");
+        fluid_settings_setstr(settings, "synth.chorus.active", "yes");
+
+        // Pokud jsme už měli načtený SoundFont, musíme ho do nového synthu znovu nalít
+        if (lastSf2Path.isNotEmpty())
+        {
+            fluid_synth_sfload(synth, lastSf2Path.toRawUTF8(), 1);
+            std::cout << "[MidiPlayer] SoundFont automaticky obnoven." << std::endl;
+        }
+    }
 }
 
 void MidiPlayer::releaseResources() {}
@@ -82,7 +116,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
     double blockDuration = (double)samplesToRender / currentSampleRate;
     double nextPlayheadTime = playheadSeconds + blockDuration;
 
-    // --- MIDI EVENTY (Tvá původní smyčka) ---
+    // --- MIDI EVENTY (Původní smyčka) ---
     for (int i = 0; i < midiSequence.getNumEvents(); ++i)
     {
         auto *event = midiSequence.getEventPointer(i);
@@ -95,7 +129,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
             if (chan < 0 || chan > 15)
                 continue;
 
-            // Filtrování NoteOn podle tvého Mute/Solo
+            // Filtrování NoteOn podle Mute/Solo
             if (msg.isNoteOn() && !isChannelAudible(chan))
                 continue;
 
@@ -126,16 +160,19 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
         }
     }
 
-    // --- AUDIO RENDERING (FluidSynth renderuje přímo stereo) ---
+    // --- AUDIO RENDERING ---
     float *left = bufferToFill.buffer->getWritePointer(0, bufferToFill.startSample);
     float *right = (bufferToFill.buffer->getNumChannels() > 1)
                        ? bufferToFill.buffer->getWritePointer(1, bufferToFill.startSample)
                        : nullptr;
 
-    // FluidSynth renderuje přímo do výstupních bufferů JUCE
-    fluid_synth_write_float(synth, samplesToRender, left, 0, 1, (right ? right : left), 0, 1);
+    int res = fluid_synth_write_float(synth, samplesToRender, left, 0, 1, (right ? right : left), 0, 1);
 
-    // Aplikace Master Volume na výsledek
+    if (res != 0)
+    {
+        bufferToFill.clearActiveBufferRegion();
+    }
+
     bufferToFill.buffer->applyGain(bufferToFill.startSample, samplesToRender, masterVolume);
 
     playheadSeconds = nextPlayheadTime;
@@ -145,16 +182,17 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 
 void MidiPlayer::loadSoundFont(const juce::File &sf2File)
 {
-    if (sf2File.existsAsFile())
+    if (sf2File.existsAsFile() && synth)
     {
-        fluid_synth_sfload(synth, sf2File.getFullPathName().toRawUTF8(), 1);
+        lastSf2Path = sf2File.getFullPathName(); // Uložení cesty pro případný restart
+        fluid_synth_sfload(synth, lastSf2Path.toRawUTF8(), 1);
+        std::cout << "[SOUNDFONT] Načteno: " << sf2File.getFileName() << std::endl;
     }
 }
 
 void MidiPlayer::loadMidiFile(const juce::File &midiFile)
 {
     stop();
-    // Tvá původní logika s odděleným vláknem a analýzou
     std::thread([this, midiFile]() mutable
                 {
         juce::MidiFile mf;
@@ -172,6 +210,7 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         juce::MessageManager::callAsync([this, tempSeq = std::move(tempSequence)]() mutable
         {
             this->midiSequence = std::move(tempSeq);
+            std::cout << "[MIDI] Soubor připraven k přehrávání." << std::endl;
         }); })
         .detach();
 }
@@ -181,12 +220,17 @@ void MidiPlayer::play()
     if (synth)
         isPlaying = true;
 }
+
 void MidiPlayer::stop()
 {
     isPlaying = false;
     playheadSeconds = 0.0;
+    if (synth)
+        fluid_synth_all_sounds_off(synth, -1);
 }
+
 void MidiPlayer::pause() { isPlaying = false; }
+
 void MidiPlayer::setMasterVolume(float v) { masterVolume = v / 127.0f; }
 
 void MidiPlayer::setChannelMute(int trackIdx, bool mute)
@@ -221,8 +265,6 @@ void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int val
         if (chan >= 0 && chan < 16)
         {
             fluid_synth_cc(synth, chan, controller, value);
-
-            // Logování přesně ve tvém stylu
             if (controller == 91 || controller == 93)
                 std::cout << "[FLUID] Effect Update -> Track: " << trackNum << " | CC: " << controller << " | Val: " << value << std::endl;
         }
