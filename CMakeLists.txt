@@ -1,11 +1,11 @@
 # ==============================================================================
 #    FILE: CMakeLists.txt
 #    PROJECT: SONAR MIDI PLAYER
-#    VERSION: 2.1.1
+#    VERSION: 2.1.2
 # ==============================================================================
 
 cmake_minimum_required(VERSION 3.25)
-project(SonarMidiPlayer VERSION 2.1.1 LANGUAGES CXX)
+project(SonarMidiPlayer VERSION 2.1.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -54,14 +54,19 @@ target_sources(${PROJECT_NAME} PRIVATE
     frontend/TrackPanelComponent/TrackPanelComponent.cpp
     frontend/TrackPanelComponent/TrackPanelComponent.h
     
-    # TRANSPORT (Složka TransportComponent)
+    # TRANSPORT
     frontend/TransportComponent/TransportComponent.cpp
     frontend/TransportComponent/TransportComponent.h
     
-    # SETTINGS BAR (Složka SettingsBarComponent)
+    # SETTINGS BAR
     frontend/SettingsBarComponent/SettingsBarComponent.cpp
     frontend/SettingsBarComponent/SettingsBarComponent.h
     
+    # MODUL: VU Meter
+    frontend/VUMeter/VUMeter.cpp
+    frontend/VUMeter/VUMeter.h
+
+    # TRACK COMPONENT
     frontend/TrackComponent/TrackComponent.cpp
     frontend/TrackComponent/TrackComponent.h
     
@@ -69,7 +74,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     frontend/MasterChannelStrip/MasterChannelStrip.cpp
     frontend/MasterChannelStrip/MasterChannelStrip.h
     
-    # MODUL: Version Footer (Jen .h, protože nemá implementační .cpp)
+    # MODUL: Version Footer
     frontend/VersionFooter/VersionFooter.h
     
     frontend/FxModal/FxModal.cpp

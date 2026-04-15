@@ -2,8 +2,8 @@
   ==============================================================================
     FILE: TrackComponent.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Complete Track UI header with real-time BE callbacks.
-    UPDATED: Fix barev čísel tracků a synchronizace FX dat.
+    DESCRIPTION: Complete Track UI header with real-time BE callbacks and VU Meter.
+    UPDATED: [2026-04-15] Přidán VUMeter a trigger pro MIDI aktivitu.
   ==============================================================================
 */
 
@@ -11,6 +11,9 @@
 
 #include <JuceHeader.h>
 #include <functional>
+
+// Dopředná deklarace, aby linker věděl o VUMeteru
+class VUMeter;
 
 enum class InstrumentType
 {
@@ -42,6 +45,9 @@ public:
   void updateSoloState(bool isSoloed);
   void updateFxData(int pan, int reverb, int chorus);
 
+  /** Spustí vizuální indikaci na VU metru (volat při MIDI note on) */
+  void triggerVuMeter(int velocity);
+
   void setInstrument(const juce::String &name, juce::Colour colour);
   void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
 
@@ -65,12 +71,15 @@ private:
   bool isSoloed = false;
 
   // --- BARVA ČÍSLA ---
-  // Tady nastavíme tvou oranžovou/zlatou barvu pro text čísla
   juce::Colour trackNumberTextColor = juce::Colour(0xffff9000);
 
   // --- UI KOMPONENTY ---
-  juce::TextButton trackNumberButton; // To je to tlačítko vlevo s číslem
+  juce::TextButton trackNumberButton;
   juce::Label nameLabel;
+
+  // Samostatná komponenta pro VU metr (vlepeno mezi název a slider)
+  std::unique_ptr<VUMeter> vuMeter;
+
   juce::Slider volumeSlider;
   juce::TextButton muteButton, soloButton, thirdButton, fxButton;
 

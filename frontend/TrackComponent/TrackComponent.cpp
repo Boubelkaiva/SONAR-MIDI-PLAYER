@@ -2,14 +2,14 @@
   ==============================================================================
     FILE: TrackComponent.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Track UI + FxModal integration (PAN / REVERB / CHORUS)
-    FIXED: Obnovena barva čísel tracků a opraveno předávání dat do modalu.
-    LOGGING: Přidáno podrobné sledování toku FX dat.
+    DESCRIPTION: Track UI s integrovaným VUMeterem a opraveným FX oknem.
+    FIXED: Obnovena funkce showFxPopup() pro otevírání FX modalu.
   ==============================================================================
 */
 
 #include "TrackComponent.h"
 #include "../FxModal/FxModal.h"
+#include "../VUMeter/VUMeter.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 // --- LOOK AND FEEL ---
@@ -40,19 +40,12 @@ public:
 
         g.setColour(bg);
         g.fillRoundedRectangle(bounds, 4.0f);
-
-        g.setColour(isMouseOverButton
-                        ? juce::Colours::white.withAlpha(0.4f)
-                        : juce::Colours::black.withAlpha(0.5f));
-
+        g.setColour(isMouseOverButton ? juce::Colours::white.withAlpha(0.4f) : juce::Colours::black.withAlpha(0.5f));
         g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
-
         g.setColour(button.getToggleState() ? juce::Colours::black : juce::Colours::white);
         g.setFont(juce::Font(14.0f, juce::Font::bold));
-        g.drawFittedText(button.getButtonText(), button.getLocalBounds(),
-                         juce::Justification::centred, 1);
+        g.drawFittedText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, 1);
     }
-
     void drawButtonText(juce::Graphics &, juce::TextButton &, bool, bool) override {}
 };
 
@@ -70,25 +63,21 @@ TrackComponent::TrackComponent(int trackNumber,
 {
     addAndMakeVisible(trackNumberButton);
     trackNumberButton.setButtonText(juce::String(trackNum));
-
-    // --- FIX: NASTAVENÍ BARVY ČÍSLA TRACKU ---
     trackNumberButton.setColour(juce::TextButton::textColourOffId, trackNumberTextColor);
-    trackNumberButton.setColour(juce::TextButton::textColourOnId, trackNumberTextColor);
-    // Průhledné pozadí, aby vynikla barva čísla
     trackNumberButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
-
     trackNumberButton.setEnabled(false);
 
     addAndMakeVisible(nameLabel);
     nameLabel.setText(trackName, juce::dontSendNotification);
     nameLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff333333));
 
-    // VOLUME SLIDER (CC 7)
+    vuMeter = std::make_unique<VUMeter>();
+    addAndMakeVisible(vuMeter.get());
+
     addAndMakeVisible(volumeSlider);
     volumeSlider.setRange(0, 127, 1);
     volumeSlider.setValue(currentVolume);
     volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 18);
-
     volumeSlider.onValueChange = [this]
     {
         currentVolume = (int)volumeSlider.getValue();
@@ -96,14 +85,12 @@ TrackComponent::TrackComponent(int trackNumber,
             onVolumeChanged(trackNum, currentVolume);
     };
 
-    // FX BUTTON
     addAndMakeVisible(fxButton);
     fxButton.setButtonText("FX");
     fxButton.setLookAndFeel(&toggleButtonLF);
     fxButton.onClick = [this]
     { showFxPopup(); };
 
-    // MUTE BUTTON
     addAndMakeVisible(muteButton);
     muteButton.setButtonText("M");
     muteButton.setClickingTogglesState(true);
@@ -115,7 +102,6 @@ TrackComponent::TrackComponent(int trackNumber,
             onMuteChanged(trackNum, isMuted);
     };
 
-    // SOLO BUTTON
     addAndMakeVisible(soloButton);
     soloButton.setButtonText("S");
     soloButton.setClickingTogglesState(true);
@@ -132,9 +118,6 @@ TrackComponent::TrackComponent(int trackNumber,
     thirdButton.setLookAndFeel(&toggleButtonLF);
 }
 
-// =======================================================
-// DESTRUCTOR
-// =======================================================
 TrackComponent::~TrackComponent()
 {
     muteButton.setLookAndFeel(nullptr);
@@ -143,89 +126,18 @@ TrackComponent::~TrackComponent()
     fxButton.setLookAndFeel(nullptr);
 }
 
-// =======================================================
-// FX MODAL OPEN (OPRAVENO: PŘÍMÉ MIDI HODNOTY)
-// =======================================================
-void TrackComponent::showFxPopup()
-{
-    // LOGOVÁNÍ STAVU PŘED OTEVŘENÍM
-    std::cout << "[TrackComponent] Opening Modal for Track " << trackNum << std::endl;
-    std::cout << "    Current Internal State -> P: " << currentPan << " R: " << currentReverb << " C: " << currentChorus << std::endl;
-
-    juce::Component *topParent = getParentComponent();
-    while (topParent != nullptr && topParent->getParentComponent() != nullptr)
-        topParent = topParent->getParentComponent();
-
-    if (topParent == nullptr)
-        return;
-
-    struct ModalContainer
-    {
-        FxModal *modal = nullptr;
-    };
-    auto *container = new ModalContainer();
-
-    container->modal = new FxModal(
-        trackNum,
-        FxModal::Listener{
-            // PAN (CC 10)
-            [this](int v)
-            {
-                currentPan = v;
-                if (onPanChanged)
-                    onPanChanged(trackNum, currentPan);
-            },
-
-            // REVERB (CC 91)
-            [this](int v)
-            {
-                currentReverb = v;
-                if (onReverbChanged)
-                    onReverbChanged(trackNum, currentReverb);
-            },
-
-            // CHORUS (CC 93)
-            [this](int v)
-            {
-                currentChorus = v;
-                if (onChorusChanged)
-                    onChorusChanged(trackNum, currentChorus);
-            },
-
-            // CLOSE
-            [topParent, container]()
-            {
-                if (container->modal != nullptr)
-                {
-                    topParent->removeChildComponent(container->modal);
-                    delete container->modal;
-                    delete container;
-                }
-            }});
-
-    // --- FIX: PŘEDÁNÍ DAT Z ANALÝZY DO MODALU PŘI OTEVŘENÍ ---
-    container->modal->setInitialValues(currentPan, currentReverb, currentChorus);
-
-    topParent->addAndMakeVisible(container->modal);
-    container->modal->setCentrePosition(topParent->getLocalBounds().getCentreX(),
-                                        topParent->getLocalBounds().getCentreY());
-}
-
-// =======================================================
-// PAINT / LAYOUT / UPDATES
-// =======================================================
-void TrackComponent::paint(juce::Graphics &g)
-{
-    g.fillAll(juce::Colour(0xff222222));
-    g.setColour(juce::Colours::black.withAlpha(0.5f));
-    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
-}
-
 void TrackComponent::resized()
 {
     auto r = getLocalBounds().reduced(2);
+
     trackNumberButton.setBounds(r.removeFromLeft(45));
     nameLabel.setBounds(r.removeFromLeft(135));
+
+    r.removeFromLeft(4);
+    if (vuMeter != nullptr)
+        vuMeter->setBounds(r.removeFromLeft(8).reduced(0, 4));
+
+    r.removeFromLeft(4);
 
     int w = 35;
     thirdButton.setBounds(r.removeFromRight(w));
@@ -234,6 +146,19 @@ void TrackComponent::resized()
     fxButton.setBounds(r.removeFromRight(w));
 
     volumeSlider.setBounds(r.reduced(4, 2));
+}
+
+void TrackComponent::paint(juce::Graphics &g)
+{
+    g.fillAll(juce::Colour(0xff222222));
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
+}
+
+void TrackComponent::triggerVuMeter(int velocity)
+{
+    if (vuMeter != nullptr)
+        vuMeter->trigger(velocity);
 }
 
 void TrackComponent::updateVolume(int newVolume)
@@ -256,23 +181,59 @@ void TrackComponent::updateSoloState(bool isSoloedState)
 
 void TrackComponent::updateFxData(int pan, int reverb, int chorus)
 {
-    // LOGOVÁNÍ PŘÍCHOZÍCH DAT Z ANALÝZY / PANELU
-    std::cout << "[TrackComponent] updateFxData for Track " << trackNum << ": P=" << pan << " R=" << reverb << " C=" << chorus << std::endl;
-
     currentPan = pan;
     currentReverb = reverb;
     currentChorus = chorus;
 }
 
+// 🔥 TADY JE TA OPRAVA 🔥
+void TrackComponent::showFxPopup()
+{
+    // Vytvoření listeneru pro modal
+    FxModal::Listener fxListener;
+
+    fxListener.onPanChanged = [this](int val)
+    {
+        currentPan = val;
+        if (onPanChanged)
+            onPanChanged(trackNum, val);
+    };
+
+    fxListener.onReverbChanged = [this](int val)
+    {
+        currentReverb = val;
+        if (onReverbChanged)
+            onReverbChanged(trackNum, val);
+    };
+
+    fxListener.onChorusChanged = [this](int val)
+    {
+        currentChorus = val;
+        if (onChorusChanged)
+            onChorusChanged(trackNum, val);
+    };
+
+    // Vytvoření okna
+    auto *modal = new FxModal(trackNum, fxListener);
+    modal->setInitialValues(currentPan, currentReverb, currentChorus);
+
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(modal);
+    options.resizable = false;
+    options.content->setSize(360, 220);
+    options.dialogTitle = "Track " + juce::String(trackNum) + " FX Settings";
+    options.componentToCentreAround = this;
+    options.dialogBackgroundColour = juce::Colour(0xff2b2b2b);
+    options.useNativeTitleBar = true;
+    options.launchAsync();
+}
+
 void TrackComponent::setInstrument(const juce::String &name, juce::Colour colour)
 {
     nameLabel.setText(name, juce::dontSendNotification);
-    nameLabel.setColour(juce::Label::backgroundColourId, colour);
 }
 
-void TrackComponent::setIcons(const juce::String &mute,
-                              const juce::String &solo,
-                              const juce::String &third)
+void TrackComponent::setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third)
 {
     muteButton.setButtonText(mute);
     soloButton.setButtonText(solo);

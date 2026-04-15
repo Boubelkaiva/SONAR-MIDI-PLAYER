@@ -1,117 +1,139 @@
 /*
   ==============================================================================
+
     FILE: MainComponent.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Main container - Async loading and Audio HW synchronization.
-    UPDATED: AI - Obnoveno propojení audio bloku pro funkční zvuk.
-    FIXED: Správné předání MidiPlayer do TransportComponent.
+    DESCRIPTION: Main container - DEBUG AUDIO PIPELINE TRACE VERSION
+    FIXED: audio routing + controlled audio callback logging (NO SPAM)
+
   ==============================================================================
 */
 
 #include "MainComponent.h"
 #include "Icons.h"
 #include <iostream>
+#include <atomic>
+
+#define LOG(x) std::cout << x << std::endl
+
+// =========================
+// GLOBAL DEBUG CONTROL
+// =========================
+static std::atomic<int> audioCallbackCounter{0};
+static constexpr int AUDIO_LOG_EVERY_N_BLOCKS = 200; // throttle log
 
 MainComponent::MainComponent()
 {
-    // 1. Inicializace AI Backend modulů
+    LOG("[MAIN] CONSTRUCTOR START");
+
+    // =========================
+    // BACKEND
+    // =========================
     midiPlayer = std::make_unique<MidiPlayer>();
     bankManager = std::make_unique<BankManager>();
 
-    // --- BEZPEČNOSTNÍ KONTROLA ---
-    jassert(midiPlayer != nullptr);
-
-    // --- SYNCHRONIZACE AUDIO HARDWARE ---
-    auto &dm = midiPlayer->getDeviceManager();
-    dm.addChangeListener(this);
-    dm.initialise(0, 2, nullptr, true);
-
-    // Inicializace výchozích kanálů pro AI
+    // =========================
+    // AUDIO PIPELINE
+    // =========================
+    LOG("[AUDIO] init JUCE audio channels");
     setAudioChannels(0, 2);
 
-    // 2. Inicializace UI komponent
+    // =========================
+    // UI
+    // =========================
     trackPanel = std::make_unique<TrackPanelComponent>();
     addAndMakeVisible(*trackPanel);
 
-    // 🔥 KLÍČOVÁ FIXACE – předání reference
     transport = std::make_unique<TransportComponent>(*midiPlayer, *bankManager);
     addAndMakeVisible(*transport);
-
-    sf2List = std::make_unique<SF2ListComponent>(*bankManager);
-    addAndMakeVisible(*sf2List);
 
     masterPanel = std::make_unique<MasterPanel>();
     addAndMakeVisible(*masterPanel);
 
-    // --- 3. CALLBACKY A PROPOJENÍ ---
+    // =========================
+    // TRANSPORT
+    // =========================
     if (transport)
     {
         transport->onStartClicked = [this]()
         {
+            LOG("[UI] PLAY CLICKED");
             if (midiPlayer)
                 midiPlayer->play();
         };
 
         transport->onStopClicked = [this]()
         {
+            LOG("[UI] STOP CLICKED");
             if (midiPlayer)
                 midiPlayer->stop();
         };
     }
 
-    if (sf2List)
-    {
-        sf2List->onSelectionChanged = [this](const juce::File &selectedFile)
-        {
-            if (selectedFile.existsAsFile() && midiPlayer)
-                midiPlayer->loadSoundFont(selectedFile);
-        };
-    }
-
+    // =========================
+    // MIDI LOAD FLOW
+    // =========================
     if (masterPanel)
     {
         masterPanel->onMidiFileSelected = [this](const juce::File &midiFile)
         {
-            if (midiFile.existsAsFile())
+            LOG("[UI] MIDI FILE SELECTED");
+
+            if (!midiFile.existsAsFile())
             {
-                std::cout << "[AI] Async load: " << midiFile.getFileName() << std::endl;
-
-                juce::Thread::launch([this, midiFile]()
-                                     {
-                    MidiAnalyzer analyzer;
-                    MidiMapper* currentMapper = (midiPlayer != nullptr) ? midiPlayer->getMapper() : nullptr;
-                    auto trackMetadata = analyzer.analyzeFile(midiFile, currentMapper);
-
-                    juce::MessageManager::callAsync([this, trackMetadata]()
-                    {
-                        std::cout << "--- [AI] Syncing metadata to UI ---" << std::endl;
-
-                        for (const auto &data : trackMetadata)
-                        {
-                            int trackIdx = data.channel - 1;
-
-                            std::cout << "[AI] Track " << data.channel
-                                      << " -> R:" << (int)data.initialReverb
-                                      << " C:" << (int)data.initialChorus << std::endl;
-
-                            // UI
-                            trackPanel->updateTrackFromMetadata(trackIdx, data.instrumentName, data.initialVolume);
-                            trackPanel->setTrackFxData(trackIdx, 64, (int)data.initialReverb, (int)data.initialChorus);
-
-                            // AUDIO
-                            if (midiPlayer)
-                            {
-                                midiPlayer->sendRealTimeControlChange(data.channel, 91, (int)data.initialReverb);
-                                midiPlayer->sendRealTimeControlChange(data.channel, 93, (int)data.initialChorus);
-                            }
-                        }
-
-                        std::cout << "--- [AI] Sync complete ---" << std::endl;
-                    });
-
-                    if (midiPlayer)
-                        midiPlayer->loadMidiFile(midiFile); });
+                LOG("[MIDI] FILE NOT FOUND");
+                return;
             }
+
+            juce::Thread::launch([this, midiFile]()
+                                 {
+                LOG("[MIDI] ANALYSIS THREAD START");
+
+                MidiAnalyzer analyzer;
+                MidiMapper* currentMapper =
+                    (midiPlayer != nullptr) ? midiPlayer->getMapper() : nullptr;
+
+                auto trackMetadata =
+                    analyzer.analyzeFile(midiFile, currentMapper);
+
+                LOG("[MIDI] ANALYSIS DONE");
+
+                juce::MessageManager::callAsync([this, trackMetadata]()
+                {
+                    LOG("[UI] APPLY TRACK METADATA");
+
+                    for (const auto &data : trackMetadata)
+                    {
+                        int trackIdx = data.channel - 1;
+
+                        trackPanel->updateTrackFromMetadata(
+                            trackIdx,
+                            data.instrumentName,
+                            data.initialVolume
+                        );
+
+                        trackPanel->setTrackFxData(
+                            trackIdx,
+                            64,
+                            (int)data.initialReverb,
+                            (int)data.initialChorus
+                        );
+
+                        if (midiPlayer)
+                        {
+                            midiPlayer->sendRealTimeControlChange(data.channel, 91, (int)data.initialReverb);
+                            midiPlayer->sendRealTimeControlChange(data.channel, 93, (int)data.initialChorus);
+                        }
+                    }
+
+                    LOG("[UI] METADATA APPLIED");
+                });
+
+                if (midiPlayer)
+                {
+                    LOG("[MIDI] LOAD INTO PLAYER");
+                    midiPlayer->loadMidiFile(midiFile);
+                } });
         };
 
         masterPanel->onVolumeChanged = [this](float volume)
@@ -121,6 +143,9 @@ MainComponent::MainComponent()
         };
     }
 
+    // =========================
+    // TRACK CONTROLS
+    // =========================
     if (trackPanel)
     {
         trackPanel->onTrackVolumeChanged = [this](int trk, int val)
@@ -149,33 +174,33 @@ MainComponent::MainComponent()
 
         trackPanel->onTrackMuteChanged = [this](int trk, bool muted)
         {
+            LOG("[UI] MUTE ch=" << trk << " val=" << muted);
             if (midiPlayer)
                 midiPlayer->setChannelMute(trk, muted);
         };
 
         trackPanel->onTrackSoloChanged = [this](int trk, bool soloed)
         {
+            LOG("[UI] SOLO ch=" << trk << " val=" << soloed);
             if (midiPlayer)
                 midiPlayer->setChannelSolo(trk, soloed);
         };
     }
 
-    // --- 4. AUTO-LOAD PRVNÍ BANKY ---
-    const std::vector<juce::File> &foundBanks = bankManager->getLoadedBanks();
-    if (!foundBanks.empty() && midiPlayer)
-        midiPlayer->loadSoundFont(foundBanks[0]);
-
     setSize(1200, 800);
+
+    LOG("[MAIN] CONSTRUCTOR END");
 }
 
 MainComponent::~MainComponent()
 {
-    if (midiPlayer)
-        midiPlayer->getDeviceManager().removeChangeListener(this);
-
+    LOG("[MAIN] DESTRUCTOR");
     shutdownAudio();
 }
 
+// =========================
+// AUDIO DEVICE CHANGE
+// =========================
 void MainComponent::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (midiPlayer && source == &midiPlayer->getDeviceManager())
@@ -183,43 +208,57 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster *source)
         auto &dm = midiPlayer->getDeviceManager();
         auto *device = dm.getCurrentAudioDevice();
 
-        if (device != nullptr && !device->getName().containsIgnoreCase("none"))
+        if (device != nullptr)
         {
-            double newSampleRate = device->getCurrentSampleRate();
-            int newSamplesPerBlock = device->getCurrentBufferSizeSamples();
+            LOG("[AUDIO] DEVICE OK: " + device->getName().toStdString());
 
-            midiPlayer->prepareToPlay(newSamplesPerBlock, newSampleRate);
-            setAudioChannels(0, 2);
+            midiPlayer->prepareToPlay(
+                device->getCurrentBufferSizeSamples(),
+                device->getCurrentSampleRate());
 
-            std::cout << "[AI STABLE] Audio běží na: " << device->getName()
-                      << " (" << newSampleRate << " Hz)" << std::endl;
-        }
-        else
-        {
-            std::cout << "[AI WATCHDOG] HW není dostupný, resetuji..." << std::endl;
-            dm.initialiseWithDefaultDevices(0, 2);
+            LOG("[AUDIO] SYNTH REPREPARED");
         }
     }
 }
 
+// =========================
+// AUDIO CALLBACK (FIXED LOG SPAM)
+// =========================
+void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
+{
+    // throttle log (otherwise UI floods + lag)
+    int c = ++audioCallbackCounter;
+    bool logThis = (c % AUDIO_LOG_EVERY_N_BLOCKS == 0);
+
+    if (logThis)
+        LOG("[AUDIO] CALLBACK START");
+
+    bufferToFill.clearActiveBufferRegion();
+
+    if (!midiPlayer)
+    {
+        if (logThis)
+            LOG("[AUDIO] NO PLAYER");
+        return;
+    }
+
+    midiPlayer->getNextAudioBlock(bufferToFill);
+
+    if (logThis)
+        LOG("[AUDIO] CALLBACK END");
+}
+
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
+    LOG("[AUDIO] PREPARE TO PLAY");
+
     if (midiPlayer)
         midiPlayer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
-{
-    bufferToFill.clearActiveBufferRegion();
-
-    if (midiPlayer != nullptr)
-        midiPlayer->getNextAudioBlock(bufferToFill);
-}
-
 void MainComponent::releaseResources()
 {
-    if (midiPlayer)
-        midiPlayer->releaseResources();
+    LOG("[AUDIO] RELEASE RESOURCES");
 }
 
 void MainComponent::paint(juce::Graphics &g)
@@ -229,25 +268,19 @@ void MainComponent::paint(juce::Graphics &g)
 
 void MainComponent::resized()
 {
-    auto area = getLocalBounds().reduced(10);
-    auto rightArea = area.removeFromRight(300);
+    auto area = getLocalBounds();
 
-    // 👉 celý pravý panel řídí TransportComponent
     if (transport)
-        transport->setBounds(rightArea);
+        transport->setBounds(area.removeFromRight(320));
 
     if (masterPanel)
-        masterPanel->setBounds(area.removeFromBottom(100));
+        masterPanel->setBounds(area.removeFromBottom(110).reduced(5));
 
     if (trackPanel)
-        trackPanel->setBounds(area);
+        trackPanel->setBounds(area.reduced(5));
 }
 
 void MainComponent::parentHierarchyChanged()
 {
-    if (getParentComponent() != nullptr)
-    {
-        std::cout << "[AI SYSTEM] Komponenta připojená, aktivuji audio..." << std::endl;
-        setAudioChannels(0, 2);
-    }
+    LOG("[MAIN] parentHierarchyChanged (ignored)");
 }

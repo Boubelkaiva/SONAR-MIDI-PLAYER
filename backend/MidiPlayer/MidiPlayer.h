@@ -3,7 +3,7 @@
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine s FluidSynth a podporou AI Master efektů.
-    UPDATED: [2026-04-14] Přidána integrace MasterEffects pro master bus.
+    UPDATED: [2026-04-15] FIX: added missing bank helper
   ==============================================================================
 */
 
@@ -11,9 +11,10 @@
 
 #include <JuceHeader.h>
 #include <fluidsynth.h>
+#include <functional>
 #include "../MidiMapper/MidiMapper.h"
 #include "../MidiAnalyzer/MidiAnalyzer.h"
-#include "../MasterEffects/MasterEffects.h" // KLÍČOVÝ INCLUDE
+#include "../MasterEffects/MasterEffects.h"
 
 class MidiPlayer : public juce::AudioSource
 {
@@ -21,59 +22,50 @@ public:
   MidiPlayer();
   ~MidiPlayer();
 
-  // --- AUDIO ZÁKLAD ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
   void releaseResources() override;
 
-  // --- SPRÁVA DAT ---
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
   void applyAnalysisResults(const std::vector<TrackData> &results);
 
-  // --- TRANSPORT ---
   void play();
   void stop();
   void pause();
   void setMasterVolume(float vol);
 
-  // --- REAL-TIME OVLÁDÁNÍ (TTS-1 STYLE) ---
+  std::function<void(int channel, int velocity)> onMidiActivity;
+
   void sendRealTimeControlChange(int trackNum, int controller, int value);
 
-  // --- OVLÁDÁNÍ MUTE / SOLO ---
   void setChannelMute(int trackIdx, bool shouldMute);
   void setChannelSolo(int trackIdx, bool shouldSolo);
   bool isChannelAudible(int channel) const;
 
-  // --- GETTERY PRO UI (PROPOJENÍ FRONTENDU) ---
   MidiMapper *getMapper() const { return mapper.get(); }
-
-  // Nová metoda, která chyběla v buildu:
   MasterEffects &getMasterEffects() { return masterEffects; }
-
   juce::AudioDeviceManager &getDeviceManager() { return const_cast<juce::AudioDeviceManager &>(deviceManager); }
 
 private:
   void processMidiMessage(const juce::MidiMessage &m);
 
-  // FluidSynth objekty
+  // 🔥 FIX: missing helper declaration
+  int getFullBank(int chan);
+
   fluid_settings_t *settings = nullptr;
   fluid_synth_t *synth = nullptr;
 
   juce::AudioDeviceManager deviceManager;
   double currentSampleRate = 48000.0;
 
-  // Instance Master Efektů (AI Engine)
   MasterEffects masterEffects;
 
-  // Pomocná proměnná pro obnovu zvuku při změně HW
   juce::String lastSf2Path;
 
-  // MIDI stav pro každý z 16 kanálů
   int currentBankMSB[16];
   int currentBankLSB[16];
 
-  // --- STAVY PRO MUTE A SOLO ---
   bool channelMuted[16];
   bool channelSolo[16];
 

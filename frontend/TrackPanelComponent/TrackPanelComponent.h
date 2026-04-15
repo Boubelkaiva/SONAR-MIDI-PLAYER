@@ -1,16 +1,16 @@
 /*
-  ==============================================================================
+  ==============================================================================
 
-    FILE: TrackPanelComponent.h
-    NAME: TrackPanelComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Header for the main track list panel (16 tracks).
-                 RESTORED ORIGINAL STRUCTURE.
-                 ADDED: Metadata update method for MIDI integration.
-                 FIXED: Correct method signatures for TrackComponent access.
-                 ADDED: Real-time FX callbacks for MainComponent.
+    FILE: TrackPanelComponent.h
+    NAME: TrackPanelComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Header for the main track list panel (16 tracks).
+                 RESTORED ORIGINAL STRUCTURE.
+                 ADDED: Metadata update method for MIDI integration.
+                 FIXED: Correct method signatures for TrackComponent access.
+                 ADDED: Real-time FX callbacks for MainComponent.
 
-  ==============================================================================
+  ==============================================================================
 */
 
 #pragma once
@@ -52,6 +52,9 @@ public:
 
   /** Nastavení instrumentu pro konkrétní track (0-15) */
   void setTrackInstrument(int index, const juce::String &name, juce::Colour colour);
+
+  /** AI: Metoda pro předání MIDI aktivity (velocity) do VU metru konkrétního tracku */
+  void triggerTrackVu(int index, int velocity);
 
 private:
   // Původní nastavení na 16 tracků (standard MIDI)

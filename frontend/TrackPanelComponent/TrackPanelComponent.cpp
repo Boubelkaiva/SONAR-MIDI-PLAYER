@@ -108,6 +108,18 @@ void TrackPanelComponent::setTrackInstrument(int index, const juce::String &name
     }
 }
 
+/** AI: Propojení MIDI aktivity z MainComponent do konkrétního TrackComponent */
+void TrackPanelComponent::triggerTrackVu(int index, int velocity)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        if (tracks[index] != nullptr)
+        {
+            tracks[index]->triggerVuMeter(velocity);
+        }
+    }
+}
+
 void TrackPanelComponent::resized()
 {
     auto r = getLocalBounds();
