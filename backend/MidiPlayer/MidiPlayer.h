@@ -2,8 +2,8 @@
   ==============================================================================
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Audio Engine s FluidSynth a podporou automatického restartu.
-    UPDATED: Přidána proměnná lastSf2Path pro obnovu po změně Sample Rate.
+    DESCRIPTION: Audio Engine s FluidSynth a podporou AI Master efektů.
+    UPDATED: [2026-04-14] Přidána integrace MasterEffects pro master bus.
   ==============================================================================
 */
 
@@ -13,6 +13,7 @@
 #include <fluidsynth.h>
 #include "../MidiMapper/MidiMapper.h"
 #include "../MidiAnalyzer/MidiAnalyzer.h"
+#include "../MasterEffects/MasterEffects.h" // KLÍČOVÝ INCLUDE
 
 class MidiPlayer : public juce::AudioSource
 {
@@ -44,8 +45,12 @@ public:
   void setChannelSolo(int trackIdx, bool shouldSolo);
   bool isChannelAudible(int channel) const;
 
-  // --- GETTERY PRO UI ---
+  // --- GETTERY PRO UI (PROPOJENÍ FRONTENDU) ---
   MidiMapper *getMapper() const { return mapper.get(); }
+
+  // Nová metoda, která chyběla v buildu:
+  MasterEffects &getMasterEffects() { return masterEffects; }
+
   juce::AudioDeviceManager &getDeviceManager() { return const_cast<juce::AudioDeviceManager &>(deviceManager); }
 
 private:
@@ -58,7 +63,10 @@ private:
   juce::AudioDeviceManager deviceManager;
   double currentSampleRate = 48000.0;
 
-  // Pomocná proměnná pro obnovu zvuku při změně HW (repro/sluchátka)
+  // Instance Master Efektů (AI Engine)
+  MasterEffects masterEffects;
+
+  // Pomocná proměnná pro obnovu zvuku při změně HW
   juce::String lastSf2Path;
 
   // MIDI stav pro každý z 16 kanálů

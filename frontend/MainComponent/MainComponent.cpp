@@ -4,6 +4,7 @@
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Main container - Async loading and Audio HW synchronization.
     UPDATED: AI - Obnoveno propojení audio bloku pro funkční zvuk.
+    FIXED: Správné předání MidiPlayer do TransportComponent.
   ==============================================================================
 */
 
@@ -17,6 +18,9 @@ MainComponent::MainComponent()
     midiPlayer = std::make_unique<MidiPlayer>();
     bankManager = std::make_unique<BankManager>();
 
+    // --- BEZPEČNOSTNÍ KONTROLA ---
+    jassert(midiPlayer != nullptr);
+
     // --- SYNCHRONIZACE AUDIO HARDWARE ---
     auto &dm = midiPlayer->getDeviceManager();
     dm.addChangeListener(this);
@@ -29,7 +33,8 @@ MainComponent::MainComponent()
     trackPanel = std::make_unique<TrackPanelComponent>();
     addAndMakeVisible(*trackPanel);
 
-    transport = std::make_unique<TransportComponent>(*midiPlayer);
+    // 🔥 KLÍČOVÁ FIXACE – předání reference
+    transport = std::make_unique<TransportComponent>(*midiPlayer, *bankManager);
     addAndMakeVisible(*transport);
 
     sf2List = std::make_unique<SF2ListComponent>(*bankManager);
@@ -77,27 +82,30 @@ MainComponent::MainComponent()
                     MidiMapper* currentMapper = (midiPlayer != nullptr) ? midiPlayer->getMapper() : nullptr;
                     auto trackMetadata = analyzer.analyzeFile(midiFile, currentMapper);
 
-                    juce::MessageManager::callAsync([this, trackMetadata]() 
+                    juce::MessageManager::callAsync([this, trackMetadata]()
                     {
                         std::cout << "--- [AI] Syncing metadata to UI ---" << std::endl;
+
                         for (const auto &data : trackMetadata)
                         {
                             int trackIdx = data.channel - 1;
 
-                            std::cout << "[AI] Track " << data.channel 
-                                      << " -> R:" << (int)data.initialReverb 
+                            std::cout << "[AI] Track " << data.channel
+                                      << " -> R:" << (int)data.initialReverb
                                       << " C:" << (int)data.initialChorus << std::endl;
 
-                            // Aktualizace UI
+                            // UI
                             trackPanel->updateTrackFromMetadata(trackIdx, data.instrumentName, data.initialVolume);
                             trackPanel->setTrackFxData(trackIdx, 64, (int)data.initialReverb, (int)data.initialChorus);
 
-                            // Synchronizace FX přímo do playeru (zvuk)
-                            if (midiPlayer) {
+                            // AUDIO
+                            if (midiPlayer)
+                            {
                                 midiPlayer->sendRealTimeControlChange(data.channel, 91, (int)data.initialReverb);
                                 midiPlayer->sendRealTimeControlChange(data.channel, 93, (int)data.initialChorus);
                             }
                         }
+
                         std::cout << "--- [AI] Sync complete ---" << std::endl;
                     });
 
@@ -120,26 +128,31 @@ MainComponent::MainComponent()
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 7, val);
         };
+
         trackPanel->onTrackPanChanged = [this](int trk, int val)
         {
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 10, val);
         };
+
         trackPanel->onTrackReverbChanged = [this](int trk, int val)
         {
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 91, val);
         };
+
         trackPanel->onTrackChorusChanged = [this](int trk, int val)
         {
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 93, val);
         };
+
         trackPanel->onTrackMuteChanged = [this](int trk, bool muted)
         {
             if (midiPlayer)
                 midiPlayer->setChannelMute(trk, muted);
         };
+
         trackPanel->onTrackSoloChanged = [this](int trk, bool soloed)
         {
             if (midiPlayer)
@@ -195,17 +208,12 @@ void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate
         midiPlayer->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
-// --- KLÍČOVÁ OPRAVA: TADY SE DĚJE ZVUK ---
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
 {
-    // Nejdřív vyčistíme buffer, aby tam nebyl bordel
     bufferToFill.clearActiveBufferRegion();
 
-    // Pokud máme player, necháme ho nasypat zvuk do bufferu
     if (midiPlayer != nullptr)
-    {
         midiPlayer->getNextAudioBlock(bufferToFill);
-    }
 }
 
 void MainComponent::releaseResources()
@@ -224,12 +232,13 @@ void MainComponent::resized()
     auto area = getLocalBounds().reduced(10);
     auto rightArea = area.removeFromRight(300);
 
+    // 👉 celý pravý panel řídí TransportComponent
     if (transport)
-        transport->setBounds(rightArea.removeFromTop(60));
-    if (sf2List)
-        sf2List->setBounds(rightArea);
+        transport->setBounds(rightArea);
+
     if (masterPanel)
         masterPanel->setBounds(area.removeFromBottom(100));
+
     if (trackPanel)
         trackPanel->setBounds(area);
 }
