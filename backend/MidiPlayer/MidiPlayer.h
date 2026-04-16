@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 #include <fluidsynth.h>
 #include <functional>
+#include <vector> // FIX: pro TrackData vector
 #include "../MidiMapper/MidiMapper.h"
 #include "../MidiAnalyzer/MidiAnalyzer.h"
 #include "../MasterEffects/MasterEffects.h"
@@ -42,6 +43,7 @@ public:
   void setChannelMute(int trackIdx, bool shouldMute);
   void setChannelSolo(int trackIdx, bool shouldSolo);
   bool isChannelAudible(int channel) const;
+  void sendProgramChange(int trackNum, int program);
 
   MidiMapper *getMapper() const { return mapper.get(); }
   MasterEffects &getMasterEffects() { return masterEffects; }
@@ -69,7 +71,6 @@ private:
   bool channelMuted[16];
   bool channelSolo[16];
 
-  MidiMode currentMode = MidiMode::GM;
   juce::MidiMessageSequence midiSequence;
   double playheadSeconds = 0.0;
   bool isPlaying = false;

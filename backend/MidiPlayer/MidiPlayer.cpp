@@ -21,10 +21,9 @@ MidiPlayer::MidiPlayer()
     : isPlaying(false),
       currentSampleRate(48000.0),
       masterVolume(1.0f),
-      settings(nullptr),
-      synth(nullptr),
       playheadSeconds(0.0),
-      currentMode(MidiMode::GM)
+      settings(nullptr),
+      synth(nullptr)
 {
     std::cout << "[POG] BE: LIFE-CYCLE: Startuji MidiPlayer (Constructor)" << std::endl;
 
@@ -161,7 +160,6 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
     // 3. Update playhead
     playheadSeconds = blockEndTime;
 
-    // Loop check (volitelně)
     if (playheadSeconds >= midiSequence.getEndTime())
         isPlaying = false;
 }
@@ -233,7 +231,7 @@ void MidiPlayer::play()
 {
     std::cout << "[POG] BE: TRANSPORT: Kliknuto na PLAY" << std::endl;
     isPlaying = true;
-    // Pokud jsme na konci, resetujeme
+
     if (playheadSeconds >= midiSequence.getEndTime())
     {
         playheadSeconds = 0.0;
@@ -258,6 +256,9 @@ void MidiPlayer::pause()
     isPlaying = false;
 }
 
+// =========================
+// MIDI PROCESS
+// =========================
 void MidiPlayer::processMidiMessage(const juce::MidiMessage &m)
 {
     if (!synth)
@@ -267,7 +268,6 @@ void MidiPlayer::processMidiMessage(const juce::MidiMessage &m)
     if (chan < 0 || chan >= 16)
         return;
 
-    // Mute / Solo check
     if (m.isNoteOn() && !isChannelAudible(chan))
         return;
 
@@ -281,18 +281,35 @@ void MidiPlayer::processMidiMessage(const juce::MidiMessage &m)
         fluid_synth_pitch_bend(synth, chan, m.getPitchWheelValue());
     else if (m.isProgramChange())
     {
-        // Logujeme jen program change, abychom viděli nastavení nástrojů
         std::cout << "[POG] BE: MIDI: Ch " << (chan + 1) << " -> Program " << m.getProgramChangeNumber() << std::endl;
         fluid_synth_program_change(synth, chan, m.getProgramChangeNumber());
     }
 
-    // Callback pro UI (VU metry)
     if (onMidiActivity && (m.isNoteOn() || m.isNoteOff()))
         onMidiActivity(chan, m.getVelocity());
 }
 
 // =========================
-// VOLUME (FIX LINKER)
+// PROGRAM CHANGE (NEW)
+// =========================
+void MidiPlayer::sendProgramChange(int trackNum, int program)
+{
+    if (!synth)
+        return;
+
+    int chan = trackNum - 1;
+
+    if (chan >= 0 && chan < 16)
+    {
+        std::cout << "[POG] BE: PROGRAM CHANGE - Track: " << trackNum
+                  << " Program: " << program << std::endl;
+
+        fluid_synth_program_change(synth, chan, program);
+    }
+}
+
+// =========================
+// VOLUME
 // =========================
 void MidiPlayer::setMasterVolume(float v)
 {
@@ -301,7 +318,7 @@ void MidiPlayer::setMasterVolume(float v)
 }
 
 // =========================
-// CC (FIX LINKER)
+// CC
 // =========================
 void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int value)
 {
@@ -318,7 +335,7 @@ void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int val
 }
 
 // =========================
-// MUTE / SOLO (FIX LINKER)
+// MUTE / SOLO
 // =========================
 void MidiPlayer::setChannelMute(int trackIdx, bool mute)
 {

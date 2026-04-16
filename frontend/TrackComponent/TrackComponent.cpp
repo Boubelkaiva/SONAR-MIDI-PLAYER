@@ -10,6 +10,7 @@
 #include "TrackComponent.h"
 #include "../FxModal/FxModal.h"
 #include "../VUMeter/VUMeter.h"
+#include "../InstrumentModal/InstrumentModal.cpp"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 // --- LOOK AND FEEL ---
@@ -115,8 +116,12 @@ TrackComponent::TrackComponent(int trackNumber,
     };
 
     addAndMakeVisible(thirdButton);
-    thirdButton.setButtonText("Vol");
+    thirdButton.setButtonText("SF");
     thirdButton.setLookAndFeel(&toggleButtonLF);
+
+    // 🔥 NAPOJENÍ NA MODAL 🔥
+    thirdButton.onClick = [this]
+    { showInstrumentPopup(); };
 }
 
 TrackComponent::~TrackComponent()
@@ -187,10 +192,9 @@ void TrackComponent::updateFxData(int pan, int reverb, int chorus)
     currentChorus = chorus;
 }
 
-// 🔥 TADY JE TA OPRAVA 🔥
+// FX modal (BEZE ZMĚN)
 void TrackComponent::showFxPopup()
 {
-    // Vytvoření listeneru pro modal
     FxModal::Listener fxListener;
 
     fxListener.onPanChanged = [this](int val)
@@ -214,7 +218,6 @@ void TrackComponent::showFxPopup()
             onChorusChanged(trackNum, val);
     };
 
-    // Vytvoření okna
     auto *modal = new FxModal(trackNum, fxListener);
     modal->setInitialValues(currentPan, currentReverb, currentChorus);
 
@@ -223,6 +226,31 @@ void TrackComponent::showFxPopup()
     options.resizable = false;
     options.content->setSize(360, 220);
     options.dialogTitle = "Track " + juce::String(trackNum) + " FX Settings";
+    options.componentToCentreAround = this;
+    options.dialogBackgroundColour = juce::Colour(0xff2b2b2b);
+    options.useNativeTitleBar = true;
+    options.launchAsync();
+}
+
+// 🔥 NOVÁ FUNKCE 🔥
+void TrackComponent::showInstrumentPopup()
+{
+    auto onSelected = [this](int bank, int cat, int prog)
+    {
+        std::cout << "Selected: B:" << bank << " C:" << cat << " P:" << prog << std::endl;
+
+        // 🔥 PŘEDÁNÍ NA PANEL / BE 🔥
+        if (onInstrumentSelected)
+            onInstrumentSelected(trackNum, bank, cat, prog);
+    };
+
+    auto *modal = new InstrumentModal(trackNum - 1, onSelected);
+
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(modal);
+    options.resizable = false;
+    options.content->setSize(600, 400);
+    options.dialogTitle = "Track " + juce::String(trackNum) + " Instrument";
     options.componentToCentreAround = this;
     options.dialogBackgroundColour = juce::Colour(0xff2b2b2b);
     options.useNativeTitleBar = true;

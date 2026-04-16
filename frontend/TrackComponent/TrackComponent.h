@@ -38,6 +38,7 @@ public:
   std::function<void(int track, int value)> onPanChanged;
   std::function<void(int track, int value)> onReverbChanged;
   std::function<void(int track, int value)> onChorusChanged;
+  std::function<void(int track, int bank, int category, int program)> onInstrumentSelected;
 
   // --- AKTUALIZACE STAVU ---
   void updateVolume(int newVolume);
@@ -56,6 +57,7 @@ public:
 
 private:
   void showFxPopup();
+  void showInstrumentPopup(); // 🔥 NOVÉ
 
   // --- DATA ---
   int trackNum;

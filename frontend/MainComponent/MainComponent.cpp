@@ -193,12 +193,23 @@ MainComponent::MainComponent()
                 midiPlayer->setChannelSolo(trk, soloed);
         };
 
+        // 🔥 NOVÉ: INSTRUMENT CHANGE 🔥
+        trackPanel->onTrackInstrumentChanged = [this](int trk, int bank, int cat, int prog)
+        {
+            std::cout << "[POG] FE -> BE: Track " << (trk + 1)
+                      << " INSTRUMENT B:" << bank
+                      << " C:" << cat
+                      << " P:" << prog << std::endl;
+
+            if (midiPlayer)
+                midiPlayer->sendProgramChange(trk + 1, prog);
+        };
+
         // =========================
         // MIDI ACTIVITY (VU METERS)
         // =========================
         midiPlayer->onMidiActivity = [this](int chan, int velocity)
         {
-            // Musíme volat asynchronně, protože callback přichází z audio threadu
             juce::MessageManager::callAsync([this, chan, velocity]()
                                             { trackPanel->triggerTrackVu(chan, velocity); });
         };

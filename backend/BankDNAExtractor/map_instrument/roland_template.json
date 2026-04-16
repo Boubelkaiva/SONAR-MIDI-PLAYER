@@ -1,0 +1,31 @@
+{
+  "bank_id": "Roland_GM",
+  "description": "Custom mapping pro Roland_GM - přesuny Trombone, French Horn a SynthBrass",
+  "categories": {
+    "0-7": "Piano",
+    "8-15": "Percussion",
+    "16-23": "Organ",
+    "24-31": "Guitar",
+    "32-39": "Bass",
+    "40-47": "Strings",
+    "48-51": "Ensemble",
+    "52-55": "Vocal & Air",
+    "56": "Trumpet",
+    "57": "Trumpet",
+    "58": "Brass",
+    "59": "Trumpet",
+    "60": "Reed Instruments",
+    "61": "Brass",
+    "62": "Brass",
+    "63": "Brass",
+    "64-67": "Saxophone",
+    "68-71": "Reed Instruments",
+    "72-79": "Pipe Instruments",
+    "80-87": "Synth Lead",
+    "88-95": "Synth Pad",
+    "96-103": "Ethnic/World",
+    "104-111": "Percussive",
+    "112-119": "Sound Effects",
+    "128-135": "Drum Kits"
+  }
+}

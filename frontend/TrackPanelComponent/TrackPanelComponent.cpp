@@ -25,10 +25,10 @@ TrackPanelComponent::TrackPanelComponent()
             InstrumentType::Piano);
 
         // AI: Nastavení tvých ikon pro Mute, Solo a Volume tlačítka
-        tracks[i]->setIcons("M", "S", "Vol");
+        tracks[i]->setIcons("M", "S", "SF");
 
         // --- PROPOJENÍ CALLBACKŮ Z JEDNOTLIVÝCH TRACKŮ DO PANELU ---
-        // Používáme i (index 0-15) pro identifikaci tracku v panelu
+
         tracks[i]->onVolumeChanged = [this](int trk, int val)
         {
             if (onTrackVolumeChanged)
@@ -41,14 +41,12 @@ TrackPanelComponent::TrackPanelComponent()
                 onTrackPanChanged(trk - 1, val);
         };
 
-        // Propojení Reverb slideru
         tracks[i]->onReverbChanged = [this](int trk, int val)
         {
             if (onTrackReverbChanged)
                 onTrackReverbChanged(trk - 1, val);
         };
 
-        // Propojení Chorus slideru
         tracks[i]->onChorusChanged = [this](int trk, int val)
         {
             if (onTrackChorusChanged)
@@ -67,6 +65,13 @@ TrackPanelComponent::TrackPanelComponent()
                 onTrackSoloChanged(trk - 1, soloed);
         };
 
+        // 🔥 NOVÉ: Instrument callback 🔥
+        tracks[i]->onInstrumentSelected = [this](int trk, int bank, int cat, int prog)
+        {
+            if (onTrackInstrumentChanged)
+                onTrackInstrumentChanged(trk - 1, bank, cat, prog);
+        };
+
         addAndMakeVisible(*tracks[i]);
     }
 }
@@ -78,16 +83,11 @@ void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String 
 {
     if (index >= 0 && index < numTracks)
     {
-        // Nastavení barvy a jména instrumentu
-        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastní tmavě šedá barva
-
+        tracks[index]->setInstrument(name, juce::Colour(0xff444444));
         tracks[index]->updateVolume(volume);
     }
 }
 
-/** * AI: Synchronizace FX dat (Pan, Reverb, Chorus) z analyzeru do konkrétního tracku.
- * Metoda, která chyběla a kterou volá MainComponent.
- */
 void TrackPanelComponent::setTrackFxData(int index, int pan, int reverb, int chorus)
 {
     if (index >= 0 && index < numTracks)
@@ -99,7 +99,6 @@ void TrackPanelComponent::setTrackFxData(int index, int pan, int reverb, int cho
     }
 }
 
-/** Ruční nastavení instrumentu pro konkrétní track (např. při změně v UI) */
 void TrackPanelComponent::setTrackInstrument(int index, const juce::String &name, juce::Colour colour)
 {
     if (index >= 0 && index < numTracks)
@@ -108,7 +107,6 @@ void TrackPanelComponent::setTrackInstrument(int index, const juce::String &name
     }
 }
 
-/** AI: Propojení MIDI aktivity z MainComponent do konkrétního TrackComponent */
 void TrackPanelComponent::triggerTrackVu(int index, int velocity)
 {
     if (index >= 0 && index < numTracks)
@@ -124,14 +122,12 @@ void TrackPanelComponent::resized()
 {
     auto r = getLocalBounds();
 
-    // AI: Rozdělení celkové výšky panelu mezi 16 tracků
     if (numTracks > 0)
     {
         int trackHeight = r.getHeight() / numTracks;
 
         for (int i = 0; i < numTracks; ++i)
         {
-            // AI: .reduced(0, 2) vytvoří malou mezeru mezi tracky pro lepší přehlednost
             tracks[i]->setBounds(r.removeFromTop(trackHeight).reduced(0, 2));
         }
     }
@@ -139,6 +135,5 @@ void TrackPanelComponent::resized()
 
 void TrackPanelComponent::paint(juce::Graphics &g)
 {
-    // AI: Pozadí panelu (pokud není překryto tracky)
     g.fillAll(juce::Colours::transparentBlack);
 }
