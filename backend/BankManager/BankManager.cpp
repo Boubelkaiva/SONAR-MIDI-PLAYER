@@ -11,12 +11,14 @@
 */
 
 #include "BankManager.h"
+#include <iostream>
 
 // ======================================================
 // Konstruktor
 // ======================================================
 BankManager::BankManager()
 {
+    std::cout << "[POG] BE: START-UP: BankManager kontroluje uložené banky..." << std::endl;
     loadConfig(); // AI: Načte banky hned při startu
 }
 
@@ -89,7 +91,10 @@ void BankManager::loadConfig()
     auto file = getSettingsFile();
 
     if (!file.exists())
+    {
+        std::cout << "[POG] BE: Konfigurační soubor nenalezen (pravděpodobně první spuštění)." << std::endl;
         return;
+    }
 
     auto xml = juce::XmlDocument::parse(file);
 
@@ -109,4 +114,9 @@ void BankManager::loadConfig()
             }
         }
     }
+
+    if (loadedBanks.empty())
+        std::cout << "[POG] BE: START-UP: Žádné uložené banky nebyly nalezeny." << std::endl;
+    else
+        std::cout << "[POG] BE: START-UP: Nalezeno " << loadedBanks.size() << " uložených bank." << std::endl;
 }

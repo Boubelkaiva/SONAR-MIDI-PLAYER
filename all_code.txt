@@ -1,5 +1,5 @@
 ﻿==============================================================================
- GENERATED ON: 11.04.2026 18:08:23
+ GENERATED ON: 16.04.2026 13:56:21
  ROOT PATH: 
 ==============================================================================
 
@@ -84,7 +84,3605 @@ private:
 
 -----------------------------
 
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\AudioWatchdog\AudioWatchdog.h =====
+/*
+  ==============================================================================
+
+    AudioWatchdog.h
+    Created: 14 Apr 2026
+    Author: AI System (Iva's Project)
+    Description: SamostatnĂˇ komponenta pro automatickou obnovu audio spojenĂ­
+                 pĹ™i odpojenĂ­ hardwaru (sluchĂˇtek) na 32-bit systĂ©mech.
+                 Sleduje zmÄ›ny v AudioDeviceManageru a vynucuje restart portĹŻ.
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+
+/**
+ * AudioWatchdog sleduje stav zvukovĂ©ho rozhranĂ­ systĂ©mu.
+ * Pokud detekuje stav "<< none >>", vynutĂ­ re-inicializaci vĂ˝chozĂ­ho zaĹ™Ă­zenĂ­ (reproduktorĹŻ).
+ */
+class AudioWatchdog : public juce::ChangeListener
+{
+public:
+    /** Konstruktor vyĹľaduje referenci na tvĹŻj hlavnĂ­ AudioDeviceManager */
+    AudioWatchdog(juce::AudioDeviceManager &dm)
+        : deviceManager(dm)
+    {
+        // PĹ™ihlĂˇsĂ­me se k odbÄ›ru zprĂˇv o zmÄ›nĂˇch v hardwaru
+        deviceManager.addChangeListener(this);
+    }
+
+    /** PĹ™i zĂˇniku komponenty se korektnÄ› odhlĂˇsĂ­me */
+    ~AudioWatchdog() override
+    {
+        deviceManager.removeChangeListener(this);
+    }
+
+    /** * HlavnĂ­ metoda, kterou JUCE zavolĂˇ, jakmile Windows nahlĂˇsĂ­ zmÄ›nu (napĹ™. vytaĹľenĂ­ Jacku).
+     * BÄ›ĹľĂ­ na Message Threadu, takĹľe je bezpeÄŤnĂˇ pro prĂˇci s UI a Device Managerem.
+     */
+    void changeListenerCallback(juce::ChangeBroadcaster *source) override
+    {
+        if (source == &deviceManager)
+        {
+            auto setup = deviceManager.getAudioDeviceSetup();
+
+            // Pokud log ukazuje prĂˇzdno nebo "<< none >>", jednĂˇme.
+            if (setup.outputDeviceName.isEmpty() || setup.outputDeviceName == "<< none >>")
+            {
+                // VĂ˝pis do tvĂ©ho logu pro kontrolu
+                DBG("[WATCHDOG] SluchĂˇtka ztracena. Aktivuji zĂˇchrannĂ˝ protokol...");
+                std::cout << "[AI SYSTEM] Audio vĂ˝stup pĹ™eruĹˇen. Restartuji zaĹ™Ă­zenĂ­..." << std::endl;
+
+                // 1. Krok: UzavĹ™enĂ­ mrtvĂ©ho portu (uvolnÄ›nĂ­ Ghost Device)
+                deviceManager.closeAudioDevice();
+
+                // 2. Krok: VynucenĂ© oÄŤichĂˇnĂ­ dostupnĂ©ho HW (Windows nĂˇm teÄŹ musĂ­ dĂˇt reprĂˇky)
+                // Parametry (0, 2) znamenajĂ­ 0 vstupĹŻ a 2 vĂ˝stupy (stereo)
+                auto error = deviceManager.initialiseWithDefaultDevices(0, 2);
+
+                if (error.isEmpty())
+                {
+                    auto newSetup = deviceManager.getAudioDeviceSetup();
+                    std::cout << "[AI SYSTEM] SpojenĂ­ obnoveno na: " << newSetup.outputDeviceName << std::endl;
+                }
+                else
+                {
+                    std::cerr << "[ERROR] Watchdog nemohl najĂ­t ĹľĂˇdnĂ˝ zvukovĂ˝ hardware: " << error << std::endl;
+                }
+            }
+        }
+    }
+
+private:
+    juce::AudioDeviceManager &deviceManager;
+
+    // StandardnĂ­ JUCE makro pro bezpeÄŤnost pamÄ›ti
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioWatchdog)
+};
+
+-----------------------------
+
 ===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankDNAExtractor\BankDNAExtractor.cpp =====
+/*
+  ==============================================================================
+    COMPONENT: BankDNAExtractor.cpp
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
+    HYBRIDNĂŤ EXTRAKCE: InteligentnĂ­ rozliĹˇenĂ­ Roland vs. Yamaha pĹ™es FluidSynth API
+  ==============================================================================
+*/
+
+#include "BankDNAExtractor.h"
+#include <fluidsynth.h>
+#include <fstream>
+#include <iostream>
+
+bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
+{
+    if (!sf2File.existsAsFile())
+        return false;
+
+    // Inicializace FluidSynth pouze pro ĂşÄŤely extrakce
+    fluid_settings_t *settings = new_fluid_settings();
+    fluid_synth_t *synth = new_fluid_synth(settings);
+
+    int sfont_id = fluid_synth_sfload(synth, sf2File.getFullPathName().toRawUTF8(), 1);
+    if (sfont_id == FLUID_FAILED)
+    {
+        delete_fluid_synth(synth);
+        delete_fluid_settings(settings);
+        return false;
+    }
+
+    fluid_sfont_t *sfont = fluid_synth_get_sfont_by_id(synth, (unsigned int)sfont_id);
+
+    juce::File jsonFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                              .getChildFile("SonarMidiPlayer")
+                              .getChildFile("bank_settings")
+                              .getChildFile(sf2File.getFileNameWithoutExtension() + ".json");
+
+    if (!jsonFile.getParentDirectory().exists())
+        jsonFile.getParentDirectory().createDirectory();
+
+    std::ofstream outFile(jsonFile.getFullPathName().toRawUTF8());
+    if (outFile.is_open())
+    {
+        juce::String fileName = sf2File.getFileName().toLowerCase();
+
+        // FluidSynth nemĂˇ pĹ™Ă­mĂ˝ "count" jako TSF, projdeme presety iterĂˇtorem
+        outFile << "{\n  \"bank_info\": {\n";
+        outFile << "    \"source\": \"" << sf2File.getFileName().toRawUTF8() << "\"\n  },\n";
+        outFile << "  \"instruments\": [\n";
+
+        fluid_sfont_iteration_start(sfont);
+        fluid_preset_t *preset;
+        int internalIdx = 0;
+        bool first = true;
+
+        while ((preset = fluid_sfont_iteration_next(sfont)))
+        {
+            if (!first)
+                outFile << ",\n";
+            first = false;
+
+            const char *name = fluid_preset_get_name(preset);
+            juce::String instrName = juce::String(name ? name : "Empty");
+
+            int b = fluid_preset_get_banknum(preset); // SkuteÄŤnĂˇ banka ze SoundFontu
+            int p = fluid_preset_get_num(preset);     // SkuteÄŤnĂ˝ program
+
+            // --- TVĂ HYBRIDNĂŤ LOGIKA (ZACHOVĂNA A ADAPTOVĂNA) ---
+
+            // 1. Detekce BICĂŤCH (PrioritnĂ­ pravidlo)
+            if (instrName.containsIgnoreCase("Kit") || instrName.containsIgnoreCase("Drum") || instrName.containsIgnoreCase("Perc"))
+            {
+                // VynutĂ­me banku 128 pro tvĹŻj systĂ©m bicĂ­ch, pokud jiĹľ nenĂ­
+                b = 128;
+            }
+            // 2. SpecifickĂˇ logika pro YAMAHA (XG hybrid)
+            else if (fileName.contains("yamaha") || fileName.contains("_xg"))
+            {
+                // U XG souborĹŻ FluidSynth obvykle banky pĹ™eÄŤte sprĂˇvnÄ›,
+                // ale pokud by byly lineĂˇrnĂ­ (jako v TSF), zachovĂˇvĂˇme tvĹŻj propoÄŤet:
+                if (b == 0 && internalIdx >= 128)
+                {
+                    b = internalIdx / 128;
+                    p = internalIdx % 128;
+                }
+            }
+            // 3. SpecifickĂˇ logika pro ROLAND (GM/GS hybrid)
+            else
+            {
+                // Roland variace: Pokud FluidSynth vidĂ­ banku 0, ale index je vysokĂ˝,
+                // aplikujeme tvĹŻj posun pro GS variace.
+                if (b == 0 && internalIdx >= 128)
+                {
+                    b = 1;
+                    p = internalIdx - 128;
+                }
+            }
+
+            juce::String safeName = instrName.replace("\"", "\\\"");
+
+            outFile << "    {\n";
+            outFile << "      \"idx\": " << internalIdx << ",\n";
+            outFile << "      \"bank\": " << b << ",\n";
+            outFile << "      \"prog\": " << p << ",\n";
+            outFile << "      \"name\": \"" << safeName.toRawUTF8() << "\"\n";
+            outFile << "    }";
+
+            internalIdx++;
+        }
+
+        outFile << "\n  ]\n}";
+        outFile.close();
+    }
+
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+
+    std::cout << "[AI] Fluid Hybridni DNA ulozena: " << sf2File.getFileName() << std::endl;
+    return true;
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankDNAExtractor\BankDNAExtractor.h =====
+/*
+  ==============================================================================
+    COMPONENT: BankDNAExtractor.h
+    MODULE: backend/BankDNAExtractor/BankDNAExtractor.h
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
+    DESCRIPTION: SamostatnĂˇ utilita pro preciznĂ­ extrakci DNA (bank a presetĹŻ)
+                 ze SoundFontu pomocĂ­ FluidSynth API.
+    AUTHOR: Iva
+  ==============================================================================
+*/
+
+#pragma once
+#include <JuceHeader.h>
+
+/**
+ * StatickĂˇ utilita pro analĂ˝zu SoundFont bank.
+ * Tato tĹ™Ă­da extrahuje reĂˇlnĂˇ ÄŤĂ­sla bank a programĹŻ ze SF2 souboru a uklĂˇdĂˇ je
+ * do JSON mapy, kterou nĂˇslednÄ› vyuĹľĂ­vĂˇ UI pro zobrazenĂ­ seznamĹŻ nĂˇstrojĹŻ.
+ */
+class BankDNAExtractor
+{
+public:
+    /**
+     * Analyzuje SF2/SF3 soubor a vytĂˇhne DNA (seznam nĂˇstrojĹŻ) do JSONu.
+     * FluidSynth verze prochĂˇzĂ­ reĂˇlnĂ© presety a banky definovanĂ© v souboru.
+     * * @param sf2File Soubor se SoundFontem k analĂ˝ze.
+     * @return true pokud byl JSON ĂşspÄ›ĹˇnÄ› vytvoĹ™en.
+     */
+    static bool extractToJSON(const juce::File &sf2File);
+
+private:
+    // Utility class â€“ zakĂˇzĂˇnĂ­ instance (podle tvĂ©ho standardu).
+    BankDNAExtractor() = delete;
+    ~BankDNAExtractor() = delete;
+    BankDNAExtractor(const BankDNAExtractor &) = delete;
+    BankDNAExtractor &operator=(const BankDNAExtractor &) = delete;
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.cpp =====
+/*
+  ==============================================================================
+
+    FILE: BankManager.cpp
+    PROJECT: SONAR MIDI PLAYER
+    MODULE: backend/BankManager
+    DESCRIPTION: Implementation of bank management logic.
+                 Stores data in AppData/Roaming/SonarMidiPlayer.
+
+  ==============================================================================
+*/
+
+#include "BankManager.h"
+#include <iostream>
+
+// ======================================================
+// Konstruktor
+// ======================================================
+BankManager::BankManager()
+{
+    std::cout << "[POG] BE: START-UP: BankManager kontroluje uloĹľenĂ© banky..." << std::endl;
+    loadConfig(); // AI: NaÄŤte banky hned pĹ™i startu
+}
+
+// ======================================================
+// Cesta k souboru
+// ======================================================
+juce::File BankManager::getSettingsFile()
+{
+    // AI: CentrĂˇlnĂ­ sloĹľka v AppData (profesionĂˇlnĂ­ standard)
+    auto appData = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
+    auto settingsDir = appData.getChildFile("SonarMidiPlayer");
+
+    if (!settingsDir.exists())
+        settingsDir.createDirectory();
+
+    return settingsDir.getChildFile("bank_settings.xml");
+}
+
+// ======================================================
+// Logika sprĂˇvy bank
+// ======================================================
+
+void BankManager::addBank(const juce::File &file)
+{
+    if (!file.existsAsFile())
+        return;
+
+    // AI: Kontrola, zda jiĹľ banka v seznamu nenĂ­
+    for (const auto &b : loadedBanks)
+    {
+        if (b.getFullPathName() == file.getFullPathName())
+            return;
+    }
+
+    loadedBanks.push_back(file);
+    saveConfig(); // AI: UloĹľit zmÄ›nu okamĹľitÄ›
+}
+
+void BankManager::removeBank(int index)
+{
+    if (index >= 0 && index < (int)loadedBanks.size())
+    {
+        loadedBanks.erase(loadedBanks.begin() + index);
+        saveConfig(); // AI: UloĹľit zmÄ›nu okamĹľitÄ›
+    }
+}
+
+// ======================================================
+// NaÄŤĂ­tĂˇnĂ­ a UklĂˇdĂˇnĂ­ (Persistence)
+// ======================================================
+
+void BankManager::saveConfig()
+{
+    juce::XmlElement xml("SONAR_BANK_STATE");
+
+    for (auto &f : loadedBanks)
+    {
+        auto *e = xml.createNewChildElement("BANK_ENTRY");
+        e->setAttribute("fullPath", f.getFullPathName());
+    }
+
+    auto file = getSettingsFile();
+    xml.writeTo(file);
+
+    DBG(u8"BankManager: Seznam uloĹľen: " << file.getFullPathName());
+}
+
+void BankManager::loadConfig()
+{
+    auto file = getSettingsFile();
+
+    if (!file.exists())
+    {
+        std::cout << "[POG] BE: KonfiguraÄŤnĂ­ soubor nenalezen (pravdÄ›podobnÄ› prvnĂ­ spuĹˇtÄ›nĂ­)." << std::endl;
+        return;
+    }
+
+    auto xml = juce::XmlDocument::parse(file);
+
+    if (xml != nullptr)
+    {
+        loadedBanks.clear();
+
+        for (auto *e : xml->getChildIterator())
+        {
+            if (e->hasTagName("BANK_ENTRY"))
+            {
+                juce::File f(e->getStringAttribute("fullPath"));
+
+                // AI: PĹ™idĂˇme pouze pokud soubor na disku stĂˇle existuje
+                if (f.existsAsFile())
+                    loadedBanks.push_back(f);
+            }
+        }
+    }
+
+    if (loadedBanks.empty())
+        std::cout << "[POG] BE: START-UP: Ĺ˝ĂˇdnĂ© uloĹľenĂ© banky nebyly nalezeny." << std::endl;
+    else
+        std::cout << "[POG] BE: START-UP: Nalezeno " << loadedBanks.size() << " uloĹľenĂ˝ch bank." << std::endl;
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.h =====
+/*
+  ==============================================================================
+
+    FILE: BankManager.h
+    PROJECT: SONAR MIDI PLAYER
+    MODULE: backend/BankManager
+    DESCRIPTION: Handles SF2 bank list management and XML persistence.
+                 This is a standalone logic module (Backend).
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <vector>
+
+class BankManager
+{
+public:
+    // AI: Konstruktor automaticky naÄŤte uloĹľenĂˇ data
+    BankManager();
+    ~BankManager() = default;
+
+    // --- API pro sprĂˇvu bank ---
+
+    // AI: PĹ™idĂˇ banku do seznamu a uloĹľĂ­ na disk
+    void addBank(const juce::File &file);
+
+    // AI: SmaĹľe banku podle indexu a aktualizuje disk
+    void removeBank(int index);
+
+    // AI: VrĂˇtĂ­ aktuĂˇlnĂ­ seznam pro potĹ™eby Frontendu
+    const std::vector<juce::File> &getLoadedBanks() const { return loadedBanks; }
+
+    // --- Persistence (PamÄ›ĹĄ) ---
+
+    void saveConfig();
+    void loadConfig();
+
+    // AI: StatickĂˇ metoda pro zĂ­skĂˇnĂ­ cesty (univerzĂˇlnĂ­ pro EXE/Plugin)
+    static juce::File getSettingsFile();
+
+private:
+    std::vector<juce::File> loadedBanks;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BankManager)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MasterEffects\MasterEffects.cpp =====
+/*
+  ==============================================================================
+    FILE: MasterEffects.cpp
+    PROJECT: SONAR MIDI PLAYER
+  ==============================================================================
+*/
+
+#include "MasterEffects.h"
+
+MasterEffects::MasterEffects()
+{
+  // 1. NastavenĂ­ Kompresoru (S-Type styl)
+  auto &compressor = fxChain.get<1>();
+  compressor.setRatio(4.0f);
+  compressor.setAttack(5.0f);
+  compressor.setRelease(100.0f);
+  compressor.setThreshold(-10.0f);
+
+  // 2. NastavenĂ­ Limiteru (MAX styl)
+  auto &limiter = fxChain.get<2>();
+  limiter.setThreshold(-0.1f);
+  limiter.setRelease(100.0f);
+}
+
+void MasterEffects::prepare(double sampleRate, int samplesPerBlock)
+{
+  juce::dsp::ProcessSpec spec{sampleRate, (juce::uint32)samplesPerBlock, 2};
+
+  // 3. NastavenĂ­ Low-Cut filtru na 40Hz (pro tvoje 2000W bedny)
+  auto &lowCut = fxChain.get<0>();
+  *lowCut.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 40.0f);
+
+  fxChain.prepare(spec);
+}
+
+void MasterEffects::process(juce::AudioBuffer<float> &buffer)
+{
+  // VytvoĹ™enĂ­ kontextu pro zpracovĂˇnĂ­
+  juce::dsp::AudioBlock<float> block(buffer);
+  juce::dsp::ProcessContextReplacing<float> context(block);
+
+  // SpuĹˇtÄ›nĂ­ celĂ©ho AI efektovĂ©ho Ĺ™etÄ›zce
+  fxChain.process(context);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MasterEffects\MasterEffects.h =====
+#pragma once
+
+#include <JuceHeader.h>
+#include <juce_dsp/juce_dsp.h>
+
+class MasterEffects
+{
+public:
+  MasterEffects();
+  ~MasterEffects() = default;
+
+  void prepare(double sampleRate, int samplesPerBlock);
+  void process(juce::AudioBuffer<float> &buffer);
+
+  // --- VEĹEJNĂ‰ METODY PRO OVLĂDĂNĂŤ Z FRONTENDU ---
+
+  void setLowCutFrequency(float frequency)
+  {
+    auto &lowCut = fxChain.get<0>();
+    // PĹ™epoÄŤet koeficientĹŻ filtru za chodu (nutnĂ˝ sampleRate)
+    *lowCut.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, frequency);
+  }
+
+  void setCompThreshold(float thresholdDb)
+  {
+    fxChain.get<1>().setThreshold(thresholdDb);
+  }
+
+  void setCompRatio(float ratio)
+  {
+    fxChain.get<1>().setRatio(ratio);
+  }
+
+  void setLimiterThreshold(float thresholdDb)
+  {
+    fxChain.get<2>().setThreshold(thresholdDb);
+  }
+
+private:
+  // ExplicitnĂ­ definice typĹŻ pro klid v duĹˇi editoru
+  using Filter = juce::dsp::IIR::Filter<float>;
+  using Coefficients = juce::dsp::IIR::Coefficients<float>;
+  using StereoFilter = juce::dsp::ProcessorDuplicator<Filter, Coefficients>;
+
+  // 0: HighPass, 1: Compressor (S-Type), 2: Limiter (MAX)
+  juce::dsp::ProcessorChain<StereoFilter, juce::dsp::Compressor<float>, juce::dsp::Limiter<float>> fxChain;
+
+  // MusĂ­me si pamatovat sample rate pro pozdÄ›jĹˇĂ­ pĹ™epoÄŤet filtru
+  double currentSampleRate = 44100.0;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterEffects)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.cpp =====
+/*
+  ==============================================================================
+    FILE: MidiAnalyzer.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Deep Event List scanning s ovÄ›Ĺ™enĂ­m FluidSynth bank.
+    UPDATED: PĹ™echod z TSF na FluidSynth engine (v2.0).
+  ==============================================================================
+*/
+
+#include "MidiAnalyzer.h"
+#include "../MidiMapper/MidiMapper.h"
+#include <iostream>
+#include <iomanip>
+
+std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMapper *mapper)
+{
+    std::vector<TrackData> results;
+
+    // 1. Inicializace 16 slotĹŻ (Indexy 0-15 odpovĂ­dajĂ­ MIDI kanĂˇlĹŻm 1-16)
+    for (int i = 0; i < 16; ++i)
+    {
+        TrackData d;
+        d.channel = i + 1;
+        d.programNumber = 0;
+        d.bankMSB = 0;
+        d.bankLSB = 0;
+        d.tsfIndex = -1; // AI: PonechĂˇno pro kompatibilitu s UI, nynĂ­ reprezentuje FluidSynth ID
+        d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
+        d.initialVolume = 100.0f;
+        d.initialReverb = 0;
+        d.initialChorus = 0;
+        results.push_back(d);
+    }
+
+    if (!file.existsAsFile())
+        return results;
+
+    juce::FileInputStream inputStream(file);
+    if (!inputStream.openedOk())
+        return results;
+
+    juce::MidiFile mf;
+    if (mf.readFrom(inputStream))
+    {
+        // --- 1. DETEKCE MĂ“DU (GM / GS / XG) ---
+        MidiMode detectedMode = MidiMode::GM;
+
+        for (int t = 0; t < mf.getNumTracks(); ++t)
+        {
+            auto *seq = mf.getTrack(t);
+            for (auto *m : *seq)
+            {
+                auto &msg = m->message;
+                if (msg.isSysEx())
+                {
+                    const uint8_t *data = msg.getRawData();
+                    int size = msg.getRawDataSize();
+
+                    MidiMode mMode = MidiMapper::detectModeFromSysEx(data, size);
+                    if (mMode != MidiMode::GM)
+                    {
+                        detectedMode = mMode;
+                        break;
+                    }
+                }
+            }
+            if (detectedMode != MidiMode::GM)
+                break;
+        }
+
+        std::cout << "\n--- [START ANALĂťZY EVENT LISTU (FLUID EDITION)] ---" << std::endl;
+        std::cout << "[INFO] DetekovanĂ˝ mĂłd souboru: "
+                  << (detectedMode == MidiMode::XG ? "Yamaha XG" : (detectedMode == MidiMode::GS ? "Roland GS" : "General MIDI")) << std::endl;
+
+        // --- 2. PRĹ®CHOD TRACKY A DEEP SCAN ---
+        for (int t = 0; t < mf.getNumTracks(); ++t)
+        {
+            auto *seq = mf.getTrack(t);
+            for (auto *m : *seq)
+            {
+                auto &msg = m->message;
+
+                // JUCE kanĂˇly jsou 1-16
+                int chRaw = msg.getChannel();
+
+                if (chRaw >= 1 && chRaw <= 16)
+                {
+                    int chIdx = chRaw - 1;
+
+                    if (msg.isController())
+                    {
+                        int ctrl = msg.getControllerNumber();
+                        int val = msg.getControllerValue();
+
+                        if (ctrl == 0)
+                            results[chIdx].bankMSB = val;
+                        else if (ctrl == 32)
+                            results[chIdx].bankLSB = val;
+                        else if (ctrl == 7)
+                            results[chIdx].initialVolume = (float)val;
+                        else if (ctrl == 91)
+                            results[chIdx].initialReverb = val;
+                        else if (ctrl == 93)
+                            results[chIdx].initialChorus = val;
+                    }
+                    else if (msg.isProgramChange())
+                    {
+                        int prog = msg.getProgramChangeNumber();
+                        results[chIdx].programNumber = prog;
+
+                        // AI: KlĂ­ÄŤovĂˇ zmÄ›na â€“ mapper nynĂ­ vracĂ­ ID pro FluidSynth
+                        if (mapper != nullptr)
+                        {
+                            results[chIdx].tsfIndex = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
+                        }
+
+                        bool isDrum = (chRaw == 10 || results[chIdx].bankMSB >= 126);
+                        results[chIdx].instrumentName = getGMName(prog, results[chIdx].bankMSB, isDrum);
+                    }
+                }
+            }
+        }
+
+        // --- 3. REKAPITULACE ---
+        std::cout << "\n--- [FINĂLNĂŤ ANALĂťZA KANĂLĹ® - OK] ---" << std::endl;
+        for (int i = 0; i < 16; ++i)
+        {
+            std::cout << "CH " << std::setw(2) << results[i].channel
+                      << " | INSTR: " << std::setw(16) << results[i].instrumentName
+                      << " | B: " << results[i].bankMSB
+                      << " | P: " << results[i].programNumber
+                      << " | FS_ID: " << results[i].tsfIndex << std::endl;
+        }
+    }
+
+    return results;
+}
+
+juce::String MidiAnalyzer::getGMName(int p, int bank, bool isDrumChannel)
+{
+    if (isDrumChannel || bank >= 126)
+        return "Drum Kit (" + juce::String(p) + ")";
+
+    // PĹŻvodnĂ­ GM kategorizace zĹŻstĂˇvĂˇ stejnĂˇ pro pĹ™ehlednost v UI
+    if (p >= 0 && p <= 7)
+        return "Piano";
+    if (p >= 8 && p <= 15)
+        return "Chr. Perc.";
+    if (p >= 16 && p <= 23)
+        return "Organ";
+    if (p >= 24 && p <= 31)
+        return "Guitar";
+    if (p >= 32 && p <= 39)
+        return "Bass";
+    if (p >= 40 && p <= 47)
+        return "Strings";
+    if (p >= 48 && p <= 55)
+        return "Ensemble";
+    if (p >= 56 && p <= 63)
+        return "Brass";
+    if (p >= 64 && p <= 71)
+        return "Reed";
+    if (p >= 72 && p <= 79)
+        return "Pipe";
+    if (p >= 80 && p <= 87)
+        return "Synth Lead";
+    if (p >= 88 && p <= 95)
+        return "Synth Pad";
+
+    return "Instr. " + juce::String(p + 1);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.h =====
+/*
+  ==============================================================================
+    FILE: MidiAnalyzer.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Logika pro extrakci metadat z MIDI/KAR souborĹŻ.
+    UPDATED: PĹ™echod na FluidSynth â€“ nahrazenĂ­ TSF Indexu (v2.0.0).
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+
+// DopĹ™ednĂˇ deklarace pro minimalizaci zĂˇvislostĂ­
+class MidiMapper;
+
+/** * Struktura pro pĹ™enos informacĂ­ o jednom MIDI kanĂˇlu do UI.
+ * UchovĂˇvĂˇ stav kanĂˇlu zjiĹˇtÄ›nĂ˝ hloubkovou analĂ˝zou MIDI eventĹŻ.
+ */
+struct TrackData
+{
+    int channel;       // 1-16
+    int programNumber; // 0-127 (MIDI Program Change)
+    int bankMSB;       // CC 0 (KlĂ­ÄŤovĂ© pro Yamaha XG / Roland GS)
+    int bankLSB;       // CC 32 (Variace / Bank Select LSB)
+
+    // ZmÄ›nÄ›no z tsfIndex na presetIndex pro kompatibilitu s FluidSynth
+    int presetIndex; // SkuteÄŤnĂ© ID nĂˇstroje v aktuĂˇlnĂ­m SoundFontu
+
+    juce::String instrumentName; // TextovĂ˝ nĂˇzev nĂˇstroje (GM nebo SF2 nĂˇzev)
+    float initialVolume;         // Hlasitost 0-127 (z CC 7)
+    juce::String trackName;      // NĂˇzev tracku z Meta EventĹŻ (pokud existuje)
+
+    // Data pro tvĹŻj FX MODAL:
+    int initialReverb = 0; // CC 91 - VĂ˝chozĂ­ ĂşroveĹ Reverb sendu
+    int initialChorus = 0; // CC 93 - VĂ˝chozĂ­ ĂşroveĹ Chorus sendu
+
+    // ZpÄ›tnĂˇ kompatibilita (volitelnĂ©):
+    // Pokud mĂˇĹˇ v UI hodnÄ› odkazĹŻ na nĂˇzev tsfIndex, mĹŻĹľeĹˇ nechat alias:
+    int &tsfIndex = presetIndex;
+};
+
+class MidiAnalyzer
+{
+public:
+    MidiAnalyzer() = default;
+    ~MidiAnalyzer() = default;
+
+    /** * OtevĹ™e soubor a vrĂˇtĂ­ seznam dat pro vĹˇech 16 kanĂˇlĹŻ.
+     * @param file MIDI soubor k analĂ˝ze
+     * @param mapper Ukazatel na instanci mapperu pro ovÄ›Ĺ™enĂ­ FluidSynth bank
+     */
+    std::vector<TrackData> analyzeFile(const juce::File &file, MidiMapper *mapper);
+
+private:
+    /** * PomocnĂˇ metoda pro pĹ™evod ÄŤĂ­sla programu a banky na srozumitelnĂ˝ nĂˇzev.
+     */
+    juce::String getGMName(int p, int bank, bool isDrumChannel);
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.cpp =====
+/*
+  ==============================================================================
+    FILE: MidiMapper.cpp
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
+  ==============================================================================
+*/
+
+#include "MidiMapper.h"
+#include <iostream>
+#include <iomanip>
+
+MidiMapper::MidiMapper() {}
+MidiMapper::~MidiMapper() {}
+
+// Implementace chybÄ›jĂ­cĂ­ funkce, kterou volĂˇ Analyzer
+int MidiMapper::findDeepPresetIndex(int bankMSB, int prog, int channel, MidiMode mode)
+{
+    // PouĹľijeme tvou logiku z getInstrumentInfo
+    InstrumentInfo info = getInstrumentInfo(bankMSB, prog, channel, mode);
+
+    // Pro FluidSynth vracĂ­me unikĂˇtnĂ­ kombinaci jako index,
+    // nebo prostÄ› program, pokud index nepotĹ™ebujeĹˇ pro pole.
+    return info.program;
+}
+
+InstrumentInfo MidiMapper::getInstrumentInfo(int bankMSB, int prog, int channel, MidiMode mode)
+{
+    InstrumentInfo info;
+
+    // TvĹŻj standard: kanĂˇl 10 (index 9) jsou vĹľdy bicĂ­ (banka 128)
+    int targetBank = (channel == 9) ? 128 : bankMSB;
+    int targetProg = prog;
+
+    // XG/GS HybridnĂ­ logika
+    if (mode == MidiMode::XG && (bankMSB == 126 || bankMSB == 127))
+        targetBank = 128;
+
+    info.bank = targetBank;
+    info.program = targetProg;
+    info.name = "Bank: " + juce::String(targetBank) + " Prog: " + juce::String(targetProg);
+
+    return info;
+}
+
+MidiMode MidiMapper::detectModeFromSysEx(const uint8_t *data, int size)
+{
+    if (!data || size < 6)
+        return MidiMode::GM;
+
+    for (int i = 0; i < size - 4; ++i)
+    {
+        if (data[i] == 0x43)
+            return MidiMode::XG; // Yamaha
+        if (data[i] == 0x41)
+            return MidiMode::GS; // Roland
+    }
+    return MidiMode::GM;
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.h =====
+/*
+  ==============================================================================
+    FILE: MidiMapper.h
+    PROJECT: SONAR MIDI PLAYER (FluidSynth Edition)
+  ==============================================================================
+*/
+
+#pragma once
+#include <JuceHeader.h>
+#include <cstdint>
+
+enum class MidiMode
+{
+    GM,
+    GS,
+    XG
+};
+
+// Struktura pro pĹ™enos vĂ˝sledku mapovĂˇnĂ­
+struct InstrumentInfo
+{
+    int bank;
+    int program;
+    juce::String name;
+};
+
+class MidiMapper
+{
+public:
+    MidiMapper(); // Konstruktor bez TSF
+    ~MidiMapper();
+
+    // Tato funkce musĂ­ existovat, protoĹľe ji volĂˇ MidiAnalyzer
+    int findDeepPresetIndex(int bankMSB, int prog, int channel, MidiMode mode);
+
+    // Tuto funkci pouĹľĂ­vĂˇĹˇ v CPP pro zĂ­skĂˇnĂ­ detailĹŻ
+    InstrumentInfo getInstrumentInfo(int bankMSB, int prog, int channel, MidiMode mode);
+
+    static MidiMode detectModeFromSysEx(const uint8_t *data, int size);
+
+private:
+    // AI: FluidSynth nepotĹ™ebuje drĹľet instanci fontu zde, Ĺ™eĹˇĂ­ si to synth v MidiPlayeru
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.cpp =====
+/*
+ ==============================================================================
+    FILE: MidiPlayer.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: FIXED AUDIO ENGINE (WORKING FLUIDSYNTH PIPELINE)
+ ==============================================================================
+*/
+
+#include "MidiPlayer.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h"
+#include <iostream>
+#include <thread>
+#include <cmath>
+
+#define LOG(x) std::cout << x << std::endl
+
+// =========================
+// CONSTRUCTOR
+// =========================
+MidiPlayer::MidiPlayer()
+    : isPlaying(false),
+      currentSampleRate(48000.0),
+      masterVolume(1.0f),
+      settings(nullptr),
+      synth(nullptr),
+      playheadSeconds(0.0),
+      currentMode(MidiMode::GM)
+{
+    std::cout << "[POG] BE: LIFE-CYCLE: Startuji MidiPlayer (Constructor)" << std::endl;
+
+    settings = new_fluid_settings();
+
+    // UmlÄŤenĂ­ internĂ­ch varovĂˇnĂ­ FluidSynthu (odstranĂ­ spam "No preset found")
+    fluid_set_log_function(FLUID_WARN, nullptr, nullptr);
+    fluid_set_log_function(FLUID_ERR, nullptr, nullptr);
+
+    fluid_settings_setnum(settings, "synth.sample-rate", currentSampleRate);
+    fluid_settings_setint(settings, "synth.polyphony", 256);
+    fluid_settings_setnum(settings, "synth.gain", 1.0);
+
+    synth = new_fluid_synth(settings);
+
+    fluid_synth_system_reset(synth);
+
+    mapper = std::make_unique<MidiMapper>();
+
+    for (int i = 0; i < 16; ++i)
+    {
+        currentBankMSB[i] = (i == 9) ? 128 : 0;
+        currentBankLSB[i] = 0;
+        channelMuted[i] = false;
+        channelSolo[i] = false;
+
+        fluid_synth_program_change(synth, i, 0);
+    }
+
+    std::cout << "[POG] BE: INIT: FluidSynth pĹ™ipraven na 48kHz, mapper OK." << std::endl;
+}
+
+// =========================
+// DESTRUCTOR
+// =========================
+MidiPlayer::~MidiPlayer()
+{
+    if (synth)
+        delete_fluid_synth(synth);
+
+    if (settings)
+        delete_fluid_settings(settings);
+}
+
+// =========================
+// REQUIRED (FIX LINKER ERROR)
+// =========================
+void MidiPlayer::releaseResources()
+{
+}
+
+// =========================
+// AUDIO INIT
+// =========================
+void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+{
+    if (sampleRate <= 0)
+        return;
+
+    bool reinit = (std::abs(currentSampleRate - sampleRate) > 0.01);
+
+    if (!reinit)
+        return;
+
+    if (synth)
+    {
+        std::cout << "[POG] BE: AUDIO-CHANGE: Re-inicializace na " << sampleRate << " Hz" << std::endl;
+        delete_fluid_synth(synth);
+        synth = nullptr;
+    }
+
+    currentSampleRate = sampleRate;
+
+    fluid_settings_setnum(settings, "synth.sample-rate", currentSampleRate);
+
+    synth = new_fluid_synth(settings);
+
+    fluid_synth_system_reset(synth);
+    fluid_synth_set_gain(synth, 1.0f);
+
+    for (int i = 0; i < 16; ++i)
+        fluid_synth_program_change(synth, i, 0);
+
+    if (!lastSf2Path.isEmpty())
+    {
+        int sfont_id = fluid_synth_sfload(synth, lastSf2Path.toRawUTF8(), 1);
+        std::cout << "[POG] BE: SoundFont automaticky znovunaÄŤten (ID: " << sfont_id << ")" << std::endl;
+    }
+}
+
+// =========================
+// AUDIO CALLBACK
+// =========================
+void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
+{
+    // --- ZDE NESMĂŤ BĂťT Ĺ˝ĂDNĂť std::cout (ODSTRANÄšNY TIKY) ---
+
+    bufferToFill.clearActiveBufferRegion();
+
+    if (!isPlaying || synth == nullptr)
+        return;
+
+    const int samples = bufferToFill.numSamples;
+    const double blockStartTime = playheadSeconds;
+    const double blockEndTime = blockStartTime + (samples / currentSampleRate);
+
+    // 1. Dispatch MIDI events for this time slice
+    for (; lastEventIndex < midiSequence.getNumEvents(); ++lastEventIndex)
+    {
+        auto *event = midiSequence.getEventPointer(lastEventIndex);
+        if (event->message.getTimeStamp() >= blockEndTime)
+            break;
+
+        if (event->message.getTimeStamp() >= blockStartTime)
+            processMidiMessage(event->message);
+    }
+
+    float *left = bufferToFill.buffer->getWritePointer(0, bufferToFill.startSample);
+    float *right = (bufferToFill.buffer->getNumChannels() > 1)
+                       ? bufferToFill.buffer->getWritePointer(1, bufferToFill.startSample)
+                       : nullptr;
+
+    float *outL = left;
+    float *outR = right ? right : left;
+
+    fluid_synth_write_float(
+        synth,
+        samples,
+        outL, 0, 1,
+        outR, 0, 1);
+
+    bufferToFill.buffer->applyGain(bufferToFill.startSample, samples, masterVolume);
+
+    // 3. Update playhead
+    playheadSeconds = blockEndTime;
+
+    // Loop check (volitelnÄ›)
+    if (playheadSeconds >= midiSequence.getEndTime())
+        isPlaying = false;
+}
+
+// =========================
+// SOUND FONT
+// =========================
+void MidiPlayer::loadSoundFont(const juce::File &sf2File)
+{
+    if (!sf2File.existsAsFile())
+    {
+        std::cout << "[POG] BE: SF2-LOAD: ERR - Soubor neexistuje: " << sf2File.getFileName() << std::endl;
+        return;
+    }
+
+    lastSf2Path = sf2File.getFullPathName();
+    std::cout << "[POG] BE: SF2-LOAD: Pokus o naÄŤtenĂ­ banky -> " << sf2File.getFileName() << std::endl;
+
+    if (synth)
+    {
+        int id = fluid_synth_sfload(synth, lastSf2Path.toRawUTF8(), 1);
+        if (id != -1)
+            std::cout << "[POG] BE: SF2-LOAD: ĂšSPÄšCH! Banka naÄŤtena pod ID: " << id << std::endl;
+        else
+            std::cout << "[POG] BE: SF2-LOAD: KRITICKĂ CHYBA - FluidSynth soubor odmĂ­tl!" << std::endl;
+    }
+}
+
+// =========================
+// MIDI LOAD (FIX LINKER)
+// =========================
+void MidiPlayer::loadMidiFile(const juce::File &midiFile)
+{
+    if (!midiFile.existsAsFile())
+    {
+        std::cout << "[POG] BE: MIDI-LOAD: ERR - Soubor nenalezen." << std::endl;
+        return;
+    }
+
+    std::cout << "[POG] BE: MIDI-LOAD: OtevĂ­rĂˇm " << midiFile.getFileName() << std::endl;
+    juce::FileInputStream inputStream(midiFile);
+    if (!inputStream.openedOk())
+        return;
+
+    juce::MidiFile mf;
+    if (mf.readFrom(inputStream))
+    {
+        mf.convertTimestampTicksToSeconds();
+        midiSequence.clear();
+        for (int i = 0; i < mf.getNumTracks(); ++i)
+            midiSequence.addSequence(*mf.getTrack(i), 0.0);
+
+        midiSequence.updateMatchedPairs();
+        playheadSeconds = 0.0;
+        lastEventIndex = 0;
+        std::cout << "[POG] BE: MIDI-LOAD: Hotovo. UdĂˇlostĂ­: " << midiSequence.getNumEvents() << std::endl;
+    }
+}
+
+void MidiPlayer::applyAnalysisResults(const std::vector<TrackData> &results)
+{
+    std::cout << "[POG] BE: ANALĂťZA: Propojuji vĂ˝sledky s audio enginem." << std::endl;
+}
+
+// =========================
+// PLAYBACK CONTROL
+// =========================
+void MidiPlayer::play()
+{
+    std::cout << "[POG] BE: TRANSPORT: Kliknuto na PLAY" << std::endl;
+    isPlaying = true;
+    // Pokud jsme na konci, resetujeme
+    if (playheadSeconds >= midiSequence.getEndTime())
+    {
+        playheadSeconds = 0.0;
+        lastEventIndex = 0;
+    }
+}
+
+void MidiPlayer::stop()
+{
+    std::cout << "[POG] BE: TRANSPORT: Kliknuto na STOP" << std::endl;
+    isPlaying = false;
+    playheadSeconds = 0.0;
+    lastEventIndex = 0;
+
+    if (synth)
+        fluid_synth_all_sounds_off(synth, -1);
+}
+
+void MidiPlayer::pause()
+{
+    std::cout << "[POG] BE: TRANSPORT: Kliknuto na PAUSE" << std::endl;
+    isPlaying = false;
+}
+
+void MidiPlayer::processMidiMessage(const juce::MidiMessage &m)
+{
+    if (!synth)
+        return;
+
+    int chan = m.getChannel() - 1;
+    if (chan < 0 || chan >= 16)
+        return;
+
+    // Mute / Solo check
+    if (m.isNoteOn() && !isChannelAudible(chan))
+        return;
+
+    if (m.isNoteOn())
+        fluid_synth_noteon(synth, chan, m.getNoteNumber(), m.getVelocity());
+    else if (m.isNoteOff())
+        fluid_synth_noteoff(synth, chan, m.getNoteNumber());
+    else if (m.isController())
+        fluid_synth_cc(synth, chan, m.getControllerNumber(), m.getControllerValue());
+    else if (m.isPitchWheel())
+        fluid_synth_pitch_bend(synth, chan, m.getPitchWheelValue());
+    else if (m.isProgramChange())
+    {
+        // Logujeme jen program change, abychom vidÄ›li nastavenĂ­ nĂˇstrojĹŻ
+        std::cout << "[POG] BE: MIDI: Ch " << (chan + 1) << " -> Program " << m.getProgramChangeNumber() << std::endl;
+        fluid_synth_program_change(synth, chan, m.getProgramChangeNumber());
+    }
+
+    // Callback pro UI (VU metry)
+    if (onMidiActivity && (m.isNoteOn() || m.isNoteOff()))
+        onMidiActivity(chan, m.getVelocity());
+}
+
+// =========================
+// VOLUME (FIX LINKER)
+// =========================
+void MidiPlayer::setMasterVolume(float v)
+{
+    std::cout << "[POG] BE: Master Volume -> " << v << std::endl;
+    masterVolume = v / 127.0f;
+}
+
+// =========================
+// CC (FIX LINKER)
+// =========================
+void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int value)
+{
+    if (!synth)
+        return;
+
+    int chan = trackNum - 1;
+
+    if (chan >= 0 && chan < 16)
+    {
+        std::cout << "[POG] BE: MIDI CC SEND - Track: " << trackNum << " CC: " << controller << " Val: " << value << std::endl;
+        fluid_synth_cc(synth, chan, controller, value);
+    }
+}
+
+// =========================
+// MUTE / SOLO (FIX LINKER)
+// =========================
+void MidiPlayer::setChannelMute(int trackIdx, bool mute)
+{
+    if (trackIdx < 0 || trackIdx >= 16)
+        return;
+
+    channelMuted[trackIdx] = mute;
+
+    if (mute && synth)
+        fluid_synth_all_sounds_off(synth, trackIdx);
+}
+
+void MidiPlayer::setChannelSolo(int trackIdx, bool solo)
+{
+    if (trackIdx < 0 || trackIdx >= 16)
+        return;
+
+    channelSolo[trackIdx] = solo;
+}
+
+bool MidiPlayer::isChannelAudible(int channel) const
+{
+    bool anySolo = false;
+    for (int i = 0; i < 16; ++i)
+    {
+        if (channelSolo[i])
+        {
+            anySolo = true;
+            break;
+        }
+    }
+
+    if (anySolo)
+        return channelSolo[channel];
+    return !channelMuted[channel];
+}
+
+// =========================
+// BANK HELPER
+// =========================
+int MidiPlayer::getFullBank(int chan)
+{
+    return (currentBankMSB[chan] << 7) | currentBankLSB[chan];
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.h =====
+/*
+  ==============================================================================
+    FILE: MidiPlayer.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Audio Engine s FluidSynth a podporou AI Master efektĹŻ.
+    UPDATED: [2026-04-15] FIX: added missing bank helper
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include <fluidsynth.h>
+#include <functional>
+#include "../MidiMapper/MidiMapper.h"
+#include "../MidiAnalyzer/MidiAnalyzer.h"
+#include "../MasterEffects/MasterEffects.h"
+
+class MidiPlayer : public juce::AudioSource
+{
+public:
+  MidiPlayer();
+  ~MidiPlayer();
+
+  void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
+  void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
+  void releaseResources() override;
+
+  void loadSoundFont(const juce::File &sf2File);
+  void loadMidiFile(const juce::File &midiFile);
+  void applyAnalysisResults(const std::vector<TrackData> &results);
+
+  void play();
+  void stop();
+  void pause();
+  void setMasterVolume(float vol);
+
+  std::function<void(int channel, int velocity)> onMidiActivity;
+
+  void sendRealTimeControlChange(int trackNum, int controller, int value);
+
+  void setChannelMute(int trackIdx, bool shouldMute);
+  void setChannelSolo(int trackIdx, bool shouldSolo);
+  bool isChannelAudible(int channel) const;
+
+  MidiMapper *getMapper() const { return mapper.get(); }
+  MasterEffects &getMasterEffects() { return masterEffects; }
+  juce::AudioDeviceManager &getDeviceManager() { return const_cast<juce::AudioDeviceManager &>(deviceManager); }
+
+private:
+  void processMidiMessage(const juce::MidiMessage &m);
+
+  // đź”Ą FIX: missing helper declaration
+  int getFullBank(int chan);
+
+  fluid_settings_t *settings = nullptr;
+  fluid_synth_t *synth = nullptr;
+
+  juce::AudioDeviceManager deviceManager;
+  double currentSampleRate = 48000.0;
+
+  MasterEffects masterEffects;
+
+  juce::String lastSf2Path;
+
+  int currentBankMSB[16];
+  int currentBankLSB[16];
+
+  bool channelMuted[16];
+  bool channelSolo[16];
+
+  MidiMode currentMode = MidiMode::GM;
+  juce::MidiMessageSequence midiSequence;
+  double playheadSeconds = 0.0;
+  bool isPlaying = false;
+  int lastEventIndex = 0;
+  float masterVolume = 1.0f;
+
+  std::unique_ptr<MidiMapper> mapper;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPlayer)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\FxModal\FxModal.cpp =====
+/*
+  ==============================================================================
+    FILE: FxModal.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementation with rounded corners and correct MIDI 0-127 ranges.
+    UPDATED: PĹ™idĂˇn podrobnĂ˝ debug vĂ˝pis pro kontrolu pĹ™Ă­chozĂ­ch dat z analĂ˝zy.
+  ==============================================================================
+*/
+
+#include "FxModal.h"
+#include <iostream>
+
+FxModal::FxModal(int trackNumber, Listener l)
+    : trackNum(trackNumber), listener(l)
+{
+    std::cout << "[POG] FE: OtevĂ­rĂˇm FxModal pro Track " << trackNum << std::endl;
+
+    // Velikost okna pro 3 Ĺ™Ăˇdky
+    setSize(360, 220);
+
+    // --- TITULEK ---
+    addAndMakeVisible(title);
+    title.setText("TRACK " + juce::String(trackNum) + " - FX SETTINGS", juce::dontSendNotification);
+    title.setFont(juce::Font(15.0f, juce::Font::bold));
+    title.setColour(juce::Label::textColourId, juce::Colour(0xfffca503)); // OranĹľovĂˇ
+
+    // --- CLOSE BUTTON ---
+    addAndMakeVisible(closeButton);
+    closeButton.setButtonText("X");
+    closeButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    closeButton.setColour(juce::TextButton::textColourOffId, juce::Colours::grey);
+    closeButton.onClick = [this]
+    { if (listener.onClose) listener.onClose(); };
+
+    // --- PAN SLIDER (0-127, Center 64) ---
+    setupSlider(panSlider, panLabel, "PAN");
+    panSlider.setRange(0, 127, 1);
+    panSlider.setValue(64);
+    panSlider.textFromValueFunction = [](double v)
+    {
+        if (v == 64)
+            return juce::String("C");
+        if (v < 64)
+            return "L " + juce::String(64 - (int)v);
+        return "R " + juce::String((int)v - 64);
+    };
+
+    // --- REVERB SLIDER (0-127) ---
+    setupSlider(reverbSlider, reverbLabel, "REVERB");
+    reverbSlider.setRange(0, 127, 1);
+    reverbSlider.setValue(0);
+    reverbSlider.textFromValueFunction = [](double v)
+    { return juce::String((int)v); };
+
+    // --- CHORUS SLIDER (0-127) ---
+    setupSlider(chorusSlider, chorusLabel, "CHORUS");
+    chorusSlider.setRange(0, 127, 1);
+    chorusSlider.setValue(0);
+    chorusSlider.textFromValueFunction = [](double v)
+    { return juce::String((int)v); };
+
+    // --- CALLBACKS ---
+    panSlider.onValueChange = [this]
+    {
+        int val = (int)panSlider.getValue();
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI PAN: " << val << std::endl;
+        if (listener.onPanChanged)
+            listener.onPanChanged(val);
+    };
+
+    reverbSlider.onValueChange = [this]
+    {
+        int val = (int)reverbSlider.getValue();
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI REVERB: " << val << std::endl;
+        if (listener.onReverbChanged)
+            listener.onReverbChanged(val);
+    };
+
+    chorusSlider.onValueChange = [this]
+    {
+        int val = (int)chorusSlider.getValue();
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI CHORUS: " << val << std::endl;
+        if (listener.onChorusChanged)
+            listener.onChorusChanged(val);
+    };
+}
+
+FxModal::~FxModal() {}
+
+/** NastavĂ­ poÄŤĂˇteÄŤnĂ­ hodnoty naÄŤtenĂ© z analĂ˝zy MIDI souboru */
+void FxModal::setInitialValues(int pan, int reverb, int chorus)
+{
+    std::cout << "[POG] FE: FxModal " << trackNum << " nastavuje hodnoty z analĂ˝zy (P:" << pan << " R:" << reverb << " C:" << chorus << ")" << std::endl;
+
+    // PouĹľĂ­vĂˇme dontSendNotification, abychom pĹ™i otevĂ­rĂˇnĂ­ okna
+    // nespustili zpÄ›tnou vazbu do Playeru, protoĹľe ty hodnoty uĹľ tam jsou.
+    panSlider.setValue(pan, juce::dontSendNotification);
+    reverbSlider.setValue(reverb, juce::dontSendNotification);
+    chorusSlider.setValue(chorus, juce::dontSendNotification);
+}
+
+void FxModal::setupSlider(juce::Slider &s, juce::Label &l, const juce::String &name)
+{
+    addAndMakeVisible(l);
+    l.setText(name, juce::dontSendNotification);
+    l.setFont(juce::Font(12.0f, juce::Font::bold));
+    l.setJustificationType(juce::Justification::centredRight);
+    l.setColour(juce::Label::textColourId, juce::Colours::white);
+
+    addAndMakeVisible(s);
+    s.setSliderStyle(juce::Slider::LinearHorizontal);
+    s.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
+
+    s.setColour(juce::Slider::thumbColourId, juce::Colour(0xfffca503));
+    s.setColour(juce::Slider::trackColourId, juce::Colours::black.withAlpha(0.3f));
+    s.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::white.withAlpha(0.1f));
+}
+
+void FxModal::paint(juce::Graphics &g)
+{
+    auto bounds = getLocalBounds().toFloat();
+    const float radius = 8.0f;
+
+    // --- POZADĂŤ ---
+    g.setColour(juce::Colour(0xff2b2b2b));
+    g.fillRoundedRectangle(bounds, radius);
+
+    // --- HORNĂŤ LIĹ TA ---
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    juce::Path headerPath;
+    headerPath.addRoundedRectangle(0.0f, 0.0f, (float)getWidth(), 35.0f,
+                                   radius, radius,
+                                   true, true, false, false);
+    g.fillPath(headerPath);
+
+    // --- ORANĹ˝OVĂť OBĹYS ---
+    g.setColour(juce::Colour(0xfffca503).withAlpha(0.6f));
+    g.drawRoundedRectangle(bounds, radius, 1.2f);
+}
+
+void FxModal::resized()
+{
+    auto r = getLocalBounds();
+
+    auto header = r.removeFromTop(35).reduced(15, 0);
+    title.setBounds(header.removeFromLeft(200));
+    closeButton.setBounds(getWidth() - 30, 7, 20, 20);
+
+    r.reduce(15, 10);
+
+    auto layoutRow = [](juce::Label &l, juce::Slider &s, juce::Rectangle<int> area)
+    {
+        l.setBounds(area.removeFromLeft(80).withSizeKeepingCentre(80, 20));
+        s.setBounds(area.reduced(0, 10));
+    };
+
+    layoutRow(panLabel, panSlider, r.removeFromTop(50));
+    layoutRow(reverbLabel, reverbSlider, r.removeFromTop(50));
+    layoutRow(chorusLabel, chorusSlider, r.removeFromTop(50));
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\FxModal\FxModal.h =====
+/*
+  ==============================================================================
+    FILE: FxModal.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Clean header with rounded corners declaration.
+    UPDATED: PĹ™idĂˇna metoda setInitialValues pro synchronizaci s originĂˇl MIDI.
+  ==============================================================================
+*/
+
+#pragma once
+#include <JuceHeader.h>
+
+class FxModal : public juce::Component
+{
+public:
+  struct Listener
+  {
+    std::function<void(int)> onPanChanged;
+    std::function<void(int)> onReverbChanged;
+    std::function<void(int)> onChorusChanged;
+    std::function<void()> onClose;
+  };
+
+  FxModal(int trackNumber, Listener listener);
+  ~FxModal() override;
+
+  /** * NastavĂ­ pozice sliderĹŻ podle dat naÄŤtenĂ˝ch z MIDI souboru.
+   * VolĂˇ se hned po vytvoĹ™enĂ­ okna v MainComponent.
+   */
+  void setInitialValues(int pan, int reverb, int chorus);
+
+  void paint(juce::Graphics &) override;
+  void resized() override;
+
+private:
+  int trackNum;
+  Listener listener;
+
+  juce::Slider panSlider;
+  juce::Slider reverbSlider;
+  juce::Slider chorusSlider;
+
+  juce::Label panLabel, reverbLabel, chorusLabel;
+  juce::Label title;
+  juce::TextButton closeButton;
+
+  void setupSlider(juce::Slider &s, juce::Label &l, const juce::String &name);
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FxModal)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\GainReductionMeter\GainReductionMeter.cpp =====
+/*
+  ==============================================================================
+    FILE: GainReductionMeter.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementace vizualizace Ăştlumu (shora dolĹŻ) v Sonar stylu.
+    UPDATED: Oprava propojenĂ­ tĹ™Ă­dy a pĹ™idĂˇnĂ­ hlaviÄŤky.
+  ==============================================================================
+*/
+
+#include "GainReductionMeter.h"
+
+GainReductionMeter::GainReductionMeter()
+{
+    startTimerHz(30);
+}
+
+GainReductionMeter::~GainReductionMeter()
+{
+    stopTimer();
+}
+
+void GainReductionMeter::setReduction(float reduction)
+{
+    if (reduction > currentReduction)
+        currentReduction = reduction;
+
+    repaint();
+}
+
+void GainReductionMeter::timerCallback()
+{
+    if (currentReduction > 0.0f)
+    {
+        currentReduction -= fallSpeed * 0.1f;
+        if (currentReduction < 0.0f)
+            currentReduction = 0.0f;
+        repaint();
+    }
+}
+
+void GainReductionMeter::paint(juce::Graphics &g)
+{
+    auto area = getLocalBounds().toFloat();
+
+    // PozadĂ­
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.fillRect(area);
+
+    if (currentReduction > 0.01f)
+    {
+        // Gain Reduction se kreslĂ­ shora dolĹŻ (oranĹľovĂˇ barva)
+        auto barHeight = area.getHeight() * currentReduction;
+        auto barArea = area.removeFromTop(barHeight);
+
+        g.setColour(juce::Colour(0xfffca503));
+        g.fillRect(barArea);
+    }
+
+    // Okraj
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+    g.drawRect(area, 1.0f);
+}
+
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\GainReductionMeter\GainReductionMeter.h =====
+/*
+  ==============================================================================
+    FILE: GainReductionMeter.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Komponenta pro vizualizaci Ăştlumu (Gain Reduction) kompresoru.
+    AUTHOR: Gemini Code Assist
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+class GainReductionMeter : public juce::Component, public juce::Timer
+{
+public:
+    GainReductionMeter();
+    ~GainReductionMeter() override;
+
+    void paint(juce::Graphics &g) override;
+    void timerCallback() override;
+
+    void setReduction(float reduction);
+
+private:
+    float currentReduction = 0.0f;
+    const float fallSpeed = 0.15f;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GainReductionMeter)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\Icons.h =====
+/*
+  ==============================================================================
+    FILE: Icons.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: GenerĂˇtor ikon pro aplikaci. Obsahuje neonovÄ› zelenou Ĺˇipku.
+  ==============================================================================
+*/
+
+#pragma once
+#include <JuceHeader.h>
+
+class Icons
+{
+public:
+    static juce::Image getSonarIcon()
+    {
+        // VytvoĹ™Ă­me ÄŤtvercovĂ˝ obrĂˇzek 32x32 (standard pro ikony oken)
+        juce::Image icon(juce::Image::ARGB, 32, 32, true);
+        juce::Graphics g(icon);
+
+        // Barva: Ta naĹˇe neonovÄ› zelenĂˇ
+        auto neonGreen = juce::Colour(0xff39ff14);
+        auto bounds = juce::Rectangle<float>(4, 4, 24, 24);
+
+        // VolitelnĂ©: JemnĂˇ zĂˇĹ™e na pozadĂ­ Ĺˇipky
+        g.setColour(neonGreen.withAlpha(0.2f));
+        juce::Path glowPath;
+        glowPath.addTriangle(bounds.getX() - 1, bounds.getY() - 1,
+                             bounds.getX() - 1, bounds.getBottom() + 1,
+                             bounds.getRight() + 1, bounds.getCentreY());
+        g.fillPath(glowPath);
+
+        // HlavnĂ­ Ĺˇipka (Play symbol)
+        g.setColour(neonGreen);
+        juce::Path p;
+        p.addTriangle(bounds.getX(), bounds.getY(),
+                      bounds.getX(), bounds.getBottom(),
+                      bounds.getRight(), bounds.getCentreY());
+
+        g.fillPath(p);
+
+        return icon;
+    }
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.cpp =====
+/*
+  ==============================================================================
+
+    FILE: MainComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Main container - DEBUG AUDIO PIPELINE TRACE VERSION
+    FIXED: audio routing + controlled audio callback logging (NO SPAM)
+
+  ==============================================================================
+*/
+
+#include "MainComponent.h"
+#include "Icons.h"
+#include <iostream>
+#include <atomic>
+
+#define LOG(x) std::cout << x << std::endl
+
+MainComponent::MainComponent()
+{
+    LOG("[MAIN] CONSTRUCTOR START");
+
+    // =========================
+    // BACKEND
+    // =========================
+    midiPlayer = std::make_unique<MidiPlayer>();
+    bankManager = std::make_unique<BankManager>();
+
+    // =========================
+    // AUDIO PIPELINE
+    // =========================
+    LOG("[AUDIO] init JUCE audio channels");
+    setAudioChannels(0, 2);
+
+    // =========================
+    // UI
+    // =========================
+    trackPanel = std::make_unique<TrackPanelComponent>();
+    addAndMakeVisible(*trackPanel);
+
+    transport = std::make_unique<TransportComponent>(*midiPlayer, *bankManager);
+    addAndMakeVisible(*transport);
+
+    masterPanel = std::make_unique<MasterPanel>();
+    addAndMakeVisible(*masterPanel);
+
+    // =========================
+    // INITIAL SOUNDFONT LOAD
+    // =========================
+    if (bankManager && midiPlayer)
+    {
+        const auto &banks = bankManager->getLoadedBanks();
+        if (!banks.empty())
+            midiPlayer->loadSoundFont(banks[0]);
+    }
+
+    // =========================
+    // TRANSPORT
+    // =========================
+    if (transport)
+    {
+        transport->onStartClicked = [this]()
+        {
+            LOG("[UI] PLAY CLICKED");
+            if (midiPlayer)
+                midiPlayer->play();
+        };
+
+        transport->onStopClicked = [this]()
+        {
+            LOG("[UI] STOP CLICKED");
+            if (midiPlayer)
+                midiPlayer->stop();
+        };
+    }
+
+    // =========================
+    // MIDI LOAD FLOW
+    // =========================
+    if (masterPanel)
+    {
+        masterPanel->onMidiFileSelected = [this](const juce::File &midiFile)
+        {
+            LOG("[UI] MIDI FILE SELECTED");
+
+            if (!midiFile.existsAsFile())
+            {
+                LOG("[MIDI] FILE NOT FOUND");
+                return;
+            }
+
+            juce::Thread::launch([this, midiFile]()
+                                 {
+                LOG("[MIDI] ANALYSIS THREAD START");
+
+                MidiAnalyzer analyzer;
+                MidiMapper* currentMapper =
+                    (midiPlayer != nullptr) ? midiPlayer->getMapper() : nullptr;
+
+                auto trackMetadata =
+                    analyzer.analyzeFile(midiFile, currentMapper);
+
+                LOG("[MIDI] ANALYSIS DONE");
+
+                juce::MessageManager::callAsync([this, trackMetadata]()
+                {
+                    LOG("[UI] APPLY TRACK METADATA");
+
+                    for (const auto &data : trackMetadata)
+                    {
+                        int trackIdx = data.channel - 1;
+
+                        trackPanel->updateTrackFromMetadata(
+                            trackIdx,
+                            data.instrumentName,
+                            data.initialVolume
+                        );
+
+                        trackPanel->setTrackFxData(
+                            trackIdx,
+                            64,
+                            (int)data.initialReverb,
+                            (int)data.initialChorus
+                        );
+
+                        if (midiPlayer)
+                        {
+                            midiPlayer->sendRealTimeControlChange(data.channel, 91, (int)data.initialReverb);
+                            midiPlayer->sendRealTimeControlChange(data.channel, 93, (int)data.initialChorus);
+                        }
+                    }
+
+                    LOG("[UI] METADATA APPLIED");
+                });
+
+                if (midiPlayer)
+                {
+                    LOG("[MIDI] LOAD INTO PLAYER");
+                    midiPlayer->loadMidiFile(midiFile);
+                } });
+        };
+
+        masterPanel->onVolumeChanged = [this](float volume)
+        {
+            std::cout << "[POG] FE -> BE: MASTER VOLUME CHANGED: " << volume << std::endl;
+            if (midiPlayer)
+                midiPlayer->setMasterVolume(volume);
+        };
+    }
+
+    // =========================
+    // TRACK CONTROLS
+    // =========================
+    if (trackPanel)
+    {
+        trackPanel->onTrackVolumeChanged = [this](int trk, int val)
+        {
+            std::cout << "[POG] FE -> BE: Track " << (trk + 1) << " VOLUME: " << val << std::endl;
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 7, val);
+        };
+
+        trackPanel->onTrackPanChanged = [this](int trk, int val)
+        {
+            std::cout << "[POG] FE -> BE: Track " << (trk + 1) << " PAN: " << val << std::endl;
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 10, val);
+        };
+
+        trackPanel->onTrackReverbChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 91, val);
+        };
+
+        trackPanel->onTrackChorusChanged = [this](int trk, int val)
+        {
+            if (midiPlayer)
+                midiPlayer->sendRealTimeControlChange(trk + 1, 93, val);
+        };
+
+        trackPanel->onTrackMuteChanged = [this](int trk, bool muted)
+        {
+            LOG("[UI] MUTE ch=" << trk << " val=" << muted);
+            if (midiPlayer)
+                midiPlayer->setChannelMute(trk, muted);
+        };
+
+        trackPanel->onTrackSoloChanged = [this](int trk, bool soloed)
+        {
+            LOG("[UI] SOLO ch=" << trk << " val=" << soloed);
+            if (midiPlayer)
+                midiPlayer->setChannelSolo(trk, soloed);
+        };
+
+        // =========================
+        // MIDI ACTIVITY (VU METERS)
+        // =========================
+        midiPlayer->onMidiActivity = [this](int chan, int velocity)
+        {
+            // MusĂ­me volat asynchronnÄ›, protoĹľe callback pĹ™ichĂˇzĂ­ z audio threadu
+            juce::MessageManager::callAsync([this, chan, velocity]()
+                                            { trackPanel->triggerTrackVu(chan, velocity); });
+        };
+    }
+
+    setSize(1200, 800);
+
+    LOG("[MAIN] CONSTRUCTOR END");
+}
+
+MainComponent::~MainComponent()
+{
+    LOG("[MAIN] DESTRUCTOR");
+    shutdownAudio();
+}
+
+// =========================
+// AUDIO DEVICE CHANGE
+// =========================
+void MainComponent::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    if (midiPlayer && source == &midiPlayer->getDeviceManager())
+    {
+        auto &dm = midiPlayer->getDeviceManager();
+        auto *device = dm.getCurrentAudioDevice();
+
+        if (device != nullptr)
+        {
+            LOG("[AUDIO] DEVICE OK: " + device->getName().toStdString());
+
+            midiPlayer->prepareToPlay(
+                device->getCurrentBufferSizeSamples(),
+                device->getCurrentSampleRate());
+
+            LOG("[AUDIO] SYNTH REPREPARED");
+        }
+    }
+}
+
+// =========================
+// AUDIO CALLBACK (FIXED LOG SPAM)
+// =========================
+void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
+{
+    bufferToFill.clearActiveBufferRegion();
+
+    if (!midiPlayer)
+        return;
+
+    midiPlayer->getNextAudioBlock(bufferToFill);
+}
+
+void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+{
+    LOG("[AUDIO] PREPARE TO PLAY");
+
+    if (midiPlayer)
+        midiPlayer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+}
+
+void MainComponent::releaseResources()
+{
+    LOG("[AUDIO] RELEASE RESOURCES");
+}
+
+void MainComponent::paint(juce::Graphics &g)
+{
+    g.fillAll(juce::Colour(0xff181818));
+}
+
+void MainComponent::resized()
+{
+    auto area = getLocalBounds();
+
+    if (transport)
+        transport->setBounds(area.removeFromRight(320));
+
+    if (masterPanel)
+        masterPanel->setBounds(area.removeFromBottom(110).reduced(5));
+
+    if (trackPanel)
+        trackPanel->setBounds(area.reduced(5));
+}
+
+void MainComponent::parentHierarchyChanged()
+{
+    LOG("[MAIN] parentHierarchyChanged (ignored)");
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.h =====
+/*
+  ==============================================================================
+    FILE: MainComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Main container - handling audio and UI layout.
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+
+// Frontend komponenty
+#include "../TrackPanelComponent/TrackPanelComponent.h"
+#include "../TransportComponent/TransportComponent.h"
+#include "../SF2ListComponent/SF2ListComponent.h"
+#include "../MasterPanel/MasterPanel.h"
+// AI FIX: PĹ™idĂˇn include pro tvou komponentu verze
+#include "../VersionFooter/VersionFooter.h"
+
+// Backend moduly
+#include "../../backend/MidiPlayer/MidiPlayer.h"
+#include "../../backend/BankManager/BankManager.h"
+#include "../../backend/MidiAnalyzer/MidiAnalyzer.h"
+
+class MainComponent : public juce::AudioAppComponent,
+                      public juce::ChangeListener
+{
+public:
+  MainComponent();
+  ~MainComponent() override;
+
+  void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
+  void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
+  void releaseResources() override;
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+
+  void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+  void parentHierarchyChanged() override;
+
+private:
+  // Backend
+  std::unique_ptr<MidiPlayer> midiPlayer;
+  std::unique_ptr<BankManager> bankManager;
+
+  // Frontend
+  std::unique_ptr<TrackPanelComponent> trackPanel;
+  std::unique_ptr<TransportComponent> transport;
+  std::unique_ptr<MasterPanel> masterPanel;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterChannelStrip\MasterChannelStrip.cpp =====
+/*
+  ==============================================================================
+    FILE: MasterChannelStrip.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: OvlĂˇdacĂ­ panel pro Master efekty (EQ, Kompresor, Limiter).
+    UPDATED: PĹ™idĂˇna hlaviÄŤka souboru a textovĂ© popisky sekcĂ­.
+  ==============================================================================
+*/
+
+#include "MasterChannelStrip.h"
+
+MasterChannelStrip::MasterChannelStrip(MasterEffects &effects) : masterEffects(effects)
+{
+    // Konfigurace knoflĂ­kĹŻ
+    applySonarStyle(lowCutKnob, " Hz");
+    lowCutKnob.setRange(20.0, 200.0, 1.0);
+    lowCutKnob.onValueChange = [this]
+    { masterEffects.setLowCutFrequency((float)lowCutKnob.getValue()); };
+
+    applySonarStyle(compThresholdKnob, " dB");
+    compThresholdKnob.setRange(-60.0, 0.0, 0.1);
+    compThresholdKnob.onValueChange = [this]
+    { masterEffects.setCompThreshold((float)compThresholdKnob.getValue()); };
+
+    applySonarStyle(compRatioKnob, ":1");
+    compRatioKnob.setRange(1.0, 20.0, 0.1);
+    compRatioKnob.onValueChange = [this]
+    { masterEffects.setCompRatio((float)compRatioKnob.getValue()); };
+
+    applySonarStyle(limiterKnob, " dB");
+    limiterKnob.setRange(-24.0, 0.0, 0.1);
+    limiterKnob.onValueChange = [this]
+    { masterEffects.setLimiterThreshold((float)limiterKnob.getValue()); };
+
+    addAndMakeVisible(titleLabel);
+    titleLabel.setJustificationType(juce::Justification::centred);
+    titleLabel.setColour(juce::Label::textColourId, juce::Colours::lightblue);
+}
+
+void MasterChannelStrip::applySonarStyle(juce::Slider &s, const juce::String &unit)
+{
+    s.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    s.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 20);
+    s.setTextValueSuffix(unit);
+    s.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff333333));
+    s.setColour(juce::Slider::thumbColourId, juce::Colours::lightblue);
+    addAndMakeVisible(s);
+}
+
+void MasterChannelStrip::paint(juce::Graphics &g)
+{
+    g.fillAll(juce::Colour(0xff151515)); // Ultra tmavĂ© Sonar pozadĂ­
+
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillRoundedRectangle(getLocalBounds().reduced(5).toFloat(), 10.0f);
+
+    // --- POPISKY SEKCI (Labels) ---
+    g.setColour(juce::Colours::grey);
+    g.setFont(juce::Font(12.0f, juce::Font::bold));
+
+    auto area = getLocalBounds().reduced(15);
+    area.removeFromTop(30); // Prostor pod hlavnĂ­m titulkem
+
+    int colW = area.getWidth() / 3;
+
+    // VykreslenĂ­ textu nad jednotlivĂ© sloupce knoflĂ­kĹŻ
+    g.drawText("LOW CUT", area.getX(), area.getY(), colW, 20, juce::Justification::centred);
+    g.drawText("COMPRESSOR", area.getX() + colW, area.getY(), colW, 20, juce::Justification::centred);
+    g.drawText("LIMITER", area.getX() + 2 * colW, area.getY(), colW, 20, juce::Justification::centred);
+}
+
+void MasterChannelStrip::resized()
+{
+    auto area = getLocalBounds().reduced(15);
+    titleLabel.setBounds(area.removeFromTop(30));
+
+    auto columnWidth = area.getWidth() / 3;
+
+    // RozloĹľenĂ­ do sekcĂ­
+    auto eqArea = area.removeFromLeft(columnWidth);
+    lowCutKnob.setBounds(eqArea.reduced(10));
+
+    auto compArea = area.removeFromLeft(columnWidth);
+    compThresholdKnob.setBounds(compArea.removeFromTop(compArea.getHeight() / 2).reduced(10));
+    compRatioKnob.setBounds(compArea.reduced(10));
+
+    auto limArea = area;
+    limiterKnob.setBounds(limArea.reduced(10));
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterChannelStrip\MasterChannelStrip.h =====
+/*
+  ==============================================================================
+    FILE: MasterChannelStrip.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Modal panel for AI Master Effects (Sonar Style)
+  ==============================================================================
+*/
+
+#pragma once
+#include <JuceHeader.h>
+#include "../../backend/MasterEffects/MasterEffects.h"
+
+class MasterChannelStrip : public juce::Component
+{
+public:
+    MasterChannelStrip(MasterEffects &effects);
+    ~MasterChannelStrip() override = default;
+
+    void paint(juce::Graphics &g) override;
+    void resized() override;
+
+private:
+    MasterEffects &masterEffects;
+
+    // --- OvlĂˇdacĂ­ prvky ---
+    juce::Slider lowCutKnob;
+    juce::Slider compThresholdKnob;
+    juce::Slider compRatioKnob;
+    juce::Slider limiterKnob;
+
+    juce::Label titleLabel{"title", "AI MASTER PROCESSOR"};
+    juce::Label lowCutLabel{"lcL", "LOW CUT"};
+    juce::Label compLabel{"cpL", "S-TYPE COMP"};
+    juce::Label limLabel{"lmL", "MAX LIMITER"};
+
+    // Stylizace knoflĂ­ku
+    void applySonarStyle(juce::Slider &s, const juce::String &unit);
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterChannelStrip)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.cpp =====
+/*
+  ==============================================================================
+    FILE: MasterPanel.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementation of the master control panel.
+    UPDATED: RobustnĂ­ asynchronnĂ­ naÄŤĂ­tĂˇnĂ­ a vizuĂˇlnĂ­ zpÄ›tnĂˇ vazba.
+  ==============================================================================
+*/
+
+#include "MasterPanel.h"
+
+MasterPanel::MasterPanel()
+{
+  // --- Master volume slider ---
+  addAndMakeVisible(masterVolume);
+  masterVolume.setRange(0.0, 127.0, 1.0);
+  masterVolume.setValue(100.0);
+  masterVolume.setSliderStyle(juce::Slider::LinearHorizontal);
+  masterVolume.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
+
+  masterVolume.onValueChange = [this]()
+  {
+    if (onVolumeChanged)
+      onVolumeChanged((float)masterVolume.getValue());
+  };
+
+  // --- Buttons & Labels ---
+  addAndMakeVisible(chooseFolderButton);
+  addAndMakeVisible(loadMidiButton);
+  addAndMakeVisible(headphonesButton);
+
+  // NastavenĂ­ popisku pro nĂˇzev souboru
+  addAndMakeVisible(currentMidiLabel);
+  currentMidiLabel.setColour(juce::Label::textColourId, juce::Colours::cyan);
+  currentMidiLabel.setFont(juce::Font(14.0f, juce::Font::bold));
+  currentMidiLabel.setText(u8"No file loaded", juce::dontSendNotification);
+
+  // --- Load MIDI/KAR button ---
+  loadMidiButton.onClick = [this]()
+  {
+    // VytvoĹ™enĂ­ chooseru jako unique_ptr (v MasterPanel.h musĂ­ bĂ˝t std::unique_ptr<juce::FileChooser> midiChooser)
+    midiChooser = std::make_unique<juce::FileChooser>(
+        u8"Vyber MIDI nebo KAR soubor...",
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
+        "*.mid;*.kar");
+
+    auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+    midiChooser->launchAsync(flags, [this](const juce::FileChooser &fc)
+                             {
+            auto file = fc.getResult();
+            
+            if (file != juce::File() && file.existsAsFile())
+            {
+                // OkamĹľitĂˇ vizuĂˇlnĂ­ odezva na UI vlĂˇknÄ›
+                currentMidiLabel.setText(u8"Loading: " + file.getFileName(), juce::dontSendNotification);
+                
+                // VyvolĂˇnĂ­ callbacku - MidiPlayer si to nynĂ­ pĹ™evezme ve vlastnĂ­m vlĂˇknÄ›
+                if (onMidiFileSelected)
+                {
+                    onMidiFileSelected(file);
+                }
+            } });
+  };
+
+  // --- Headphones toggle ---
+  headphonesButton.onClick = [this]()
+  {
+    headphonesOn = !headphonesOn;
+    headphonesButton.setButtonText(headphonesOn ? u8"Headphones On" : u8"Headphones Off");
+    // Zde mĹŻĹľeĹˇ pĹ™idat onHeadphonesChanged(headphonesOn), pokud mĂˇĹˇ definovĂˇno
+  };
+}
+
+MasterPanel::~MasterPanel()
+{
+  // Chooser se zniÄŤĂ­ automaticky dĂ­ky unique_ptr
+}
+
+void MasterPanel::paint(juce::Graphics &g)
+{
+  g.fillAll(juce::Colour(0xff151515));
+  g.setColour(juce::Colours::grey.withAlpha(0.2f));
+  g.drawRect(getLocalBounds(), 1);
+}
+
+void MasterPanel::resized()
+{
+  auto r = getLocalBounds().reduced(10);
+
+  // Slider nahoĹ™e na celou ĹˇĂ­Ĺ™ku
+  int sliderHeight = 30;
+  masterVolume.setBounds(r.removeFromTop(sliderHeight));
+  r.removeFromTop(5);
+
+  // RozloĹľenĂ­ prvkĹŻ v Ĺ™adÄ›
+  int buttonWidth = 120;
+  int spacing = 10;
+
+  chooseFolderButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
+  r.removeFromLeft(spacing);
+
+  loadMidiButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
+  r.removeFromLeft(spacing);
+
+  headphonesButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
+  r.removeFromLeft(spacing + 5);
+
+  // Label zabere zbytek mĂ­sta
+  currentMidiLabel.setBounds(r.reduced(0, 5));
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.h =====
+/*
+  ==============================================================================
+
+    FILE: MasterPanel.h
+    NAME: MasterPanel.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Header for the master control panel.
+                 UPDATED: Added currentMidiLabel for visual feedback.
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+
+class MasterPanel : public juce::Component
+{
+public:
+  MasterPanel();
+  ~MasterPanel() override;
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+
+  // --- Callbacks ---
+
+  // AI: Callback pro zmÄ›nu hlasitosti (0-127)
+  std::function<void(float volume)> onVolumeChanged;
+
+  // AI: Callback pro vĂ˝bÄ›r MIDI/KAR souboru
+  std::function<void(const juce::File &)> onMidiFileSelected;
+
+private:
+  juce::Slider masterVolume;
+  juce::TextButton chooseFolderButton{u8"Select Folder"};
+  juce::TextButton loadMidiButton{u8"Load MIDI/KAR"};
+  juce::ToggleButton headphonesButton{u8"Headphones Off"};
+
+  // AI: Popisek, kterĂ˝ vypĂ­Ĺˇe nĂˇzev nahranĂ© MIDI vedle sluchĂˇtek
+  juce::Label currentMidiLabel;
+
+  // AI: DrĹľĂ­ instanci vĂ˝bÄ›rovĂ©ho okna
+  std::unique_ptr<juce::FileChooser> midiChooser;
+
+  // AI: Stav pro pĹ™epĂ­nĂˇnĂ­ sluchĂˇtek
+  bool headphonesOn{false};
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterPanel)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SettingsBarComponent\SettingsBarComponent.cpp =====
+/*
+  ==============================================================================
+    FILE: SettingsBarComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementace tlaÄŤĂ­tek Master FX a Audio HW s novĂ˝mi barvami.
+    COLORS: FX: SteelBlue (0xff4682b4), Audio: Firebrick (0xffb22222)
+  ==============================================================================
+*/
+
+#include "SettingsBarComponent.h"
+#include "../MasterChannelStrip/MasterChannelStrip.h"
+#include "../../backend/AudioSettingsPanel/AudioSettingsPanel.h"
+
+SettingsBarComponent::SettingsBarComponent(MidiPlayer &player) : midiPlayer(player)
+{
+    // --- TlaÄŤĂ­tko Master FX (TlumenĂˇ modrĂˇ) ---
+    addAndMakeVisible(fxButton);
+    fxButton.setButtonText("Master FX");
+    fxButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff4682b4));
+
+    fxButton.onClick = [this]
+    {
+        auto *fxPanel = new MasterChannelStrip(midiPlayer.getMasterEffects());
+        fxPanel->setSize(500, 350);
+
+        juce::DialogWindow::LaunchOptions opt;
+        opt.content.setOwned(fxPanel);
+        opt.dialogTitle = "AI MASTER PROCESSOR";
+        opt.dialogBackgroundColour = juce::Colour(0xff151515); // TmavĂ© pozadĂ­ okna
+        opt.useNativeTitleBar = true;
+        opt.launchAsync();
+    };
+
+    // --- TlaÄŤĂ­tko Audio HW (CihlovÄ› ÄŤervenĂˇ) ---
+    addAndMakeVisible(settingsButton);
+    settingsButton.setButtonText("Audio HW");
+    settingsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff741010));
+
+    settingsButton.onClick = [this]
+    {
+        auto *settingsPanel = new AudioSettingsPanel(midiPlayer.getDeviceManager());
+        settingsPanel->setSize(450, 350);
+
+        juce::DialogWindow::LaunchOptions opt;
+        opt.content.setOwned(settingsPanel);
+        opt.dialogTitle = "AUDIO HARDWARE";
+        opt.dialogBackgroundColour = juce::Colour(0xff151515); // TmavĂ© pozadĂ­ okna
+        opt.useNativeTitleBar = true;
+        opt.launchAsync();
+    };
+}
+
+void SettingsBarComponent::paint(juce::Graphics &g)
+{
+    // PozadĂ­ je Ĺ™eĹˇeno v TransportComponent (0xff151515)
+}
+
+void SettingsBarComponent::resized()
+{
+    auto area = getLocalBounds();
+    int btnWidth = area.getWidth() / 2;
+
+    // TlaÄŤĂ­tka vedle sebe s mĂ­rnĂ˝m zmenĹˇenĂ­m pro mezery
+    fxButton.setBounds(area.removeFromLeft(btnWidth).reduced(2));
+    settingsButton.setBounds(area.reduced(2));
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SettingsBarComponent\SettingsBarComponent.h =====
+/*
+  ==============================================================================
+    FILE: SettingsBarComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: SamostatnĂˇ komponenta pro ovlĂˇdĂˇnĂ­ efektĹŻ a hardware.
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include "../../backend/MidiPlayer/MidiPlayer.h"
+
+class SettingsBarComponent : public juce::Component
+{
+public:
+    SettingsBarComponent(MidiPlayer &player);
+    ~SettingsBarComponent() override = default;
+
+    void paint(juce::Graphics &g) override;
+    void resized() override;
+
+private:
+    MidiPlayer &midiPlayer;
+
+    juce::TextButton fxButton;
+    juce::TextButton settingsButton;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SettingsBarComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.cpp =====
+/*
+  ==============================================================================
+
+    FILE: SF2ListComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    MODULE: frontend/SF2ListComponent
+    DESCRIPTION: SF2 list implementation.
+                 Now fully integrated with BankManager (Backend).
+                 Includes automatic DNA extraction to JSON during load.
+
+  ==============================================================================
+*/
+
+#include "SF2ListComponent.h"
+#include "../../backend/BankDNAExtractor/BankDNAExtractor.h" // AI: PĹ™idĂˇn include pro extraktor
+
+// ======================================================
+// Konstruktor - PropojenĂ­ s Backendem
+// ======================================================
+SF2ListComponent::SF2ListComponent(BankManager &manager) : bankManager(manager)
+{
+    // 1. TlaÄŤĂ­tko FOLDER BANK (NahoĹ™e)
+    addAndMakeVisible(chooseFolderButton);
+    chooseFolderButton.setButtonText(u8"FOLDER BANK");
+    chooseFolderButton.onClick = [this]
+    {
+        juce::File startDir = lastBankDirectory.exists() ? lastBankDirectory
+                                                         : juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
+
+        auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems;
+
+        fc = std::make_unique<juce::FileChooser>(u8"Vyberte SF2 banky...", startDir, "*.sf2");
+
+        fc->launchAsync(chooserFlags, [this](const juce::FileChooser &chooser)
+                        {
+            auto results = chooser.getResults();
+            if (results.size() > 0)
+            {
+                lastBankDirectory = results[0].getParentDirectory();
+                for (auto& file : results)
+                {
+                    if (file.existsAsFile()) loadSF2(file);
+                }
+            } });
+    };
+
+    // 2. TlaÄŤĂ­tko DELETE BANK (NahoĹ™e)
+    addAndMakeVisible(deleteBankButton);
+    deleteBankButton.setButtonText(u8"DELETE BANK");
+    deleteBankButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred.withAlpha(0.8f));
+    deleteBankButton.onClick = [this]
+    { deleteSelectedBank(); };
+
+    // 3. NastavenĂ­ tabulky (Pod tlaÄŤĂ­tky)
+    addAndMakeVisible(sf2List);
+    sf2List.getHeader().addColumn(u8"SF2 Banky (Seznam)", 1, 200);
+    sf2List.setModel(this);
+    sf2List.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    sf2List.setMultipleSelectionEnabled(false);
+}
+
+SF2ListComponent::~SF2ListComponent() {}
+
+// ======================================================
+// TableListBoxModel Implementace (ÄŚte z Manageru)
+// ======================================================
+
+int SF2ListComponent::getNumRows()
+{
+    return (int)bankManager.getLoadedBanks().size();
+}
+
+void SF2ListComponent::paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
+{
+    if (rowIsSelected)
+        g.fillAll(juce::Colours::azure.withAlpha(0.15f));
+    else if (rowNumber % 2 == 0)
+        g.fillAll(juce::Colours::black.withAlpha(0.1f));
+}
+
+void SF2ListComponent::paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
+{
+    g.setColour(rowIsSelected ? juce::Colours::yellow : juce::Colours::white);
+
+    auto &currentBanks = bankManager.getLoadedBanks();
+
+    if (rowNumber < (int)currentBanks.size())
+    {
+        g.drawText(currentBanks[rowNumber].getFileNameWithoutExtension(),
+                   5, 0, width - 10, height,
+                   juce::Justification::centredLeft, true);
+    }
+}
+
+// ======================================================
+// Logika sprĂˇvy bank (VolĂˇ Backend)
+// ======================================================
+
+void SF2ListComponent::loadSF2(const juce::File &file)
+{
+    // --- AI DEBUG START ---
+    juce::Logger::writeToLog("--------------------------------------------------");
+    juce::Logger::writeToLog("[AI DEBUG] Zahajuji proces pro: " + file.getFileName());
+
+    // 1. KROK: BleskovĂˇ extrakce DNA (vytvoĹ™Ă­ JSON v AppData/bank_settings)
+    if (BankDNAExtractor::extractToJSON(file))
+    {
+        // Najdeme cestu pro potvrzenĂ­ v logu
+        juce::File jsonPath = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                                  .getChildFile("SonarMidiPlayer")
+                                  .getChildFile("bank_settings")
+                                  .getChildFile(file.getFileNameWithoutExtension() + ".json");
+
+        juce::Logger::writeToLog("[AI SUCCESS] JSON DNA vytvoĹ™en: " + jsonPath.getFullPathName());
+    }
+    else
+    {
+        juce::Logger::writeToLog("[AI ERROR] Extrakce DNA selhala pro: " + file.getFullPathName());
+    }
+    // --- AI DEBUG END ---
+
+    // 2. KROK: BankManager si sĂˇm hlĂ­dĂˇ duplicity a uklĂˇdĂˇnĂ­ do XML
+    bankManager.addBank(file);
+
+    sf2List.updateContent();
+    sf2List.repaint();
+}
+
+void SF2ListComponent::deleteSelectedBank()
+{
+    int selected = sf2List.getSelectedRow();
+    auto &currentBanks = bankManager.getLoadedBanks();
+
+    if (selected >= 0 && selected < (int)currentBanks.size())
+    {
+        bankManager.removeBank(selected);
+        sf2List.updateContent();
+        sf2List.deselectAllRows();
+        sf2List.repaint();
+    }
+}
+
+void SF2ListComponent::paint(juce::Graphics &g)
+{
+    g.fillAll(juce::Colour(0xff1a1a1a));
+}
+
+// ======================================================
+// ROZLOĹ˝ENĂŤ PRVKĹ® (Layout)
+// ======================================================
+
+void SF2ListComponent::resized()
+{
+    auto area = getLocalBounds().reduced(5);
+
+    // 1. Prostor pro tlaÄŤĂ­tka NAHOĹE (vĂ˝Ĺˇka 35px)
+    auto topRow = area.removeFromTop(35);
+
+    int gap = 4;
+    int buttonWidth = (topRow.getWidth() - gap) / 2;
+
+    chooseFolderButton.setBounds(topRow.removeFromLeft(buttonWidth));
+    deleteBankButton.setBounds(topRow.removeFromRight(buttonWidth));
+
+    // 2. Mezera mezi tlaÄŤĂ­tka a tabulku
+    area.removeFromTop(5);
+
+    // 3. Tabulka zabere zbytek
+    sf2List.setBounds(area);
+}
+
+// ======================================================
+// Drag & Drop
+// ======================================================
+
+bool SF2ListComponent::isInterestedInFileDrag(const juce::StringArray &files)
+{
+    for (auto &f : files)
+        if (f.endsWith(".sf2"))
+            return true;
+    return false;
+}
+
+void SF2ListComponent::filesDropped(const juce::StringArray &files, int x, int y)
+{
+    juce::ignoreUnused(x, y);
+    for (auto &f : files)
+    {
+        juce::File file(f);
+        if (file.existsAsFile() && file.hasFileExtension("sf2"))
+            loadSF2(file);
+    }
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.h =====
+/*
+  ==============================================================================
+
+    FILE: SF2ListComponent.h
+    NAME: SF2ListComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Header for the SF2 bank list.
+                 FIXED: Connected to BankManager (Backend) and removed local storage.
+                 RESTORED: Callback 'onSelectionChanged' for MainComponent.
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+#include "../../backend/BankManager/BankManager.h"
+
+class SF2ListComponent : public juce::Component,
+                         public juce::FileDragAndDropTarget,
+                         public juce::TableListBoxModel
+{
+public:
+  // AI: Konstruktor nynĂ­ pĹ™ijĂ­mĂˇ referenci na BankManager z backendu
+  SF2ListComponent(BankManager &manager);
+  ~SF2ListComponent() override;
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+
+  // --- TableListBoxModel metody (nynĂ­ berou data z bankManageru) ---
+  int getNumRows() override;
+  void paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected) override;
+  void paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
+
+  // --- Logika pro sprĂˇvu bank (volĂˇ metody v bankManageru) ---
+  void loadSF2(const juce::File &file);
+  void deleteSelectedBank();
+
+  // AI: Callback pro MainComponent (vĂ˝bÄ›r banky pro pĹ™ehrĂˇvĂˇnĂ­)
+  std::function<void(const juce::File &selectedFile)> onSelectionChanged;
+
+  // Drag & Drop
+  bool isInterestedInFileDrag(const juce::StringArray &files) override;
+  void filesDropped(const juce::StringArray &files, int x, int y) override;
+
+private:
+  // AI: Odkaz na centrĂˇlnĂ­ sprĂˇvu bank
+  BankManager &bankManager;
+
+  juce::TableListBox sf2List{"SF2 Table"};
+
+  juce::TextButton chooseFolderButton;
+  juce::TextButton deleteBankButton;
+
+  std::unique_ptr<juce::FileChooser> fc;
+  juce::File lastBankDirectory;
+
+  // AI: 'loadedBanks' zde jiĹľ nenĂ­, pouĹľĂ­vĂˇme bankManager.getLoadedBanks()
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SF2ListComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.cpp =====
+/*
+  ==============================================================================
+    FILE: TrackComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Track UI s integrovanĂ˝m VUMeterem a opravenĂ˝m FX oknem.
+    FIXED: Obnovena funkce showFxPopup() pro otevĂ­rĂˇnĂ­ FX modalu.
+  ==============================================================================
+*/
+
+#include "TrackComponent.h"
+#include "../FxModal/FxModal.h"
+#include "../VUMeter/VUMeter.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+
+// --- LOOK AND FEEL ---
+class ToggleButtonLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    void drawButtonBackground(juce::Graphics &g, juce::Button &button,
+                              const juce::Colour &, bool, bool isMouseOverButton) override
+    {
+        auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
+        juce::Colour bg;
+
+        if (button.getToggleState() || button.isDown())
+        {
+            if (button.getButtonText() == "M")
+                bg = juce::Colours::red;
+            else if (button.getButtonText() == "S")
+                bg = juce::Colours::yellow;
+            else if (button.getButtonText() == "FX")
+                bg = juce::Colours::orange;
+            else
+                bg = juce::Colours::green;
+        }
+        else
+        {
+            bg = juce::Colours::grey.withAlpha(0.3f);
+        }
+
+        g.setColour(bg);
+        g.fillRoundedRectangle(bounds, 4.0f);
+        g.setColour(isMouseOverButton ? juce::Colours::white.withAlpha(0.4f) : juce::Colours::black.withAlpha(0.5f));
+        g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
+        g.setColour(button.getToggleState() ? juce::Colours::black : juce::Colours::white);
+        g.setFont(juce::Font(14.0f, juce::Font::bold));
+        g.drawFittedText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, 1);
+    }
+    void drawButtonText(juce::Graphics &, juce::TextButton &, bool, bool) override {}
+};
+
+static ToggleButtonLookAndFeel toggleButtonLF;
+
+// =======================================================
+// CONSTRUCTOR
+// =======================================================
+TrackComponent::TrackComponent(int trackNumber,
+                               const juce::String &instrumentName,
+                               InstrumentType type)
+    : trackNum(trackNumber),
+      trackName(instrumentName),
+      instrType(type)
+{
+    addAndMakeVisible(trackNumberButton);
+    trackNumberButton.setButtonText(juce::String(trackNum));
+    trackNumberButton.setColour(juce::TextButton::textColourOffId, trackNumberTextColor);
+    trackNumberButton.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    trackNumberButton.setEnabled(false);
+
+    addAndMakeVisible(nameLabel);
+    nameLabel.setText(trackName, juce::dontSendNotification);
+    nameLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff333333));
+
+    vuMeter = std::make_unique<VUMeter>();
+    addAndMakeVisible(vuMeter.get());
+
+    addAndMakeVisible(volumeSlider);
+    volumeSlider.setRange(0, 127, 1);
+    volumeSlider.setValue(currentVolume);
+    volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 18);
+    volumeSlider.onValueChange = [this]
+    {
+        currentVolume = (int)volumeSlider.getValue();
+        std::cout << "[POG] FE: Track " << trackNum << " -> UI VOLUME slider: " << currentVolume << std::endl;
+        if (onVolumeChanged)
+            onVolumeChanged(trackNum, currentVolume);
+    };
+
+    addAndMakeVisible(fxButton);
+    fxButton.setButtonText("FX");
+    fxButton.setLookAndFeel(&toggleButtonLF);
+    fxButton.onClick = [this]
+    { showFxPopup(); };
+
+    addAndMakeVisible(muteButton);
+    muteButton.setButtonText("M");
+    muteButton.setClickingTogglesState(true);
+    muteButton.setLookAndFeel(&toggleButtonLF);
+    muteButton.onClick = [this]
+    {
+        isMuted = muteButton.getToggleState();
+        if (onMuteChanged)
+            onMuteChanged(trackNum, isMuted);
+    };
+
+    addAndMakeVisible(soloButton);
+    soloButton.setButtonText("S");
+    soloButton.setClickingTogglesState(true);
+    soloButton.setLookAndFeel(&toggleButtonLF);
+    soloButton.onClick = [this]
+    {
+        isSoloed = soloButton.getToggleState();
+        if (onSoloChanged)
+            onSoloChanged(trackNum, isSoloed);
+    };
+
+    addAndMakeVisible(thirdButton);
+    thirdButton.setButtonText("Vol");
+    thirdButton.setLookAndFeel(&toggleButtonLF);
+}
+
+TrackComponent::~TrackComponent()
+{
+    muteButton.setLookAndFeel(nullptr);
+    soloButton.setLookAndFeel(nullptr);
+    thirdButton.setLookAndFeel(nullptr);
+    fxButton.setLookAndFeel(nullptr);
+}
+
+void TrackComponent::resized()
+{
+    auto r = getLocalBounds().reduced(2);
+
+    trackNumberButton.setBounds(r.removeFromLeft(45));
+    nameLabel.setBounds(r.removeFromLeft(135));
+
+    r.removeFromLeft(4);
+    if (vuMeter != nullptr)
+        vuMeter->setBounds(r.removeFromLeft(8).reduced(0, 4));
+
+    r.removeFromLeft(4);
+
+    int w = 35;
+    thirdButton.setBounds(r.removeFromRight(w));
+    soloButton.setBounds(r.removeFromRight(w));
+    muteButton.setBounds(r.removeFromRight(w));
+    fxButton.setBounds(r.removeFromRight(w));
+
+    volumeSlider.setBounds(r.reduced(4, 2));
+}
+
+void TrackComponent::paint(juce::Graphics &g)
+{
+    g.fillAll(juce::Colour(0xff222222));
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
+}
+
+void TrackComponent::triggerVuMeter(int velocity)
+{
+    if (vuMeter != nullptr)
+        vuMeter->trigger(velocity);
+}
+
+void TrackComponent::updateVolume(int newVolume)
+{
+    currentVolume = newVolume;
+    volumeSlider.setValue(newVolume, juce::dontSendNotification);
+}
+
+void TrackComponent::updateMuteState(bool isMutedState)
+{
+    isMuted = isMutedState;
+    muteButton.setToggleState(isMuted, juce::dontSendNotification);
+}
+
+void TrackComponent::updateSoloState(bool isSoloedState)
+{
+    isSoloed = isSoloedState;
+    soloButton.setToggleState(isSoloed, juce::dontSendNotification);
+}
+
+void TrackComponent::updateFxData(int pan, int reverb, int chorus)
+{
+    currentPan = pan;
+    currentReverb = reverb;
+    currentChorus = chorus;
+}
+
+// đź”Ą TADY JE TA OPRAVA đź”Ą
+void TrackComponent::showFxPopup()
+{
+    // VytvoĹ™enĂ­ listeneru pro modal
+    FxModal::Listener fxListener;
+
+    fxListener.onPanChanged = [this](int val)
+    {
+        currentPan = val;
+        if (onPanChanged)
+            onPanChanged(trackNum, val);
+    };
+
+    fxListener.onReverbChanged = [this](int val)
+    {
+        currentReverb = val;
+        if (onReverbChanged)
+            onReverbChanged(trackNum, val);
+    };
+
+    fxListener.onChorusChanged = [this](int val)
+    {
+        currentChorus = val;
+        if (onChorusChanged)
+            onChorusChanged(trackNum, val);
+    };
+
+    // VytvoĹ™enĂ­ okna
+    auto *modal = new FxModal(trackNum, fxListener);
+    modal->setInitialValues(currentPan, currentReverb, currentChorus);
+
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(modal);
+    options.resizable = false;
+    options.content->setSize(360, 220);
+    options.dialogTitle = "Track " + juce::String(trackNum) + " FX Settings";
+    options.componentToCentreAround = this;
+    options.dialogBackgroundColour = juce::Colour(0xff2b2b2b);
+    options.useNativeTitleBar = true;
+    options.launchAsync();
+}
+
+void TrackComponent::setInstrument(const juce::String &name, juce::Colour colour)
+{
+    nameLabel.setText(name, juce::dontSendNotification);
+}
+
+void TrackComponent::setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third)
+{
+    muteButton.setButtonText(mute);
+    soloButton.setButtonText(solo);
+    thirdButton.setButtonText(third);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.h =====
+/*
+  ==============================================================================
+    FILE: TrackComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Complete Track UI header with real-time BE callbacks and VU Meter.
+    UPDATED: [2026-04-15] PĹ™idĂˇn VUMeter a trigger pro MIDI aktivitu.
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include <functional>
+
+// DopĹ™ednĂˇ deklarace, aby linker vÄ›dÄ›l o VUMeteru
+class VUMeter;
+
+enum class InstrumentType
+{
+  Piano,
+  Guitar,
+  Bass,
+  Drums,
+  Synth,
+  Other
+};
+
+class TrackComponent : public juce::Component
+{
+public:
+  TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType type);
+  ~TrackComponent() override;
+
+  // --- CALLBACKY PRO BACKEND ---
+  std::function<void(int track, bool isActive)> onMuteChanged;
+  std::function<void(int track, bool isActive)> onSoloChanged;
+  std::function<void(int track, int value)> onVolumeChanged;
+  std::function<void(int track, int value)> onPanChanged;
+  std::function<void(int track, int value)> onReverbChanged;
+  std::function<void(int track, int value)> onChorusChanged;
+
+  // --- AKTUALIZACE STAVU ---
+  void updateVolume(int newVolume);
+  void updateMuteState(bool isMuted);
+  void updateSoloState(bool isSoloed);
+  void updateFxData(int pan, int reverb, int chorus);
+
+  /** SpustĂ­ vizuĂˇlnĂ­ indikaci na VU metru (volat pĹ™i MIDI note on) */
+  void triggerVuMeter(int velocity);
+
+  void setInstrument(const juce::String &name, juce::Colour colour);
+  void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
+
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+
+private:
+  void showFxPopup();
+
+  // --- DATA ---
+  int trackNum;
+  juce::String trackName;
+  InstrumentType instrType;
+
+  int currentVolume = 100;
+  int currentPan = 64;
+  int currentReverb = 0;
+  int currentChorus = 0;
+
+  bool isMuted = false;
+  bool isSoloed = false;
+
+  // --- BARVA ÄŚĂŤSLA ---
+  juce::Colour trackNumberTextColor = juce::Colour(0xffff9000);
+
+  // --- UI KOMPONENTY ---
+  juce::TextButton trackNumberButton;
+  juce::Label nameLabel;
+
+  // SamostatnĂˇ komponenta pro VU metr (vlepeno mezi nĂˇzev a slider)
+  std::unique_ptr<VUMeter> vuMeter;
+
+  juce::Slider volumeSlider;
+  juce::TextButton muteButton, soloButton, thirdButton, fxButton;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.cpp =====
+/*
+  ==============================================================================
+
+    FILE: TrackPanelComponent.cpp
+    NAME: TrackPanelComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementation of the main track list panel.
+                 FIXED: Full implementation with updateTrackFromMetadata.
+                 ADDED: Real-time callback bridging for all 16 tracks.
+
+  ==============================================================================
+*/
+
+#include "TrackPanelComponent.h"
+
+TrackPanelComponent::TrackPanelComponent()
+{
+    // AI: Generujeme 16 trackĹŻ podle tvĂ© pĹŻvodnĂ­ logiky
+    for (int i = 0; i < numTracks; ++i)
+    {
+        // AI: VytvoĹ™enĂ­ instance tracku s vĂ˝chozĂ­m nastavenĂ­m
+        tracks[i] = std::make_unique<TrackComponent>(
+            i + 1,
+            "Track " + juce::String(i + 1),
+            InstrumentType::Piano);
+
+        // AI: NastavenĂ­ tvĂ˝ch ikon pro Mute, Solo a Volume tlaÄŤĂ­tka
+        tracks[i]->setIcons("M", "S", "Vol");
+
+        // --- PROPOJENĂŤ CALLBACKĹ® Z JEDNOTLIVĂťCH TRACKĹ® DO PANELU ---
+        // PouĹľĂ­vĂˇme i (index 0-15) pro identifikaci tracku v panelu
+        tracks[i]->onVolumeChanged = [this](int trk, int val)
+        {
+            if (onTrackVolumeChanged)
+                onTrackVolumeChanged(trk - 1, val);
+        };
+
+        tracks[i]->onPanChanged = [this](int trk, int val)
+        {
+            if (onTrackPanChanged)
+                onTrackPanChanged(trk - 1, val);
+        };
+
+        // PropojenĂ­ Reverb slideru
+        tracks[i]->onReverbChanged = [this](int trk, int val)
+        {
+            if (onTrackReverbChanged)
+                onTrackReverbChanged(trk - 1, val);
+        };
+
+        // PropojenĂ­ Chorus slideru
+        tracks[i]->onChorusChanged = [this](int trk, int val)
+        {
+            if (onTrackChorusChanged)
+                onTrackChorusChanged(trk - 1, val);
+        };
+
+        tracks[i]->onMuteChanged = [this](int trk, bool muted)
+        {
+            if (onTrackMuteChanged)
+                onTrackMuteChanged(trk - 1, muted);
+        };
+
+        tracks[i]->onSoloChanged = [this](int trk, bool soloed)
+        {
+            if (onTrackSoloChanged)
+                onTrackSoloChanged(trk - 1, soloed);
+        };
+
+        addAndMakeVisible(*tracks[i]);
+    }
+}
+
+/** * AI: KlĂ­ÄŤovĂˇ metoda pro propojenĂ­ Backend Analyzeru s Frontend UI.
+ * MainComponent volĂˇ tuhle metodu pro kaĹľdĂ˝ kanĂˇl po naÄŤtenĂ­ MIDI.
+ */
+void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String &name, int volume)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        // NastavenĂ­ barvy a jmĂ©na instrumentu
+        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastnĂ­ tmavÄ› ĹˇedĂˇ barva
+
+        tracks[index]->updateVolume(volume);
+    }
+}
+
+/** * AI: Synchronizace FX dat (Pan, Reverb, Chorus) z analyzeru do konkrĂ©tnĂ­ho tracku.
+ * Metoda, kterĂˇ chybÄ›la a kterou volĂˇ MainComponent.
+ */
+void TrackPanelComponent::setTrackFxData(int index, int pan, int reverb, int chorus)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        if (tracks[index] != nullptr)
+        {
+            tracks[index]->updateFxData(pan, reverb, chorus);
+        }
+    }
+}
+
+/** RuÄŤnĂ­ nastavenĂ­ instrumentu pro konkrĂ©tnĂ­ track (napĹ™. pĹ™i zmÄ›nÄ› v UI) */
+void TrackPanelComponent::setTrackInstrument(int index, const juce::String &name, juce::Colour colour)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        tracks[index]->setInstrument(name, colour);
+    }
+}
+
+/** AI: PropojenĂ­ MIDI aktivity z MainComponent do konkrĂ©tnĂ­ho TrackComponent */
+void TrackPanelComponent::triggerTrackVu(int index, int velocity)
+{
+    if (index >= 0 && index < numTracks)
+    {
+        if (tracks[index] != nullptr)
+        {
+            tracks[index]->triggerVuMeter(velocity);
+        }
+    }
+}
+
+void TrackPanelComponent::resized()
+{
+    auto r = getLocalBounds();
+
+    // AI: RozdÄ›lenĂ­ celkovĂ© vĂ˝Ĺˇky panelu mezi 16 trackĹŻ
+    if (numTracks > 0)
+    {
+        int trackHeight = r.getHeight() / numTracks;
+
+        for (int i = 0; i < numTracks; ++i)
+        {
+            // AI: .reduced(0, 2) vytvoĹ™Ă­ malou mezeru mezi tracky pro lepĹˇĂ­ pĹ™ehlednost
+            tracks[i]->setBounds(r.removeFromTop(trackHeight).reduced(0, 2));
+        }
+    }
+}
+
+void TrackPanelComponent::paint(juce::Graphics &g)
+{
+    // AI: PozadĂ­ panelu (pokud nenĂ­ pĹ™ekryto tracky)
+    g.fillAll(juce::Colours::transparentBlack);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.h =====
+/*
+  ==============================================================================
+
+    FILE: TrackPanelComponent.h
+    NAME: TrackPanelComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Header for the main track list panel (16 tracks).
+                 RESTORED ORIGINAL STRUCTURE.
+                 ADDED: Metadata update method for MIDI integration.
+                 FIXED: Correct method signatures for TrackComponent access.
+                 ADDED: Real-time FX callbacks for MainComponent.
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include "../TrackComponent/TrackComponent.h"
+#include <functional>
+
+class TrackPanelComponent : public juce::Component
+{
+public:
+  TrackPanelComponent();
+
+  // AI: Destruktor pĹ™idanĂ˝ pro jistotu kvĹŻli sprĂˇvnĂ©mu uvolnÄ›nĂ­ unique_ptr
+  ~TrackPanelComponent() override = default;
+
+  /** StandardnĂ­ JUCE metoda pro vykreslenĂ­ pozadĂ­ panelu */
+  void paint(juce::Graphics &g) override;
+
+  /** StandardnĂ­ JUCE metoda pro rozvrĹľenĂ­ 16 Ĺ™ĂˇdkĹŻ (trackĹŻ) */
+  void resized() override;
+
+  // --- CALLBACKY PRO MAIN COMPONENT (PĹEMOSTÄšNĂŤ SIGNĂLU) ---
+  std::function<void(int track, int value)> onTrackVolumeChanged;
+  std::function<void(int track, int value)> onTrackPanChanged;
+  std::function<void(int track, int value)> onTrackReverbChanged;
+  std::function<void(int track, int value)> onTrackChorusChanged;
+  std::function<void(int track, bool muted)> onTrackMuteChanged;
+  std::function<void(int track, bool soloed)> onTrackSoloChanged;
+
+  /** * AI: Metoda pro hromadnou aktualizaci z analyzeru.
+   * Tato metoda v .cpp volĂˇ tracks[index]->updateVolume(volume).
+   */
+  void updateTrackFromMetadata(int index, const juce::String &name, int volume);
+
+  /** * AI: Synchronizace FX dat (Pan, Reverb, Chorus) z analyzeru do UI.
+   */
+  void setTrackFxData(int index, int pan, int reverb, int chorus);
+
+  /** NastavenĂ­ instrumentu pro konkrĂ©tnĂ­ track (0-15) */
+  void setTrackInstrument(int index, const juce::String &name, juce::Colour colour);
+
+  /** AI: Metoda pro pĹ™edĂˇnĂ­ MIDI aktivity (velocity) do VU metru konkrĂ©tnĂ­ho tracku */
+  void triggerTrackVu(int index, int velocity);
+
+private:
+  // PĹŻvodnĂ­ nastavenĂ­ na 16 trackĹŻ (standard MIDI)
+  static constexpr int numTracks = 16;
+
+  /** * Pole s tracky.
+   * AI: PouĹľĂ­vĂˇme std::array a std::unique_ptr pro bezpeÄŤnou sprĂˇvu pamÄ›ti.
+   */
+  std::array<std::unique_ptr<TrackComponent>, numTracks> tracks;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackPanelComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.cpp =====
+/*
+  ==============================================================================
+    FILE: TransportComponent.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: RodiÄŤ pro pravĂ˝ panel - Transport, Settings, Banky, Verze.
+    UPDATED: Ajka - Oprava LNK2019 a finĂˇlnĂ­ bootstrap layout.
+  ==============================================================================
+*/
+
+#include "TransportComponent.h"
+
+TransportComponent::TransportComponent(MidiPlayer &player, BankManager &manager)
+    : midiPlayer(player)
+{
+    // 1. HornĂ­ transport (TlaÄŤĂ­tka)
+    addAndMakeVisible(startButton);
+    startButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d5a27));
+    addAndMakeVisible(stopButton);
+    stopButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff7a1a1a));
+    addAndMakeVisible(pauseButton);
+
+    // 2. Settings Bar (Audio HW + Master FX)
+    settingsBar = std::make_unique<SettingsBarComponent>(midiPlayer);
+    addAndMakeVisible(settingsBar.get());
+
+    // 3. SF2 LIST (Banky)
+    sf2List = std::make_unique<SF2ListComponent>(manager);
+    addAndMakeVisible(sf2List.get());
+
+    // 4. VERSION FOOTER (Verze ĂşplnÄ› dole)
+    versionFooter = std::make_unique<VersionFooter>();
+    addAndMakeVisible(versionFooter.get());
+
+    // Callbacky pro tlaÄŤĂ­tka
+    startButton.onClick = [this]
+    {
+        std::cout << "[UI] START BUTTON CLICKED" << std::endl;
+
+        if (onStartClicked)
+            onStartClicked();
+    };
+    stopButton.onClick = [this]
+    { if (onStopClicked)  onStopClicked(); };
+    pauseButton.onClick = [this]
+    { if (onPauseClicked) onPauseClicked(); };
+}
+
+// Implementace destruktoru (Fix pro chybu LNK2019)
+TransportComponent::~TransportComponent()
+{
+}
+
+void TransportComponent::paint(juce::Graphics &g)
+{
+    // PozadĂ­ pravĂ©ho panelu
+    g.fillAll(juce::Colour(0xff151515));
+
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+
+    // ÄŚĂˇra pod transportnĂ­mi tlaÄŤĂ­tky
+    g.drawHorizontalLine(startButton.getBottom() + 5, 10.0f, (float)getWidth() - 10.0f);
+}
+
+void TransportComponent::resized()
+{
+    auto area = getLocalBounds().reduced(8);
+
+    const int transportHeight = 45;
+    const int settingsHeight = 45;
+    const int footerHeight = 25;
+    const int spacing = 10;
+
+    // A. Verze ĂşplnÄ› dospod modulu
+    if (versionFooter)
+        versionFooter->setBounds(area.removeFromBottom(footerHeight));
+
+    // Mezera nad verzĂ­
+    area.removeFromBottom(spacing);
+
+    // B. HornĂ­ sekce - TransportnĂ­ tlaÄŤĂ­tka
+    auto transportRow = area.removeFromTop(transportHeight);
+    int btnW = transportRow.getWidth() / 3;
+    startButton.setBounds(transportRow.removeFromLeft(btnW).reduced(2));
+    stopButton.setBounds(transportRow.removeFromLeft(btnW).reduced(2));
+    pauseButton.setBounds(transportRow.reduced(2));
+
+    area.removeFromTop(spacing);
+
+    // C. Settings Bar (Audio HW a Master FX)
+    if (settingsBar)
+        settingsBar->setBounds(area.removeFromTop(settingsHeight));
+
+    area.removeFromTop(spacing);
+
+    // D. Banky (Zbytek prostoru uprostĹ™ed modulu)
+    if (sf2List)
+        sf2List->setBounds(area);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.h =====
+/*
+  ==============================================================================
+    FILE: TransportComponent.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Main transport, Settings Bar, SF2 List and Version footer.
+    VERSION: 2.1.2
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+#include "../SF2ListComponent/SF2ListComponent.h"
+#include "../VersionFooter/VersionFooter.h"
+#include "../../backend/MidiPlayer/MidiPlayer.h"
+
+class SettingsBarComponent : public juce::Component
+{
+public:
+  SettingsBarComponent(MidiPlayer &player);
+  ~SettingsBarComponent() override = default;
+  void paint(juce::Graphics &g) override {}
+  void resized() override;
+
+private:
+  MidiPlayer &midiPlayer;
+  juce::TextButton fxButton{"Master FX"}, settingsButton{"Audio HW"};
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SettingsBarComponent)
+};
+
+class TransportComponent : public juce::Component
+{
+public:
+  TransportComponent(MidiPlayer &player, BankManager &manager);
+  ~TransportComponent() override;
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+
+  std::function<void()> onStartClicked, onStopClicked, onPauseClicked;
+  std::unique_ptr<SF2ListComponent> sf2List;
+
+private:
+  MidiPlayer &midiPlayer;
+  juce::TextButton startButton{"Start"}, stopButton{"Stop"}, pauseButton{"Pause"};
+  std::unique_ptr<SettingsBarComponent> settingsBar;
+  std::unique_ptr<VersionFooter> versionFooter;
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\VersionFooter\VersionFooter.h =====
+#pragma once
+#include <JuceHeader.h>
+
+class VersionFooter : public juce::Component
+{
+public:
+    VersionFooter()
+    {
+        addAndMakeVisible(versionLabel);
+        versionLabel.setText("v" + juce::String(ProjectInfo::versionString), juce::dontSendNotification);
+        versionLabel.setFont(juce::Font(11.0f, juce::Font::bold));
+        versionLabel.setColour(juce::Label::textColourId, juce::Colours::grey.withAlpha(0.6f));
+        versionLabel.setJustificationType(juce::Justification::centred);
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        // VolitelnĂˇ linka nad verzĂ­, aby se oddÄ›lila od bank
+        g.setColour(juce::Colours::white.withAlpha(0.05f));
+        g.drawHorizontalLine(1, 20.0f, (float)getWidth() - 20.0f);
+    }
+
+    void resized() override
+    {
+        versionLabel.setBounds(getLocalBounds());
+    }
+
+private:
+    juce::Label versionLabel;
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\VUMeter\VUMeter.cpp =====
+/*
+  ==============================================================================
+    FILE: VUMeter.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Implementace vykreslovĂˇnĂ­ a animace VU metru.
+  ==============================================================================
+*/
+
+#include "VUMeter.h"
+
+VUMeter::VUMeter()
+{
+    startTimerHz(30); // 30 FPS pro plynulĂ˝ pohyb
+}
+
+VUMeter::~VUMeter()
+{
+    stopTimer();
+}
+
+void VUMeter::trigger(int velocity)
+{
+    // Normalizace velocity na rozsah 0.0 - 1.0
+    float newLevel = (float)velocity / 127.0f;
+
+    // Pokud je novĂˇ nota silnÄ›jĹˇĂ­ neĹľ aktuĂˇlnĂ­ stav, hned tam skoÄŤĂ­me
+    if (newLevel > currentLevel)
+        currentLevel = newLevel;
+
+    repaint();
+}
+
+void VUMeter::timerCallback()
+{
+    if (currentLevel > 0.0f)
+    {
+        currentLevel *= decayFactor;
+
+        if (currentLevel < 0.005f)
+            currentLevel = 0.0f;
+
+        repaint();
+    }
+}
+
+void VUMeter::paint(juce::Graphics &g)
+{
+    auto area = getLocalBounds().toFloat();
+
+    // PozadĂ­ (Ĺˇachta metru) - tmavĹˇĂ­ neĹľ hlavnĂ­ pozadĂ­ 0xff151515
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.fillRect(area);
+
+    if (currentLevel > 0.0f)
+    {
+        auto fillHeight = area.getHeight() * currentLevel;
+        auto fillRect = area.withTop(area.getBottom() - fillHeight);
+
+        // Gradient v barvĂˇch Sonaru
+        juce::ColourGradient gradient(juce::Colours::green, 0, area.getBottom(),
+                                      juce::Colours::red, 0, area.getY(), false);
+
+        // PĹ™idĂˇme Ĺľlutou do stĹ™edu pro lepĹˇĂ­ pĹ™echod
+        gradient.addColour(0.6, juce::Colours::yellow);
+
+        g.setGradientFill(gradient);
+        g.fillRect(fillRect);
+    }
+
+    // JemnĂ˝ rĂˇmeÄŤek pro ohraniÄŤenĂ­
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+    g.drawRect(area, 1.0f);
+}
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\VUMeter\VUMeter.h =====
+/*
+  ==============================================================================
+    FILE: VUMeter.h
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: VertikĂˇlnĂ­ VU metr pro indikaci MIDI aktivity tracku.
+    AUTHOR: AI (Iva's Assistant)
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+class VUMeter : public juce::Component, public juce::Timer
+{
+public:
+    VUMeter();
+    ~VUMeter() override;
+
+    void paint(juce::Graphics &g) override;
+    void timerCallback() override;
+
+    /** NastavĂ­ ĂşroveĹ metru na zĂˇkladÄ› velocity (0-127) */
+    void trigger(int velocity);
+
+private:
+    float currentLevel = 0.0f;
+    const float decayFactor = 0.88f; // Jak rychle padĂˇ hladina dolĹŻ
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VUMeter)
+};
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SourceCode.h =====
+/*
+  ==============================================================================
+
+    SourceCode.h
+    Created: 4 Apr 2026 1:10:18pm
+    Author:  ivana
+
+  ==============================================================================
+*/
+
+#pragma once
+
+
+-----------------------------
+
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\BankDNAExtractor_TSF.cpp =====
 /*
   ==============================================================================
     COMPONENT: BankDNAExtractor.cpp
@@ -184,7 +3782,7 @@ bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankDNAExtractor\BankDNAExtractor.h =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\BankDNAExtractor_TSF.h =====
 /*
   ==============================================================================
     COMPONENT: BankDNAExtractor.h
@@ -196,7 +3794,7 @@ bool BankDNAExtractor::extractToJSON(const juce::File &sf2File)
 */
 
 #pragma once
-#include <juce_core/juce_core.h>
+#include <JuceHeader.h>
 
 /**
  * StatickĂˇ utilita pro analĂ˝zu SoundFont bank.
@@ -222,181 +3820,13 @@ private:
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.cpp =====
-/*
-  ==============================================================================
-
-    FILE: BankManager.cpp
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: backend/BankManager
-    DESCRIPTION: Implementation of bank management logic.
-                 Stores data in AppData/Roaming/SonarMidiPlayer.
-
-  ==============================================================================
-*/
-
-#include "BankManager.h"
-
-// ======================================================
-// Konstruktor
-// ======================================================
-BankManager::BankManager()
-{
-    loadConfig(); // AI: NaÄŤte banky hned pĹ™i startu
-}
-
-// ======================================================
-// Cesta k souboru
-// ======================================================
-juce::File BankManager::getSettingsFile()
-{
-    // AI: CentrĂˇlnĂ­ sloĹľka v AppData (profesionĂˇlnĂ­ standard)
-    auto appData = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
-    auto settingsDir = appData.getChildFile("SonarMidiPlayer");
-
-    if (!settingsDir.exists())
-        settingsDir.createDirectory();
-
-    return settingsDir.getChildFile("bank_settings.xml");
-}
-
-// ======================================================
-// Logika sprĂˇvy bank
-// ======================================================
-
-void BankManager::addBank(const juce::File &file)
-{
-    if (!file.existsAsFile())
-        return;
-
-    // AI: Kontrola, zda jiĹľ banka v seznamu nenĂ­
-    for (const auto &b : loadedBanks)
-    {
-        if (b.getFullPathName() == file.getFullPathName())
-            return;
-    }
-
-    loadedBanks.push_back(file);
-    saveConfig(); // AI: UloĹľit zmÄ›nu okamĹľitÄ›
-}
-
-void BankManager::removeBank(int index)
-{
-    if (index >= 0 && index < (int)loadedBanks.size())
-    {
-        loadedBanks.erase(loadedBanks.begin() + index);
-        saveConfig(); // AI: UloĹľit zmÄ›nu okamĹľitÄ›
-    }
-}
-
-// ======================================================
-// NaÄŤĂ­tĂˇnĂ­ a UklĂˇdĂˇnĂ­ (Persistence)
-// ======================================================
-
-void BankManager::saveConfig()
-{
-    juce::XmlElement xml("SONAR_BANK_STATE");
-
-    for (auto &f : loadedBanks)
-    {
-        auto *e = xml.createNewChildElement("BANK_ENTRY");
-        e->setAttribute("fullPath", f.getFullPathName());
-    }
-
-    auto file = getSettingsFile();
-    xml.writeTo(file);
-
-    DBG(u8"BankManager: Seznam uloĹľen: " << file.getFullPathName());
-}
-
-void BankManager::loadConfig()
-{
-    auto file = getSettingsFile();
-
-    if (!file.exists())
-        return;
-
-    auto xml = juce::XmlDocument::parse(file);
-
-    if (xml != nullptr)
-    {
-        loadedBanks.clear();
-
-        for (auto *e : xml->getChildIterator())
-        {
-            if (e->hasTagName("BANK_ENTRY"))
-            {
-                juce::File f(e->getStringAttribute("fullPath"));
-
-                // AI: PĹ™idĂˇme pouze pokud soubor na disku stĂˇle existuje
-                if (f.existsAsFile())
-                    loadedBanks.push_back(f);
-            }
-        }
-    }
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\BankManager\BankManager.h =====
-/*
-  ==============================================================================
-
-    FILE: BankManager.h
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: backend/BankManager
-    DESCRIPTION: Handles SF2 bank list management and XML persistence.
-                 This is a standalone logic module (Backend).
-
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-#include <vector>
-
-class BankManager
-{
-public:
-    // AI: Konstruktor automaticky naÄŤte uloĹľenĂˇ data
-    BankManager();
-    ~BankManager() = default;
-
-    // --- API pro sprĂˇvu bank ---
-
-    // AI: PĹ™idĂˇ banku do seznamu a uloĹľĂ­ na disk
-    void addBank(const juce::File &file);
-
-    // AI: SmaĹľe banku podle indexu a aktualizuje disk
-    void removeBank(int index);
-
-    // AI: VrĂˇtĂ­ aktuĂˇlnĂ­ seznam pro potĹ™eby Frontendu
-    const std::vector<juce::File> &getLoadedBanks() const { return loadedBanks; }
-
-    // --- Persistence (PamÄ›ĹĄ) ---
-
-    void saveConfig();
-    void loadConfig();
-
-    // AI: StatickĂˇ metoda pro zĂ­skĂˇnĂ­ cesty (univerzĂˇlnĂ­ pro EXE/Plugin)
-    static juce::File getSettingsFile();
-
-private:
-    std::vector<juce::File> loadedBanks;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BankManager)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.cpp =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiAnalyzer_TSF.cpp =====
 /*
   ==============================================================================
     FILE: MidiAnalyzer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Deep Event List scanning with TSF Index verification.
-    UPDATED: Oprava getRawDataSize pro SysEx analĂ˝zu.
+    UPDATED: Oprava volĂˇnĂ­ kanĂˇlovĂ˝ch zprĂˇv a rekapitulace FX (Reverb/Chorus).
   ==============================================================================
 */
 
@@ -420,6 +3850,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
         d.tsfIndex = -1;
         d.instrumentName = (i == 9 ? "Standard Drums" : "Acoustic Piano");
         d.initialVolume = 100.0f;
+        d.initialReverb = 0;
+        d.initialChorus = 0;
         results.push_back(d);
     }
 
@@ -444,7 +3876,6 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                 auto &msg = m->message;
                 if (msg.isSysEx())
                 {
-                    // OPRAVA: V JUCE pouĹľĂ­vĂˇme getRawData a getRawDataSize
                     const uint8_t *data = msg.getRawData();
                     int size = msg.getRawDataSize();
 
@@ -471,6 +3902,8 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
             for (auto *m : *seq)
             {
                 auto &msg = m->message;
+
+                // OPRAVA: V JUCE se kanĂˇlovĂˇ zprĂˇva poznĂˇ tak, Ĺľe getChannel() vrĂˇtĂ­ > 0
                 int chRaw = msg.getChannel();
 
                 if (chRaw >= 1 && chRaw <= 16)
@@ -488,32 +3921,37 @@ std::vector<TrackData> MidiAnalyzer::analyzeFile(const juce::File &file, MidiMap
                             results[chIdx].bankLSB = val;
                         else if (ctrl == 7)
                             results[chIdx].initialVolume = (float)val;
+                        else if (ctrl == 91)
+                            results[chIdx].initialReverb = val;
+                        else if (ctrl == 93)
+                            results[chIdx].initialChorus = val;
                     }
                     else if (msg.isProgramChange())
                     {
                         int prog = msg.getProgramChangeNumber();
                         results[chIdx].programNumber = prog;
 
-                        // ZjiĹˇtÄ›nĂ­ TSF Indexu pomocĂ­ Mapperu
-                        int tsfIdx = -1;
                         if (mapper != nullptr)
                         {
-                            tsfIdx = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
+                            results[chIdx].tsfIndex = mapper->findDeepPresetIndex(results[chIdx].bankMSB, prog, chIdx, detectedMode);
                         }
-
-                        results[chIdx].tsfIndex = tsfIdx;
 
                         bool isDrum = (chRaw == 10 || results[chIdx].bankMSB >= 126);
                         results[chIdx].instrumentName = getGMName(prog, results[chIdx].bankMSB, isDrum);
-
-                        std::cout << "[DEBUG] Ch " << std::setw(2) << chRaw
-                                  << " | Prog: " << std::setw(3) << prog
-                                  << " | Bank: " << std::setw(3) << results[chIdx].bankMSB
-                                  << " | TSF_Idx: " << std::setw(5) << tsfIdx
-                                  << " | Instrument: " << results[chIdx].instrumentName << std::endl;
                     }
                 }
             }
+        }
+
+        // --- 3. REKAPITULACE (Zde se ovÄ›Ĺ™Ă­ hodnoty proti Sonaru) ---
+        std::cout << "\n--- [FINĂLNĂŤ REKAPITULACE NASTAVENĂŤ KANĂLĹ®] ---" << std::endl;
+        for (int i = 0; i < 16; ++i)
+        {
+            std::cout << "CH " << std::setw(2) << results[i].channel
+                      << " | INSTR: " << std::setw(16) << results[i].instrumentName
+                      << " | REV: " << std::setw(3) << results[i].initialReverb
+                      << " | CHO: " << std::setw(3) << results[i].initialChorus
+                      << " | VOL: " << std::setw(3) << (int)results[i].initialVolume << std::endl;
         }
         std::cout << "--- [KONEC ANALĂťZY] ---\n"
                   << std::endl;
@@ -557,7 +3995,7 @@ juce::String MidiAnalyzer::getGMName(int p, int bank, bool isDrumChannel)
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiAnalyzer\MidiAnalyzer.h =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiAnalyzer_TSF.h =====
 /*
   ==============================================================================
     FILE: MidiAnalyzer.h
@@ -577,37 +4015,41 @@ class MidiMapper;
 /** Struktura pro pĹ™enos informacĂ­ o jednom MIDI kanĂˇlu do UI */
 struct TrackData
 {
-    int channel;                 // 1-16
-    int programNumber;           // 0-127 (GM Program)
-    int bankMSB;                 // CC 0 - KlĂ­ÄŤovĂ© pro Yamaha 127 / Roland 128
-    int bankLSB;                 // CC 32 - Variace
-    int tsfIndex;                // SKUTEÄŚNĂť index v SoundFontu (pĹ™idĂˇno pro debug)
-    juce::String instrumentName; // TextovĂ˝ nĂˇzev nĂˇstroje
-    float initialVolume;         // Hlasitost 0-127 (podle CC 7)
-    juce::String trackName;      // NĂˇzev tracku z Meta EventĹŻ
+  int channel;                 // 1-16
+  int programNumber;           // 0-127 (GM Program)
+  int bankMSB;                 // CC 0 - KlĂ­ÄŤovĂ© pro Yamaha 127 / Roland 128
+  int bankLSB;                 // CC 32 - Variace
+  int tsfIndex;                // SKUTEÄŚNĂť index v SoundFontu (pĹ™idĂˇno pro debug)
+  juce::String instrumentName; // TextovĂ˝ nĂˇzev nĂˇstroje
+  float initialVolume;         // Hlasitost 0-127 (podle CC 7)
+  juce::String trackName;      // NĂˇzev tracku z Meta EventĹŻ
+
+  // PĹIDĂNO PRO FX MODAL:
+  int initialReverb = 0; // CC 91 - VĂ˝chozĂ­ ĂşroveĹ dozvuku
+  int initialChorus = 0; // CC 93 - VĂ˝chozĂ­ ĂşroveĹ chorusu
 };
 
 class MidiAnalyzer
 {
 public:
-    MidiAnalyzer() = default;
-    ~MidiAnalyzer() = default;
+  MidiAnalyzer() = default;
+  ~MidiAnalyzer() = default;
 
-    /** * OtevĹ™e soubor a vrĂˇtĂ­ seznam dat pro vĹˇech 16 kanĂˇlĹŻ.
-     * @param file MIDI soubor k analĂ˝ze
-     * @param mapper Ukazatel na instanci mapperu pro ovÄ›Ĺ™enĂ­ TSF indexĹŻ
-     */
-    std::vector<TrackData> analyzeFile(const juce::File &file, MidiMapper *mapper);
+  /** * OtevĹ™e soubor a vrĂˇtĂ­ seznam dat pro vĹˇech 16 kanĂˇlĹŻ.
+   * @param file MIDI soubor k analĂ˝ze
+   * @param mapper Ukazatel na instanci mapperu pro ovÄ›Ĺ™enĂ­ TSF indexĹŻ
+   */
+  std::vector<TrackData> analyzeFile(const juce::File &file, MidiMapper *mapper);
 
 private:
-    /** * PomocnĂˇ metoda pro pĹ™evod ÄŤĂ­sla programu na nĂˇzev.
-     */
-    juce::String getGMName(int p, int bank, bool isDrumChannel);
+  /** * PomocnĂˇ metoda pro pĹ™evod ÄŤĂ­sla programu na nĂˇzev.
+   */
+  juce::String getGMName(int p, int bank, bool isDrumChannel);
 };
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.cpp =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiMapper_TSF.cpp =====
 /*
   ==============================================================================
     FILE: MidiMapper.cpp
@@ -695,7 +4137,7 @@ MidiMode MidiMapper::detectModeFromSysEx(const uint8_t *data, int size)
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiMapper\MidiMapper.h =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiMapper_TSF.h =====
 /*
   ==============================================================================
     FILE: MidiMapper.h
@@ -736,13 +4178,13 @@ private:
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.cpp =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiPlayer_TSF.cpp =====
 /*
   ==============================================================================
     FILE: MidiPlayer.cpp
     PROJECT: SONAR MIDI PLAYER
     DESCRIPTION: Audio Engine with real-time TSF Index mapping.
-    UPDATED: KompletnĂ­ verze s fixem pro notebookovĂ© reproduktory (48kHz).
+    UPDATED: Fixed Mute/Solo logic and real-time CC response.
   ==============================================================================
 */
 
@@ -764,6 +4206,8 @@ MidiPlayer::MidiPlayer()
     {
         currentBankMSB[i] = (i == 9) ? 128 : 0;
         currentBankLSB[i] = 0;
+        channelMuted[i] = false; // Inicializace Mute
+        channelSolo[i] = false;  // Inicializace Solo
     }
     std::cout << "[MidiPlayer] Konstruktor dokonÄŤen. VĂ˝chozĂ­ frekvence: 48kHz." << std::endl;
 }
@@ -774,10 +4218,27 @@ MidiPlayer::~MidiPlayer()
         tsf_close(g_tinyfont);
 }
 
+// PomocnĂˇ funkce pro vyhodnocenĂ­, zda mĂˇ kanĂˇl hrĂˇt
+bool MidiPlayer::isChannelAudible(int channel) const
+{
+    bool anySolo = false;
+    for (int i = 0; i < 16; ++i)
+    {
+        if (channelSolo[i])
+        {
+            anySolo = true;
+            break;
+        }
+    }
+
+    if (anySolo)
+        return channelSolo[channel];
+    return !channelMuted[channel];
+}
+
 void MidiPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
-    // Buffer musĂ­ bĂ˝t stereo (poÄŤet vzorkĹŻ * 2 kanĂˇly)
     renderBuffer.setSize(1, samplesPerBlockExpected * 2);
 
     if (g_tinyfont)
@@ -803,7 +4264,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
     double blockDuration = (double)samplesToRender / currentSampleRate;
     double nextPlayheadTime = playheadSeconds + blockDuration;
 
-    // --- MIDI EVENTY ---
+    // --- MIDI EVENTY ZE SEKVENCE ---
     for (int i = 0; i < midiSequence.getNumEvents(); ++i)
     {
         auto *event = midiSequence.getEventPointer(i);
@@ -814,6 +4275,10 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
             auto &msg = event->message;
             int chan = msg.getChannel() - 1;
             if (chan < 0 || chan > 15)
+                continue;
+
+            // FiltrovĂˇnĂ­ NoteOn podle Mute/Solo
+            if (msg.isNoteOn() && !isChannelAudible(chan))
                 continue;
 
             if (msg.isController())
@@ -846,24 +4311,21 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
         }
     }
 
-    // --- AUDIO RENDERING (PROFI FIX PRO REPRODUKTORY) ---
+    // --- AUDIO RENDERING ---
     if (renderBuffer.getNumSamples() < samplesToRender * 2)
         renderBuffer.setSize(1, samplesToRender * 2);
 
     renderBuffer.clear();
-    // TSF renderuje stereo do renderBufferu (L, R, L, R...)
     tsf_render_float(g_tinyfont, renderBuffer.getWritePointer(0), samplesToRender, 0);
 
     const float *tsfOut = renderBuffer.getReadPointer(0);
     int numHardwareChannels = bufferToFill.buffer->getNumChannels();
 
-    // RozmĂ­stÄ›nĂ­ signĂˇlu do vĹˇech dostupnĂ˝ch kanĂˇlĹŻ reproduktorĹŻ
     for (int channel = 0; channel < numHardwareChannels; ++channel)
     {
         float *deviceOut = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
         for (int i = 0; i < samplesToRender; ++i)
         {
-            // Interleaved pĹ™Ă­stup: KanĂˇl 0 bere 0,2,4... KanĂˇl 1 bere 1,3,5...
             deviceOut[i] = tsfOut[i * 2 + (channel % 2)] * masterVolume;
         }
     }
@@ -875,9 +4337,7 @@ void MidiPlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToF
 
 void MidiPlayer::loadMidiFile(const juce::File &midiFile)
 {
-    std::cout << "\n[CHECKPOINT 0] Start loadMidiFile: " << midiFile.getFileName() << std::endl;
     stop();
-
     std::thread([this, midiFile]() mutable
                 {
         juce::MidiFile mf;
@@ -885,7 +4345,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         if (is == nullptr || !mf.readFrom(*is)) return;
         mf.convertTimestampTicksToSeconds();
 
-        // ÄŚekĂˇnĂ­ na naloĹľenĂ­ SoundFontu
         int retryCount = 0;
         while (g_tinyfont == nullptr && retryCount < 20)
         {
@@ -896,8 +4355,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         if (g_tinyfont != nullptr && mapper != nullptr)
         {
             mapper->updateTSFInstance(g_tinyfont);
-            std::cout << "[CHECKPOINT 1] Mapper pĹ™ipraven." << std::endl;
-
             MidiAnalyzer analyzer;
             auto results = analyzer.analyzeFile(midiFile, mapper.get());
             applyAnalysisResults(results);
@@ -913,7 +4370,6 @@ void MidiPlayer::loadMidiFile(const juce::File &midiFile)
         juce::MessageManager::callAsync([this, tempSeq = std::move(tempSequence)]() mutable
         {
             this->midiSequence = std::move(tempSeq);
-            std::cout << "[CHECKPOINT 3] Sekvence pĹ™edĂˇna hlavnĂ­mu vlĂˇknu.\n" << std::endl;
         }); })
         .detach();
 }
@@ -922,7 +4378,6 @@ void MidiPlayer::applyAnalysisResults(const std::vector<TrackData> &results)
 {
     if (!g_tinyfont)
         return;
-    std::cout << "[MidiPlayer] Aplikuji mapovĂˇnĂ­ z analĂ˝zy..." << std::endl;
     for (const auto &data : results)
     {
         if (data.tsfIndex >= 0)
@@ -939,20 +4394,12 @@ void MidiPlayer::loadSoundFont(const juce::File &sf2File)
     isPlaying = false;
     if (g_tinyfont)
         tsf_close(g_tinyfont);
-
     g_tinyfont = tsf_load_filename(sf2File.getFullPathName().toRawUTF8());
-
     if (g_tinyfont)
     {
-        // OkamĹľitĂ© nastavenĂ­ vĂ˝stupu podle aktuĂˇlnĂ­ frekvence notebooku
         tsf_set_output(g_tinyfont, TSF_STEREO_INTERLEAVED, (float)currentSampleRate, 0.0f);
         if (mapper)
             mapper->updateTSFInstance(g_tinyfont);
-        std::cout << "[MidiPlayer] SoundFont naloĹľen (" << currentSampleRate << " Hz)." << std::endl;
-    }
-    else
-    {
-        std::cout << "[MidiPlayer] ERROR: TSF nemohl naÄŤĂ­st font!" << std::endl;
     }
 }
 
@@ -961,7 +4408,6 @@ void MidiPlayer::play()
     if (g_tinyfont)
         isPlaying = true;
 }
-
 void MidiPlayer::stop()
 {
     isPlaying = false;
@@ -969,20 +4415,100 @@ void MidiPlayer::stop()
     if (g_tinyfont)
         tsf_reset(g_tinyfont);
 }
-
 void MidiPlayer::pause() { isPlaying = false; }
-
 void MidiPlayer::setMasterVolume(float v) { masterVolume = v / 127.0f; }
+
+// --- SETTERY PRO MUTE / SOLO ---
+void MidiPlayer::setChannelMute(int trackIdx, bool mute)
+{
+    if (trackIdx >= 0 && trackIdx < 16)
+    {
+        channelMuted[trackIdx] = mute;
+
+        // Pokud je Mute aktivnĂ­, okamĹľitÄ› "zbijeme" vĹˇechny hrajĂ­cĂ­ hlasy
+        if (mute && g_tinyfont)
+        {
+            tsf_channel_sounds_off_all(g_tinyfont, trackIdx);
+        }
+    }
+}
+
+void MidiPlayer::setChannelSolo(int trackIdx, bool solo)
+{
+    if (trackIdx >= 0 && trackIdx < 16)
+    {
+        channelSolo[trackIdx] = solo;
+
+        if (g_tinyfont)
+        {
+            // PĹ™i Solo musĂ­me utnout vĹˇechny kanĂˇly, kterĂ© teÄŹ majĂ­ mlÄŤet
+            for (int i = 0; i < 16; ++i)
+            {
+                if (!isChannelAudible(i))
+                {
+                    tsf_channel_sounds_off_all(g_tinyfont, i);
+                }
+            }
+        }
+    }
+}
+
+// --- REAL-TIME ZMÄšNY ---
+void MidiPlayer::sendRealTimeControlChange(int trackNum, int controller, int value)
+{
+    if (g_tinyfont != nullptr)
+    {
+        int chan = trackNum - 1;
+        if (chan >= 0 && chan < 16)
+        {
+            // --- 1. STANDARDNĂŤ TSF OBSLUHA ---
+            // Zpracuje zĂˇkladnĂ­ MIDI CC (7=Volume, 10=Pan, atd.)
+            tsf_channel_midi_control(g_tinyfont, chan, controller, value);
+
+            // --- 2. [EXT MODUL] RUÄŚNĂŤ SMÄšROVĂNĂŤ EFEKTĹ® ---
+            // ProtoĹľe standardnĂ­ TSF CC 91/93 ignoruje, posĂ­lĂˇme je do tsf_ext.cpp
+            if (controller == 91) // REVERB
+            {
+                float revLevel = (float)value / 127.0f;
+                tsf_channel_set_reverb(g_tinyfont, chan, revLevel);
+
+                // DiagnostickĂ˝ log pro externĂ­ modul
+                std::cout << "[EXT MODUL] Reverb Update -> Track: " << trackNum
+                          << " | Level: " << std::fixed << std::setprecision(2) << revLevel << std::endl;
+            }
+            else if (controller == 93) // CHORUS
+            {
+                float choLevel = (float)value / 127.0f;
+                tsf_channel_set_chorus(g_tinyfont, chan, choLevel);
+
+                // DiagnostickĂ˝ log pro externĂ­ modul
+                std::cout << "[EXT MODUL] Chorus Update -> Track: " << trackNum
+                          << " | Level: " << std::fixed << std::setprecision(2) << choLevel << std::endl;
+            }
+
+            // --- 3. SPECIĂLNĂŤ PĹĂŤPAD: MASTER VOLUME (CC 7) ---
+            // Pokud chceme, aby Master Slider ovlĂˇdal globĂˇlnĂ­ hlasitost (volitelnĂ©)
+            if (controller == 7 && trackNum == 0)
+            {
+                setMasterVolume((float)value);
+            }
+
+            // StandardnĂ­ logovĂˇnĂ­ pro kaĹľdĂ˝ MIDI event
+            std::cout << "[LIVE MIDI] Track: " << trackNum << " | CC: " << controller << " | Val: " << value << std::endl;
+        }
+    }
+}
+
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\MidiPlayer.h =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\MidiPlayer_TSF.h =====
 /*
   ==============================================================================
     FILE: MidiPlayer.h
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Audio Engine using TinySoundFont with full MIDI mapping support.
-    UPDATED: PĹ™idĂˇn AudioDeviceManager a getter pro Modal okno nastavenĂ­.
+    DESCRIPTION: Audio Engine with Mute/Solo logic and Real-time CC support.
+    UPDATED: Integrated Mute/Solo state arrays and proper method signatures.
   ==============================================================================
 */
 
@@ -994,53 +4520,68 @@ void MidiPlayer::setMasterVolume(float v) { masterVolume = v / 127.0f; }
 
 struct tsf;
 
+// --- [EXT MODUL: TSF EFFECTS] ---
+extern "C" void tsf_channel_set_reverb(struct tsf *f, int channel, float level);
+extern "C" void tsf_channel_set_chorus(struct tsf *f, int channel, float level);
+
 class MidiPlayer
 {
 public:
   MidiPlayer();
   ~MidiPlayer();
 
+  // --- AUDIO ZĂKLAD ---
   void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
   void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill);
   void releaseResources();
 
+  // --- SPRĂVA DAT ---
   void loadSoundFont(const juce::File &sf2File);
   void loadMidiFile(const juce::File &midiFile);
-
   void applyAnalysisResults(const std::vector<TrackData> &results);
 
+  // --- TRANSPORT ---
   void play();
   void stop();
   void pause();
   void setMasterVolume(float vol);
 
+  // --- REAL-TIME OVLĂDĂNĂŤ (TTS-1 STYLE) ---
+  /** PosĂ­lĂˇ CC zprĂˇvy pĹ™Ă­mo do syntĂ©zy (Volume=7, Pan=10, Reverb=91, Chorus=93) */
+  void sendRealTimeControlChange(int trackNum, int controller, int value);
+
+  // --- OVLĂDĂNĂŤ MUTE / SOLO ---
+  /** NastavĂ­ Mute pro kanĂˇl (0-15) a okamĹľitÄ› utne hrajĂ­cĂ­ hlasy v .cpp */
+  void setChannelMute(int trackIdx, bool shouldMute);
+
+  /** NastavĂ­ Solo pro kanĂˇl (0-15) */
+  void setChannelSolo(int trackIdx, bool shouldSolo);
+
+  /** PomocnĂˇ funkce pro vyhodnocenĂ­, zda mĂˇ kanĂˇl produkovat zvuk (zohledĹuje Mute i Solo) */
+  bool isChannelAudible(int channel) const;
+
   // --- GETTERY PRO UI ---
   MidiMapper *getMapper() const { return mapper.get(); }
-
-  // TATO METODA VYĹEĹ ĂŤ CHYBU C/C++(135)
-  // UmoĹľnĂ­ Modal oknu ovlĂˇdat hardware
   juce::AudioDeviceManager &getDeviceManager() { return deviceManager; }
 
 private:
   void processMidiMessage(const juce::MidiMessage &m);
 
-  // --- AUDIO HARDWARE ---
-  // DrĹľĂ­me instanci zde, aby byla dostupnĂˇ pro celĂ˝ backend
   juce::AudioDeviceManager deviceManager;
 
-  // TSF Instance a Audio data
   struct tsf *g_tinyfont = nullptr;
-  double currentSampleRate = 44100.0;
-
-  // PomocnĂ˝ buffer pro renderovĂˇnĂ­ TSF (stereo interleaved)
+  double currentSampleRate = 48000.0;
   juce::AudioBuffer<float> renderBuffer;
 
-  // MIDI stav pro kaĹľdĂ˝ z 16 kanĂˇlĹŻ
+  // MIDI stav pro kaĹľdĂ˝ z 16 kanĂˇlĹŻ (pro pĹ™epĂ­nĂˇnĂ­ bank)
   int currentBankMSB[16];
   int currentBankLSB[16];
-  MidiMode currentMode = MidiMode::GM;
 
-  // ÄŚasovĂˇnĂ­ a sekvence
+  // --- STAVY PRO MUTE A SOLO ---
+  bool channelMuted[16];
+  bool channelSolo[16];
+
+  MidiMode currentMode = MidiMode::GM;
   juce::MidiMessageSequence midiSequence;
   double playheadSeconds = 0.0;
   bool isPlaying = false;
@@ -1053,7 +4594,7 @@ private:
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\backend\MidiPlayer\tsf.h =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\tsf.h =====
 /* TinySoundFont - v0.9 - SoundFont2 synthesizer - https://github.com/schellingb/TinySoundFont
                                      no warranty implied; use at your own risk
    Do this:
@@ -3137,1203 +6678,35 @@ TSFDEF float tsf_channel_get_tuning(tsf* f, int channel)
 
 -----------------------------
 
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.cpp =====
+===== FILE: D:\C++\SONAR MIDI PLAYER\staré soubory\tsf_ext.cpp =====
 /*
   ==============================================================================
-    FILE: MainComponent.cpp
+    FILE: tsf_ext.cpp
     PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Main container - Async loading and Audio HW synchronization.
-    FIXED: AutomatickĂ© pĹ™epĂ­nĂˇnĂ­ vĂ˝stupu pĹ™i zmÄ›nÄ› zaĹ™Ă­zenĂ­.
+    DESCRIPTION: External FX Module for TSF (Reverb & Chorus support).
+    AUTHOR: Iva (AI Assisted)
+    DATE: 2026-04-12
   ==============================================================================
 */
 
-#include "MainComponent.h"
-#include <iostream>
+#include "tsf.h"
 
-MainComponent::MainComponent()
+extern "C"
 {
-    // 1. Inicializace Backend modulĹŻ
-    midiPlayer = std::make_unique<MidiPlayer>();
-    bankManager = std::make_unique<BankManager>();
-
-    // --- SYNCHRONIZACE AUDIO HARDWARE ---
-    auto &dm = midiPlayer->getDeviceManager();
-    dm.addChangeListener(this);
-    dm.initialise(0, 2, nullptr, true);
-
-    // Inicializace vĂ˝chozĂ­ch kanĂˇlĹŻ
-    setAudioChannels(0, 2);
-
-    // 2. Inicializace UI komponent
-    trackPanel = std::make_unique<TrackPanelComponent>();
-    addAndMakeVisible(*trackPanel);
-
-    transport = std::make_unique<TransportComponent>(*midiPlayer);
-    addAndMakeVisible(*transport);
-
-    sf2List = std::make_unique<SF2ListComponent>(*bankManager);
-    addAndMakeVisible(*sf2List);
-
-    masterPanel = std::make_unique<MasterPanel>();
-    addAndMakeVisible(*masterPanel);
-
-    // --- 3. CALLBACKY A PROPOJENĂŤ ---
-    if (transport)
+    // PropojenĂ­ CC 91 s reverbem
+    void tsf_channel_set_reverb(struct tsf *f, int channel, float level)
     {
-        transport->onStartClicked = [this]()
-        {
-            if (midiPlayer)
-                midiPlayer->play();
-        };
-
-        transport->onStopClicked = [this]()
-        {
-            if (midiPlayer)
-                midiPlayer->stop();
-        };
+        if (f != nullptr)
+            tsf_channel_midi_control(f, channel, 91, (int)(level * 127.0f));
     }
 
-    if (sf2List)
+    // PropojenĂ­ CC 93 s chorusem
+    void tsf_channel_set_chorus(struct tsf *f, int channel, float level)
     {
-        sf2List->onSelectionChanged = [this](const juce::File &selectedFile)
-        {
-            if (selectedFile.existsAsFile() && midiPlayer)
-                midiPlayer->loadSoundFont(selectedFile);
-        };
-    }
-
-    if (masterPanel)
-    {
-        masterPanel->onMidiFileSelected = [this](const juce::File &midiFile)
-        {
-            if (midiFile.existsAsFile())
-            {
-                std::cout << "[Main] Async load: " << midiFile.getFileName() << std::endl;
-
-                juce::Thread::launch([this, midiFile]()
-                                     {
-                    MidiAnalyzer analyzer;
-                    MidiMapper* currentMapper = (midiPlayer != nullptr) ? midiPlayer->getMapper() : nullptr;
-                    auto trackMetadata = analyzer.analyzeFile(midiFile, currentMapper);
-
-                    juce::MessageManager::callAsync([this, trackMetadata]() 
-                    {
-                        for (const auto &data : trackMetadata)
-                            trackPanel->updateTrackFromMetadata(data.channel - 1, data.instrumentName, data.initialVolume);
-                    });
-
-                    if (midiPlayer)
-                        midiPlayer->loadMidiFile(midiFile); });
-            }
-        };
-
-        masterPanel->onVolumeChanged = [this](float volume)
-        {
-            if (midiPlayer)
-                midiPlayer->setMasterVolume(volume);
-        };
-    }
-
-    // --- 4. AUTO-LOAD PRVNĂŤ BANKY ---
-    const std::vector<juce::File> &foundBanks = bankManager->getLoadedBanks();
-    if (!foundBanks.empty() && midiPlayer)
-        midiPlayer->loadSoundFont(foundBanks[0]);
-
-    setSize(1200, 800);
-}
-
-MainComponent::~MainComponent()
-{
-    if (midiPlayer)
-        midiPlayer->getDeviceManager().removeChangeListener(this);
-
-    shutdownAudio();
-}
-
-void MainComponent::changeListenerCallback(juce::ChangeBroadcaster *source)
-{
-    if (midiPlayer && source == &midiPlayer->getDeviceManager())
-    {
-        auto *device = midiPlayer->getDeviceManager().getCurrentAudioDevice();
-        if (device != nullptr)
-        {
-            // Informujeme player o novĂ© vzorkovacĂ­ frekvenci
-            midiPlayer->prepareToPlay(device->getCurrentBufferSizeSamples(),
-                                      device->getCurrentSampleRate());
-
-            // DĹ®LEĹ˝ITĂ‰: VynutĂ­me restart audio streamu pro novĂ© zaĹ™Ă­zenĂ­
-            setAudioChannels(0, 2);
-
-            std::cout << "[AI SYSTEM] ZvukovĂ© zaĹ™Ă­zenĂ­ zmÄ›nÄ›no na: " << device->getName()
-                      << " (" << device->getCurrentSampleRate() << " Hz)" << std::endl;
-        }
+        if (f != nullptr)
+            tsf_channel_midi_control(f, channel, 93, (int)(level * 127.0f));
     }
 }
-
-void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
-{
-    if (midiPlayer)
-        midiPlayer->prepareToPlay(samplesPerBlockExpected, sampleRate);
-}
-
-void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
-{
-    if (midiPlayer)
-        midiPlayer->getNextAudioBlock(bufferToFill);
-    else
-        bufferToFill.clearActiveBufferRegion();
-}
-
-void MainComponent::releaseResources()
-{
-    if (midiPlayer)
-        midiPlayer->releaseResources();
-}
-
-void MainComponent::paint(juce::Graphics &g)
-{
-    g.fillAll(juce::Colour(0xff181818));
-}
-
-void MainComponent::resized()
-{
-    auto area = getLocalBounds().reduced(10);
-    auto rightArea = area.removeFromRight(300);
-
-    if (transport)
-        transport->setBounds(rightArea.removeFromTop(60));
-
-    if (sf2List)
-        sf2List->setBounds(rightArea);
-
-    if (masterPanel)
-        masterPanel->setBounds(area.removeFromBottom(100));
-
-    if (trackPanel)
-        trackPanel->setBounds(area);
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MainComponent\MainComponent.h =====
-/*
-  ==============================================================================
-    FILE: MainComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: frontend/MainComponent
-    DESCRIPTION: Main container - handling audio and UI layout.
-    UPDATED: Added ChangeListener for automatic audio hardware switching.
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <JuceHeader.h>
-
-// Frontend komponenty
-#include "../TrackPanelComponent/TrackPanelComponent.h"
-#include "../TransportComponent/TransportComponent.h"
-#include "../SF2ListComponent/SF2ListComponent.h"
-#include "../MasterPanel/MasterPanel.h"
-
-// Backend moduly
-#include "../../backend/MidiPlayer/MidiPlayer.h"
-#include "../../backend/BankManager/BankManager.h"
-#include "../../backend/MidiAnalyzer/MidiAnalyzer.h"
-
-class MainComponent : public juce::AudioAppComponent,
-                      public juce::ChangeListener // Sleduje zmÄ›ny HW (sluchĂˇtka/repro)
-{
-public:
-  MainComponent();
-  ~MainComponent() override;
-
-  // Audio metody
-  void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
-  void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
-  void releaseResources() override;
-
-  // GrafickĂ© metody
-  void paint(juce::Graphics &g) override;
-  void resized() override;
-
-  // Callback pro automatickou detekci odpojenĂ­ sluchĂˇtek
-  void changeListenerCallback(juce::ChangeBroadcaster *source) override;
-
-private:
-  // AI: Audio engine a sprĂˇva bank (Backend)
-  std::unique_ptr<MidiPlayer> midiPlayer;
-  std::unique_ptr<BankManager> bankManager;
-
-  // AI: UI Komponenty (Frontend)
-  std::unique_ptr<TrackPanelComponent> trackPanel;
-  std::unique_ptr<TransportComponent> transport;
-  std::unique_ptr<SF2ListComponent> sf2List;
-  std::unique_ptr<MasterPanel> masterPanel;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.cpp =====
-/*
-  ==============================================================================
-    FILE: MasterPanel.cpp
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Implementation of the master control panel.
-    UPDATED: RobustnĂ­ asynchronnĂ­ naÄŤĂ­tĂˇnĂ­ a vizuĂˇlnĂ­ zpÄ›tnĂˇ vazba.
-  ==============================================================================
-*/
-
-#include "MasterPanel.h"
-
-MasterPanel::MasterPanel()
-{
-  // --- Master volume slider ---
-  addAndMakeVisible(masterVolume);
-  masterVolume.setRange(0.0, 127.0, 1.0);
-  masterVolume.setValue(100.0);
-  masterVolume.setSliderStyle(juce::Slider::LinearHorizontal);
-  masterVolume.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
-
-  masterVolume.onValueChange = [this]()
-  {
-    if (onVolumeChanged)
-      onVolumeChanged((float)masterVolume.getValue());
-  };
-
-  // --- Buttons & Labels ---
-  addAndMakeVisible(chooseFolderButton);
-  addAndMakeVisible(loadMidiButton);
-  addAndMakeVisible(headphonesButton);
-
-  // NastavenĂ­ popisku pro nĂˇzev souboru
-  addAndMakeVisible(currentMidiLabel);
-  currentMidiLabel.setColour(juce::Label::textColourId, juce::Colours::cyan);
-  currentMidiLabel.setFont(juce::Font(14.0f, juce::Font::bold));
-  currentMidiLabel.setText(u8"No file loaded", juce::dontSendNotification);
-
-  // --- Load MIDI/KAR button ---
-  loadMidiButton.onClick = [this]()
-  {
-    // VytvoĹ™enĂ­ chooseru jako unique_ptr (v MasterPanel.h musĂ­ bĂ˝t std::unique_ptr<juce::FileChooser> midiChooser)
-    midiChooser = std::make_unique<juce::FileChooser>(
-        u8"Vyber MIDI nebo KAR soubor...",
-        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-        "*.mid;*.kar");
-
-    auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
-
-    midiChooser->launchAsync(flags, [this](const juce::FileChooser &fc)
-                             {
-            auto file = fc.getResult();
-            
-            if (file != juce::File() && file.existsAsFile())
-            {
-                // OkamĹľitĂˇ vizuĂˇlnĂ­ odezva na UI vlĂˇknÄ›
-                currentMidiLabel.setText(u8"Loading: " + file.getFileName(), juce::dontSendNotification);
-                
-                // VyvolĂˇnĂ­ callbacku - MidiPlayer si to nynĂ­ pĹ™evezme ve vlastnĂ­m vlĂˇknÄ›
-                if (onMidiFileSelected)
-                {
-                    onMidiFileSelected(file);
-                }
-            } });
-  };
-
-  // --- Headphones toggle ---
-  headphonesButton.onClick = [this]()
-  {
-    headphonesOn = !headphonesOn;
-    headphonesButton.setButtonText(headphonesOn ? u8"Headphones On" : u8"Headphones Off");
-    // Zde mĹŻĹľeĹˇ pĹ™idat onHeadphonesChanged(headphonesOn), pokud mĂˇĹˇ definovĂˇno
-  };
-}
-
-MasterPanel::~MasterPanel()
-{
-  // Chooser se zniÄŤĂ­ automaticky dĂ­ky unique_ptr
-}
-
-void MasterPanel::paint(juce::Graphics &g)
-{
-  g.fillAll(juce::Colour(0xff151515));
-  g.setColour(juce::Colours::grey.withAlpha(0.2f));
-  g.drawRect(getLocalBounds(), 1);
-}
-
-void MasterPanel::resized()
-{
-  auto r = getLocalBounds().reduced(10);
-
-  // Slider nahoĹ™e na celou ĹˇĂ­Ĺ™ku
-  int sliderHeight = 30;
-  masterVolume.setBounds(r.removeFromTop(sliderHeight));
-  r.removeFromTop(5);
-
-  // RozloĹľenĂ­ prvkĹŻ v Ĺ™adÄ›
-  int buttonWidth = 120;
-  int spacing = 10;
-
-  chooseFolderButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(spacing);
-
-  loadMidiButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(spacing);
-
-  headphonesButton.setBounds(r.removeFromLeft(buttonWidth).reduced(0, 5));
-  r.removeFromLeft(spacing + 5);
-
-  // Label zabere zbytek mĂ­sta
-  currentMidiLabel.setBounds(r.reduced(0, 5));
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\MasterPanel\MasterPanel.h =====
-/*
-  ==============================================================================
-
-    FILE: MasterPanel.h
-    NAME: MasterPanel.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Header for the master control panel.
-                 UPDATED: Added currentMidiLabel for visual feedback.
-
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <JuceHeader.h>
-
-class MasterPanel : public juce::Component
-{
-public:
-  MasterPanel();
-  ~MasterPanel() override;
-
-  void paint(juce::Graphics &g) override;
-  void resized() override;
-
-  // --- Callbacks ---
-
-  // AI: Callback pro zmÄ›nu hlasitosti (0-127)
-  std::function<void(float volume)> onVolumeChanged;
-
-  // AI: Callback pro vĂ˝bÄ›r MIDI/KAR souboru
-  std::function<void(const juce::File &)> onMidiFileSelected;
-
-private:
-  juce::Slider masterVolume;
-  juce::TextButton chooseFolderButton{u8"Select Folder"};
-  juce::TextButton loadMidiButton{u8"Load MIDI/KAR"};
-  juce::ToggleButton headphonesButton{u8"Headphones Off"};
-
-  // AI: Popisek, kterĂ˝ vypĂ­Ĺˇe nĂˇzev nahranĂ© MIDI vedle sluchĂˇtek
-  juce::Label currentMidiLabel;
-
-  // AI: DrĹľĂ­ instanci vĂ˝bÄ›rovĂ©ho okna
-  std::unique_ptr<juce::FileChooser> midiChooser;
-
-  // AI: Stav pro pĹ™epĂ­nĂˇnĂ­ sluchĂˇtek
-  bool headphonesOn{false};
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterPanel)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.cpp =====
-/*
-  ==============================================================================
-
-    FILE: SF2ListComponent.cpp
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: frontend/SF2ListComponent
-    DESCRIPTION: SF2 list implementation.
-                 Now fully integrated with BankManager (Backend).
-                 Includes automatic DNA extraction to JSON during load.
-
-  ==============================================================================
-*/
-
-#include "SF2ListComponent.h"
-#include "../../backend/BankDNAExtractor/BankDNAExtractor.h" // AI: PĹ™idĂˇn include pro extraktor
-
-// ======================================================
-// Konstruktor - PropojenĂ­ s Backendem
-// ======================================================
-SF2ListComponent::SF2ListComponent(BankManager &manager) : bankManager(manager)
-{
-    // 1. TlaÄŤĂ­tko FOLDER BANK (NahoĹ™e)
-    addAndMakeVisible(chooseFolderButton);
-    chooseFolderButton.setButtonText(u8"FOLDER BANK");
-    chooseFolderButton.onClick = [this]
-    {
-        juce::File startDir = lastBankDirectory.exists() ? lastBankDirectory
-                                                         : juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
-
-        auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems;
-
-        fc = std::make_unique<juce::FileChooser>(u8"Vyberte SF2 banky...", startDir, "*.sf2");
-
-        fc->launchAsync(chooserFlags, [this](const juce::FileChooser &chooser)
-                        {
-            auto results = chooser.getResults();
-            if (results.size() > 0)
-            {
-                lastBankDirectory = results[0].getParentDirectory();
-                for (auto& file : results)
-                {
-                    if (file.existsAsFile()) loadSF2(file);
-                }
-            } });
-    };
-
-    // 2. TlaÄŤĂ­tko DELETE BANK (NahoĹ™e)
-    addAndMakeVisible(deleteBankButton);
-    deleteBankButton.setButtonText(u8"DELETE BANK");
-    deleteBankButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred.withAlpha(0.8f));
-    deleteBankButton.onClick = [this]
-    { deleteSelectedBank(); };
-
-    // 3. NastavenĂ­ tabulky (Pod tlaÄŤĂ­tky)
-    addAndMakeVisible(sf2List);
-    sf2List.getHeader().addColumn(u8"SF2 Banky (Seznam)", 1, 200);
-    sf2List.setModel(this);
-    sf2List.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
-    sf2List.setMultipleSelectionEnabled(false);
-}
-
-SF2ListComponent::~SF2ListComponent() {}
-
-// ======================================================
-// TableListBoxModel Implementace (ÄŚte z Manageru)
-// ======================================================
-
-int SF2ListComponent::getNumRows()
-{
-    return (int)bankManager.getLoadedBanks().size();
-}
-
-void SF2ListComponent::paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
-{
-    if (rowIsSelected)
-        g.fillAll(juce::Colours::azure.withAlpha(0.15f));
-    else if (rowNumber % 2 == 0)
-        g.fillAll(juce::Colours::black.withAlpha(0.1f));
-}
-
-void SF2ListComponent::paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
-{
-    g.setColour(rowIsSelected ? juce::Colours::yellow : juce::Colours::white);
-
-    auto &currentBanks = bankManager.getLoadedBanks();
-
-    if (rowNumber < (int)currentBanks.size())
-    {
-        g.drawText(currentBanks[rowNumber].getFileNameWithoutExtension(),
-                   5, 0, width - 10, height,
-                   juce::Justification::centredLeft, true);
-    }
-}
-
-// ======================================================
-// Logika sprĂˇvy bank (VolĂˇ Backend)
-// ======================================================
-
-void SF2ListComponent::loadSF2(const juce::File &file)
-{
-    // --- AI DEBUG START ---
-    juce::Logger::writeToLog("--------------------------------------------------");
-    juce::Logger::writeToLog("[AI DEBUG] Zahajuji proces pro: " + file.getFileName());
-
-    // 1. KROK: BleskovĂˇ extrakce DNA (vytvoĹ™Ă­ JSON v AppData/bank_settings)
-    if (BankDNAExtractor::extractToJSON(file))
-    {
-        // Najdeme cestu pro potvrzenĂ­ v logu
-        juce::File jsonPath = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                                  .getChildFile("SonarMidiPlayer")
-                                  .getChildFile("bank_settings")
-                                  .getChildFile(file.getFileNameWithoutExtension() + ".json");
-
-        juce::Logger::writeToLog("[AI SUCCESS] JSON DNA vytvoĹ™en: " + jsonPath.getFullPathName());
-    }
-    else
-    {
-        juce::Logger::writeToLog("[AI ERROR] Extrakce DNA selhala pro: " + file.getFullPathName());
-    }
-    // --- AI DEBUG END ---
-
-    // 2. KROK: BankManager si sĂˇm hlĂ­dĂˇ duplicity a uklĂˇdĂˇnĂ­ do XML
-    bankManager.addBank(file);
-
-    sf2List.updateContent();
-    sf2List.repaint();
-}
-
-void SF2ListComponent::deleteSelectedBank()
-{
-    int selected = sf2List.getSelectedRow();
-    auto &currentBanks = bankManager.getLoadedBanks();
-
-    if (selected >= 0 && selected < (int)currentBanks.size())
-    {
-        bankManager.removeBank(selected);
-        sf2List.updateContent();
-        sf2List.deselectAllRows();
-        sf2List.repaint();
-    }
-}
-
-void SF2ListComponent::paint(juce::Graphics &g)
-{
-    g.fillAll(juce::Colour(0xff1a1a1a));
-}
-
-// ======================================================
-// ROZLOĹ˝ENĂŤ PRVKĹ® (Layout)
-// ======================================================
-
-void SF2ListComponent::resized()
-{
-    auto area = getLocalBounds().reduced(5);
-
-    // 1. Prostor pro tlaÄŤĂ­tka NAHOĹE (vĂ˝Ĺˇka 35px)
-    auto topRow = area.removeFromTop(35);
-
-    int gap = 4;
-    int buttonWidth = (topRow.getWidth() - gap) / 2;
-
-    chooseFolderButton.setBounds(topRow.removeFromLeft(buttonWidth));
-    deleteBankButton.setBounds(topRow.removeFromRight(buttonWidth));
-
-    // 2. Mezera mezi tlaÄŤĂ­tka a tabulku
-    area.removeFromTop(5);
-
-    // 3. Tabulka zabere zbytek
-    sf2List.setBounds(area);
-}
-
-// ======================================================
-// Drag & Drop
-// ======================================================
-
-bool SF2ListComponent::isInterestedInFileDrag(const juce::StringArray &files)
-{
-    for (auto &f : files)
-        if (f.endsWith(".sf2"))
-            return true;
-    return false;
-}
-
-void SF2ListComponent::filesDropped(const juce::StringArray &files, int x, int y)
-{
-    juce::ignoreUnused(x, y);
-    for (auto &f : files)
-    {
-        juce::File file(f);
-        if (file.existsAsFile() && file.hasFileExtension("sf2"))
-            loadSF2(file);
-    }
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SF2ListComponent\SF2ListComponent.h =====
-/*
-  ==============================================================================
-
-    FILE: SF2ListComponent.h
-    NAME: SF2ListComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Header for the SF2 bank list.
-                 FIXED: Connected to BankManager (Backend) and removed local storage.
-                 RESTORED: Callback 'onSelectionChanged' for MainComponent.
-
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-#include "../../backend/BankManager/BankManager.h"
-
-class SF2ListComponent : public juce::Component,
-                         public juce::FileDragAndDropTarget,
-                         public juce::TableListBoxModel
-{
-public:
-  // AI: Konstruktor nynĂ­ pĹ™ijĂ­mĂˇ referenci na BankManager z backendu
-  SF2ListComponent(BankManager &manager);
-  ~SF2ListComponent() override;
-
-  void paint(juce::Graphics &g) override;
-  void resized() override;
-
-  // --- TableListBoxModel metody (nynĂ­ berou data z bankManageru) ---
-  int getNumRows() override;
-  void paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected) override;
-  void paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
-
-  // --- Logika pro sprĂˇvu bank (volĂˇ metody v bankManageru) ---
-  void loadSF2(const juce::File &file);
-  void deleteSelectedBank();
-
-  // AI: Callback pro MainComponent (vĂ˝bÄ›r banky pro pĹ™ehrĂˇvĂˇnĂ­)
-  std::function<void(const juce::File &selectedFile)> onSelectionChanged;
-
-  // Drag & Drop
-  bool isInterestedInFileDrag(const juce::StringArray &files) override;
-  void filesDropped(const juce::StringArray &files, int x, int y) override;
-
-private:
-  // AI: Odkaz na centrĂˇlnĂ­ sprĂˇvu bank
-  BankManager &bankManager;
-
-  juce::TableListBox sf2List{"SF2 Table"};
-
-  juce::TextButton chooseFolderButton;
-  juce::TextButton deleteBankButton;
-
-  std::unique_ptr<juce::FileChooser> fc;
-  juce::File lastBankDirectory;
-
-  // AI: 'loadedBanks' zde jiĹľ nenĂ­, pouĹľĂ­vĂˇme bankManager.getLoadedBanks()
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SF2ListComponent)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.cpp =====
-/*
-  ==============================================================================
-
-    FILE: TrackComponent.cpp
-    NAME: TrackComponent.cpp
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Implementation of individual track with custom LookAndFeel.
-                 FIXED: Increased track number button width to fit 2-digit numbers.
-
-  ==============================================================================
-*/
-
-#include "TrackComponent.h"
-
-// --- vlastnĂ­ LookAndFeel pro toggle tlaÄŤĂ­tka ---
-class ToggleButtonLookAndFeel : public juce::LookAndFeel_V4
-{
-public:
-    void drawButtonBackground(juce::Graphics &g, juce::Button &button,
-                              const juce::Colour &, bool, bool isMouseOverButton) override
-    {
-        auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
-        juce::Colour bg;
-        juce::Colour text;
-
-        if (button.getToggleState())
-        {
-            if (button.getButtonText() == "M")
-                bg = juce::Colours::red;
-            else if (button.getButtonText() == "S")
-                bg = juce::Colours::yellow;
-            else
-                bg = juce::Colours::green;
-
-            text = juce::Colours::black;
-        }
-        else
-        {
-            bg = juce::Colours::grey.withAlpha(0.3f);
-            text = juce::Colours::white;
-        }
-
-        g.setColour(bg);
-        g.fillRoundedRectangle(bounds, 4.0f);
-
-        g.setColour(isMouseOverButton ? juce::Colours::white.withAlpha(0.4f) : juce::Colours::black.withAlpha(0.5f));
-        g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
-
-        g.setColour(text);
-        g.setFont(juce::Font(15.0f, juce::Font::bold));
-        g.drawFittedText(button.getButtonText(), button.getLocalBounds(),
-                         juce::Justification::centred, 1);
-    }
-
-    void drawButtonText(juce::Graphics &, juce::TextButton &, bool, bool) override {}
-};
-
-static ToggleButtonLookAndFeel toggleButtonLF;
-
-TrackComponent::TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType::Type type)
-    : trackNum(trackNumber), trackName(instrumentName), instrumentType(type)
-{
-    // --- ÄŤĂ­slo tracku (zvÄ›tĹˇeno a vypnuto pohlcovĂˇnĂ­ kliknutĂ­) ---
-    addAndMakeVisible(trackNumberButton);
-    trackNumberButton.setButtonText(juce::String(trackNum));
-    trackNumberButton.setEnabled(false);
-    trackNumberButton.setColour(juce::TextButton::buttonColourId, juce::Colours::black.withAlpha(0.3f));
-    trackNumberButton.setColour(juce::TextButton::textColourOffId, juce::Colours::orange);
-
-    // --- nĂˇzev instrumentu ---
-    addAndMakeVisible(nameLabel);
-    nameLabel.setText(trackName, juce::dontSendNotification);
-    nameLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff333333));
-    nameLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-    nameLabel.setEditable(true, true, false);
-    nameLabel.setJustificationType(juce::Justification::centredLeft);
-
-    // --- volume slider ---
-    addAndMakeVisible(volumeSlider);
-    volumeSlider.setRange(0, 127, 1);
-    volumeSlider.setValue(100);
-    volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 45, 18);
-
-    // --- Mute Button ---
-    addAndMakeVisible(muteButton);
-    muteButton.setButtonText("M");
-    muteButton.setClickingTogglesState(true);
-    muteButton.setLookAndFeel(&toggleButtonLF);
-
-    // --- Solo Button ---
-    addAndMakeVisible(soloButton);
-    soloButton.setButtonText("S");
-    soloButton.setClickingTogglesState(true);
-    soloButton.setLookAndFeel(&toggleButtonLF);
-
-    // --- Third Button (Vol) ---
-    addAndMakeVisible(thirdButton);
-    thirdButton.setButtonText("Vol");
-    thirdButton.setClickingTogglesState(true);
-    thirdButton.setLookAndFeel(&toggleButtonLF);
-}
-
-TrackComponent::~TrackComponent()
-{
-    muteButton.setLookAndFeel(nullptr);
-    soloButton.setLookAndFeel(nullptr);
-    thirdButton.setLookAndFeel(nullptr);
-}
-
-void TrackComponent::updateVolume(float newVolume)
-{
-    volumeSlider.setValue((double)newVolume, juce::dontSendNotification);
-}
-
-void TrackComponent::setInstrument(const juce::String &name, juce::Colour colour)
-{
-    trackName = name;
-    nameLabel.setText(trackName, juce::dontSendNotification);
-    nameLabel.setColour(juce::Label::backgroundColourId, colour);
-}
-
-void TrackComponent::setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third)
-{
-    muteButton.setButtonText(mute);
-    soloButton.setButtonText(solo);
-    thirdButton.setButtonText(third);
-}
-
-void TrackComponent::paint(juce::Graphics &g)
-{
-    g.fillAll(juce::Colour(0xff222222));
-
-    // SpodnĂ­ linka pro oddÄ›lenĂ­ Ĺ™ĂˇdkĹŻ
-    g.setColour(juce::Colours::black.withAlpha(0.5f));
-    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
-}
-
-void TrackComponent::resized()
-{
-    auto r = getLocalBounds().reduced(2);
-
-    // AI: ZvÄ›tĹˇeno z 30 na 45 pixelĹŻ, aby se veĹˇla ÄŤĂ­sla 10-16
-    trackNumberButton.setBounds(r.removeFromLeft(45).reduced(1));
-
-    // AI: ZvÄ›tĹˇeno ze 120 na 135 pro delĹˇĂ­ nĂˇzvy nĂˇstrojĹŻ
-    nameLabel.setBounds(r.removeFromLeft(135).reduced(1));
-
-    int buttonWidth = 35;
-    int buttonSpacing = 2;
-
-    // PravĂˇ strana: tlaÄŤĂ­tka
-    thirdButton.setBounds(r.removeFromRight(buttonWidth).reduced(1));
-    r.removeFromRight(buttonSpacing);
-    soloButton.setBounds(r.removeFromRight(buttonWidth).reduced(1));
-    r.removeFromRight(buttonSpacing);
-    muteButton.setBounds(r.removeFromRight(buttonWidth).reduced(1));
-    r.removeFromRight(buttonSpacing);
-
-    // Slider vyplnĂ­ zbĂ˝vajĂ­cĂ­ prostor uprostĹ™ed
-    volumeSlider.setBounds(r.reduced(2));
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackComponent\TrackComponent.h =====
-/*
-  ==============================================================================
-
-    FILE: TrackComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: frontend/TrackComponent
-    DESCRIPTION: Header for a single MIDI track row.
-                 FIXED: Explicitly declared updateVolume.
-
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-
-namespace InstrumentType
-{
-    enum Type
-    {
-        Piano,
-        Guitar,
-        Bass,
-        Drums,
-        Synth,
-        Other
-    };
-}
-
-class TrackComponent : public juce::Component
-{
-public:
-    TrackComponent(int trackNumber, const juce::String &instrumentName, InstrumentType::Type type);
-    ~TrackComponent() override;
-
-    // Metody pro aktualizaci obsahu
-    void setInstrument(const juce::String &name, juce::Colour colour);
-    void setIcons(const juce::String &mute, const juce::String &solo, const juce::String &third);
-
-    // AI: Tato metoda musĂ­ bĂ˝t deklarovĂˇna zde
-    void updateVolume(float newVolume);
-
-    void paint(juce::Graphics &g) override;
-    void resized() override;
-
-private:
-    int trackNum;
-    juce::String trackName;
-    InstrumentType::Type instrumentType;
-
-    juce::TextButton trackNumberButton;
-    juce::Label nameLabel;
-    juce::Slider volumeSlider;
-    juce::TextButton muteButton;
-    juce::TextButton soloButton;
-    juce::TextButton thirdButton;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackComponent)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.cpp =====
-/*
-  ==============================================================================
-
-    FILE: TrackPanelComponent.cpp
-    NAME: TrackPanelComponent.cpp
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Implementation of the main track list panel.
-                 FIXED: Full implementation with updateTrackFromMetadata.
-
-  ==============================================================================
-*/
-
-#include "TrackPanelComponent.h"
-
-TrackPanelComponent::TrackPanelComponent()
-{
-    // AI: Generujeme 16 trackĹŻ podle tvĂ© pĹŻvodnĂ­ logiky
-    for (int i = 0; i < numTracks; ++i)
-    {
-        // AI: VytvoĹ™enĂ­ instance tracku s vĂ˝chozĂ­m nastavenĂ­m
-        tracks[i] = std::make_unique<TrackComponent>(
-            i + 1,
-            "Track " + juce::String(i + 1),
-            InstrumentType::Piano);
-
-        // AI: NastavenĂ­ tvĂ˝ch ikon pro Mute, Solo a Volume tlaÄŤĂ­tka
-        tracks[i]->setIcons("M", "S", "Vol");
-
-        addAndMakeVisible(*tracks[i]);
-    }
-}
-
-/** * AI: KlĂ­ÄŤovĂˇ metoda pro propojenĂ­ Backend Analyzeru s Frontend UI.
- * MainComponent volĂˇ tuhle metodu pro kaĹľdĂ˝ kanĂˇl po naÄŤtenĂ­ MIDI.
- */
-void TrackPanelComponent::updateTrackFromMetadata(int index, const juce::String &name, float volume)
-{
-    if (index >= 0 && index < numTracks)
-    {
-        // ZmÄ›Ĺ juce::Colours::cyan na nÄ›co jinĂ©ho, napĹ™Ă­klad tmavÄ› Ĺˇedou nebo oranĹľovou
-        // tracks[index]->setInstrument(name, juce::Colours::darkgrey); // decentnĂ­ ĹˇedĂˇ
-        tracks[index]->setInstrument(name, juce::Colour(0xff444444)); // vlastnĂ­ barva
-
-        tracks[index]->updateVolume(volume);
-    }
-}
-
-/** RuÄŤnĂ­ nastavenĂ­ instrumentu pro konkrĂ©tnĂ­ track (napĹ™. pĹ™i zmÄ›nÄ› v UI) */
-void TrackPanelComponent::setTrackInstrument(int index, const juce::String &name, juce::Colour colour)
-{
-    if (index >= 0 && index < numTracks)
-    {
-        tracks[index]->setInstrument(name, colour);
-    }
-}
-
-void TrackPanelComponent::resized()
-{
-    auto r = getLocalBounds();
-
-    // AI: RozdÄ›lenĂ­ celkovĂ© vĂ˝Ĺˇky panelu mezi 16 trackĹŻ
-    if (numTracks > 0)
-    {
-        int trackHeight = r.getHeight() / numTracks;
-
-        for (int i = 0; i < numTracks; ++i)
-        {
-            // AI: .reduced(0, 2) vytvoĹ™Ă­ malou mezeru mezi tracky pro lepĹˇĂ­ pĹ™ehlednost
-            tracks[i]->setBounds(r.removeFromTop(trackHeight).reduced(0, 2));
-        }
-    }
-}
-
-void TrackPanelComponent::paint(juce::Graphics &g)
-{
-    // AI: PozadĂ­ panelu (pokud nenĂ­ pĹ™ekryto tracky)
-    g.fillAll(juce::Colours::transparentBlack);
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TrackPanelComponent\TrackPanelComponent.h =====
-/*
-  ==============================================================================
-
-    FILE: TrackPanelComponent.h
-    NAME: TrackPanelComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Header for the main track list panel (16 tracks).
-                 RESTORED ORIGINAL STRUCTURE.
-                 ADDED: Metadata update method for MIDI integration.
-                 FIXED: Correct method signatures for TrackComponent access.
-
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <JuceHeader.h>
-#include "../TrackComponent/TrackComponent.h"
-
-class TrackPanelComponent : public juce::Component
-{
-public:
-  TrackPanelComponent();
-
-  // AI: Destruktor pĹ™idanĂ˝ pro jistotu kvĹŻli sprĂˇvnĂ©mu uvolnÄ›nĂ­ unique_ptr
-  ~TrackPanelComponent() override = default;
-
-  /** StandardnĂ­ JUCE metoda pro vykreslenĂ­ pozadĂ­ panelu */
-  void paint(juce::Graphics &g) override;
-
-  /** StandardnĂ­ JUCE metoda pro rozvrĹľenĂ­ 16 Ĺ™ĂˇdkĹŻ (trackĹŻ) */
-  void resized() override;
-
-  /** * AI: Metoda pro hromadnou aktualizaci z analyzeru.
-   * Tato metoda v .cpp volĂˇ tracks[index]->setTrackVolume(volume).
-   */
-  void updateTrackFromMetadata(int index, const juce::String &name, float volume);
-
-  /** NastavenĂ­ instrumentu pro konkrĂ©tnĂ­ track (0-15) */
-  void setTrackInstrument(int index, const juce::String &name, juce::Colour colour);
-
-private:
-  // PĹŻvodnĂ­ nastavenĂ­ na 16 trackĹŻ (standard MIDI)
-  static constexpr int numTracks = 16;
-
-  /** * Pole s tracky.
-   * AI: PouĹľĂ­vĂˇme std::array a std::unique_ptr pro bezpeÄŤnou sprĂˇvu pamÄ›ti.
-   * TrackComponent musĂ­ mĂ­t v public sekci metodu setTrackVolume(float).
-   */
-  std::array<std::unique_ptr<TrackComponent>, numTracks> tracks;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackPanelComponent)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.cpp =====
-/*
-  ==============================================================================
-    FILE: TransportComponent.cpp
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Transport controls + Audio Settings Button.
-    FIXED: Added explicit console logging for event tracking.
-  ==============================================================================
-*/
-
-#include "TransportComponent.h"
-#include "../../backend/MidiPlayer/MidiPlayer.h"
-#include "../../backend/AudioSettingsPanel/AudioSettingsPanel.h"
-#include <iostream>
-
-TransportComponent::TransportComponent(MidiPlayer &player) : midiPlayer(player)
-{
-    addAndMakeVisible(startButton);
-    startButton.setButtonText("Start");
-
-    addAndMakeVisible(stopButton);
-    stopButton.setButtonText("Stop");
-
-    addAndMakeVisible(pauseButton);
-    pauseButton.setButtonText("Pause");
-
-    addAndMakeVisible(settingsButton);
-    settingsButton.setButtonText("Audio HW");
-    settingsButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
-
-    // --- KLĂŤÄŚOVĂ LOGIKA S DIAGNOSTIKOU ---
-
-    startButton.onClick = [this]
-    {
-        std::cout << "[UI] Transport: Kliknuto na START" << std::endl;
-        if (onStartClicked)
-        {
-            onStartClicked();
-        }
-        else
-        {
-            std::cout << "[CRITICAL] Transport: onStartClicked neni propojen v MainComponent!" << std::endl;
-        }
-    };
-
-    stopButton.onClick = [this]
-    {
-        std::cout << "[UI] Transport: Kliknuto na STOP" << std::endl;
-        if (onStopClicked)
-            onStopClicked();
-    };
-
-    pauseButton.onClick = [this]
-    {
-        std::cout << "[UI] Transport: Kliknuto na PAUSE" << std::endl;
-        if (onPauseClicked)
-            onPauseClicked();
-    };
-
-    settingsButton.onClick = [this]
-    {
-        std::cout << "[UI] Oteviram nastaveni zvuku..." << std::endl;
-
-        auto *settingsPanel = new AudioSettingsPanel(midiPlayer.getDeviceManager());
-        settingsPanel->setSize(400, 300);
-
-        juce::DialogWindow::LaunchOptions dialogOptions;
-        dialogOptions.content.setOwned(settingsPanel);
-        dialogOptions.dialogTitle = "Audio Hardware Settings";
-        dialogOptions.dialogBackgroundColour = juce::Colour(0xff2b2b2b);
-        dialogOptions.escapeKeyTriggersCloseButton = true;
-        dialogOptions.useNativeTitleBar = true;
-        dialogOptions.resizable = false;
-
-        dialogOptions.launchAsync();
-    };
-}
-
-TransportComponent::~TransportComponent() {}
-
-void TransportComponent::paint(juce::Graphics &g)
-{
-    g.fillAll(juce::Colour(0xff202020));
-}
-
-void TransportComponent::resized()
-{
-    auto area = getLocalBounds();
-    int buttonWidth = area.getWidth() / 4;
-
-    startButton.setBounds(area.removeFromLeft(buttonWidth).reduced(2));
-    stopButton.setBounds(area.removeFromLeft(buttonWidth).reduced(2));
-    pauseButton.setBounds(area.removeFromLeft(buttonWidth).reduced(2));
-    settingsButton.setBounds(area.reduced(2));
-}
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\TransportComponent\TransportComponent.h =====
-/*
-  ==============================================================================
-    FILE: TransportComponent.h
-    PROJECT: SONAR MIDI PLAYER
-    DESCRIPTION: Transport controls + Audio Settings.
-  ==============================================================================
-*/
-
-#pragma once
-
-#include <juce_gui_basics/juce_gui_basics.h>
-#include "../SF2ListComponent/SF2ListComponent.h"
-
-// DopĹ™ednĂˇ deklarace
-class MidiPlayer;
-
-class TransportComponent : public juce::Component
-{
-public:
-  TransportComponent(MidiPlayer &player);
-  ~TransportComponent() override;
-
-  void paint(juce::Graphics &g) override;
-  void resized() override;
-
-  // Callbacky pro propojenĂ­ s hlavnĂ­ logikou v MainComponent
-  std::function<void()> onStartClicked;
-  std::function<void()> onStopClicked;
-  std::function<void()> onPauseClicked;
-
-  std::unique_ptr<SF2ListComponent> sf2List;
-
-private:
-  MidiPlayer &midiPlayer;
-
-  juce::TextButton startButton{"Start"};
-  juce::TextButton stopButton{"Stop"};
-  juce::TextButton pauseButton{"Pause"};
-
-  // NovĂ© tlaÄŤĂ­tko pro vyvolĂˇnĂ­ Modal okna s nastavenĂ­m HW
-  juce::TextButton settingsButton{"Audio HW"};
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TransportComponent)
-};
-
------------------------------
-
-===== FILE: D:\C++\SONAR MIDI PLAYER\frontend\SourceCode.h =====
-/*
-  ==============================================================================
-
-    SourceCode.h
-    Created: 4 Apr 2026 1:10:18pm
-    Author:  ivana
-
-  ==============================================================================
-*/
-
-#pragma once
-
 
 -----------------------------
 
@@ -4353,7 +6726,8 @@ private:
 
 #include <JuceHeader.h>
 #include "frontend/MainComponent/MainComponent.h"
-#include "backend/BankDNAExtractor/BankDNAExtractor.h" // SOSĂK JE TADY
+#include "backend/BankDNAExtractor/BankDNAExtractor.h"
+#include "frontend/MainComponent/Icons.h" // <--- PĹIDĂNO: Inkluze s naĹˇĂ­ ikonou
 
 // ==============================================================================
 class MainAppWindow : public juce::DocumentWindow
@@ -4365,6 +6739,10 @@ public:
                          DocumentWindow::allButtons)
     {
         setUsingNativeTitleBar(true);
+
+        // --- NASTAVENĂŤ IKONY ---
+        // NaÄŤteme naĹˇi 16x16 ikonu a nastavĂ­me ji oknu
+        setIcon(Icons::getSonarIcon());
 
         // Inicializace hlavnĂ­ komponenty
         mainComponent = std::make_unique<MainComponent>();

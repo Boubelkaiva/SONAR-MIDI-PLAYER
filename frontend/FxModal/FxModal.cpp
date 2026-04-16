@@ -13,6 +13,8 @@
 FxModal::FxModal(int trackNumber, Listener l)
     : trackNum(trackNumber), listener(l)
 {
+    std::cout << "[POG] FE: Otevírám FxModal pro Track " << trackNum << std::endl;
+
     // Velikost okna pro 3 řádky
     setSize(360, 220);
 
@@ -61,7 +63,7 @@ FxModal::FxModal(int trackNumber, Listener l)
     panSlider.onValueChange = [this]
     {
         int val = (int)panSlider.getValue();
-        std::cout << "[FxModal] UI Interaction - PAN changed: " << val << std::endl;
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI PAN: " << val << std::endl;
         if (listener.onPanChanged)
             listener.onPanChanged(val);
     };
@@ -69,7 +71,7 @@ FxModal::FxModal(int trackNumber, Listener l)
     reverbSlider.onValueChange = [this]
     {
         int val = (int)reverbSlider.getValue();
-        std::cout << "[FxModal] UI Interaction - REVERB changed: " << val << std::endl;
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI REVERB: " << val << std::endl;
         if (listener.onReverbChanged)
             listener.onReverbChanged(val);
     };
@@ -77,7 +79,7 @@ FxModal::FxModal(int trackNumber, Listener l)
     chorusSlider.onValueChange = [this]
     {
         int val = (int)chorusSlider.getValue();
-        std::cout << "[FxModal] UI Interaction - CHORUS changed: " << val << std::endl;
+        std::cout << "[POG] FE: FxModal Track " << trackNum << " -> UI CHORUS: " << val << std::endl;
         if (listener.onChorusChanged)
             listener.onChorusChanged(val);
     };
@@ -88,13 +90,7 @@ FxModal::~FxModal() {}
 /** Nastaví počáteční hodnoty načtené z analýzy MIDI souboru */
 void FxModal::setInitialValues(int pan, int reverb, int chorus)
 {
-    // --- PODROBNÝ VÝPIS DO TERMINÁLU ---
-    std::cout << "--------------------------------------------------" << std::endl;
-    std::cout << "[FxModal] DATA RECEIVED FOR TRACK " << trackNum << ":" << std::endl;
-    std::cout << "   -> PAN:    " << pan << std::endl;
-    std::cout << "   -> REVERB: " << reverb << std::endl;
-    std::cout << "   -> CHORUS: " << chorus << std::endl;
-    std::cout << "--------------------------------------------------" << std::endl;
+    std::cout << "[POG] FE: FxModal " << trackNum << " nastavuje hodnoty z analýzy (P:" << pan << " R:" << reverb << " C:" << chorus << ")" << std::endl;
 
     // Používáme dontSendNotification, abychom při otevírání okna
     // nespustili zpětnou vazbu do Playeru, protože ty hodnoty už tam jsou.

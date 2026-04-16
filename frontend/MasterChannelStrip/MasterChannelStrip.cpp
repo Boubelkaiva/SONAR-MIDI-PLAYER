@@ -1,3 +1,12 @@
+/*
+  ==============================================================================
+    FILE: MasterChannelStrip.cpp
+    PROJECT: SONAR MIDI PLAYER
+    DESCRIPTION: Ovládací panel pro Master efekty (EQ, Kompresor, Limiter).
+    UPDATED: Přidána hlavička souboru a textové popisky sekcí.
+  ==============================================================================
+*/
+
 #include "MasterChannelStrip.h"
 
 MasterChannelStrip::MasterChannelStrip(MasterEffects &effects) : masterEffects(effects)
@@ -44,6 +53,20 @@ void MasterChannelStrip::paint(juce::Graphics &g)
 
     g.setColour(juce::Colours::white.withAlpha(0.05f));
     g.fillRoundedRectangle(getLocalBounds().reduced(5).toFloat(), 10.0f);
+
+    // --- POPISKY SEKCI (Labels) ---
+    g.setColour(juce::Colours::grey);
+    g.setFont(juce::Font(12.0f, juce::Font::bold));
+
+    auto area = getLocalBounds().reduced(15);
+    area.removeFromTop(30); // Prostor pod hlavním titulkem
+
+    int colW = area.getWidth() / 3;
+
+    // Vykreslení textu nad jednotlivé sloupce knoflíků
+    g.drawText("LOW CUT", area.getX(), area.getY(), colW, 20, juce::Justification::centred);
+    g.drawText("COMPRESSOR", area.getX() + colW, area.getY(), colW, 20, juce::Justification::centred);
+    g.drawText("LIMITER", area.getX() + 2 * colW, area.getY(), colW, 20, juce::Justification::centred);
 }
 
 void MasterChannelStrip::resized()

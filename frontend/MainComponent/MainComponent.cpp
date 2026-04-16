@@ -16,12 +16,6 @@
 
 #define LOG(x) std::cout << x << std::endl
 
-// =========================
-// GLOBAL DEBUG CONTROL
-// =========================
-static std::atomic<int> audioCallbackCounter{0};
-static constexpr int AUDIO_LOG_EVERY_N_BLOCKS = 200; // throttle log
-
 MainComponent::MainComponent()
 {
     LOG("[MAIN] CONSTRUCTOR START");
@@ -49,6 +43,16 @@ MainComponent::MainComponent()
 
     masterPanel = std::make_unique<MasterPanel>();
     addAndMakeVisible(*masterPanel);
+
+    // =========================
+    // INITIAL SOUNDFONT LOAD
+    // =========================
+    if (bankManager && midiPlayer)
+    {
+        const auto &banks = bankManager->getLoadedBanks();
+        if (!banks.empty())
+            midiPlayer->loadSoundFont(banks[0]);
+    }
 
     // =========================
     // TRANSPORT
@@ -138,6 +142,7 @@ MainComponent::MainComponent()
 
         masterPanel->onVolumeChanged = [this](float volume)
         {
+            std::cout << "[POG] FE -> BE: MASTER VOLUME CHANGED: " << volume << std::endl;
             if (midiPlayer)
                 midiPlayer->setMasterVolume(volume);
         };
@@ -150,12 +155,14 @@ MainComponent::MainComponent()
     {
         trackPanel->onTrackVolumeChanged = [this](int trk, int val)
         {
+            std::cout << "[POG] FE -> BE: Track " << (trk + 1) << " VOLUME: " << val << std::endl;
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 7, val);
         };
 
         trackPanel->onTrackPanChanged = [this](int trk, int val)
         {
+            std::cout << "[POG] FE -> BE: Track " << (trk + 1) << " PAN: " << val << std::endl;
             if (midiPlayer)
                 midiPlayer->sendRealTimeControlChange(trk + 1, 10, val);
         };
@@ -184,6 +191,16 @@ MainComponent::MainComponent()
             LOG("[UI] SOLO ch=" << trk << " val=" << soloed);
             if (midiPlayer)
                 midiPlayer->setChannelSolo(trk, soloed);
+        };
+
+        // =========================
+        // MIDI ACTIVITY (VU METERS)
+        // =========================
+        midiPlayer->onMidiActivity = [this](int chan, int velocity)
+        {
+            // Musíme volat asynchronně, protože callback přichází z audio threadu
+            juce::MessageManager::callAsync([this, chan, velocity]()
+                                            { trackPanel->triggerTrackVu(chan, velocity); });
         };
     }
 
@@ -226,26 +243,12 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster *source)
 // =========================
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
 {
-    // throttle log (otherwise UI floods + lag)
-    int c = ++audioCallbackCounter;
-    bool logThis = (c % AUDIO_LOG_EVERY_N_BLOCKS == 0);
-
-    if (logThis)
-        LOG("[AUDIO] CALLBACK START");
-
     bufferToFill.clearActiveBufferRegion();
 
     if (!midiPlayer)
-    {
-        if (logThis)
-            LOG("[AUDIO] NO PLAYER");
         return;
-    }
 
     midiPlayer->getNextAudioBlock(bufferToFill);
-
-    if (logThis)
-        LOG("[AUDIO] CALLBACK END");
 }
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)

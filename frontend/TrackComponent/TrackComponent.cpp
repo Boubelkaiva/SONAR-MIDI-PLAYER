@@ -81,6 +81,7 @@ TrackComponent::TrackComponent(int trackNumber,
     volumeSlider.onValueChange = [this]
     {
         currentVolume = (int)volumeSlider.getValue();
+        std::cout << "[POG] FE: Track " << trackNum << " -> UI VOLUME slider: " << currentVolume << std::endl;
         if (onVolumeChanged)
             onVolumeChanged(trackNum, currentVolume);
     };

@@ -73,6 +73,7 @@ private:
   juce::MidiMessageSequence midiSequence;
   double playheadSeconds = 0.0;
   bool isPlaying = false;
+  int lastEventIndex = 0;
   float masterVolume = 1.0f;
 
   std::unique_ptr<MidiMapper> mapper;
