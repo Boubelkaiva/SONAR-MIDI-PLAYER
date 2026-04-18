@@ -1,7 +1,7 @@
 # ==============================================================================
 #    FILE: CMakeLists.txt
 #    PROJECT: SONAR MIDI PLAYER
-#    VERSION: 2.1.2
+#    VERSION: 2.1.3
 # ==============================================================================
 
 cmake_minimum_required(VERSION 3.25)
@@ -44,6 +44,10 @@ target_sources(${PROJECT_NAME} PRIVATE
     backend/MidiAnalyzer/MidiAnalyzer.cpp
     backend/MidiAnalyzer/MidiAnalyzer.h
 
+    # --- FileHash64 ---
+    backend/FileHash64/FileHash64.cpp
+    backend/FileHash64/FileHash64.h
+
     # --- Frontend ---
     frontend/MainComponent/MainComponent.cpp
     frontend/MainComponent/MainComponent.h
@@ -83,7 +87,12 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 juce_generate_juce_header(${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PRIVATE . frontend backend)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    .
+    frontend
+    backend
+    backend/FileHash64   # 🔥 DŮLEŽITÉ - FIX PRO FileHash64.h
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_core

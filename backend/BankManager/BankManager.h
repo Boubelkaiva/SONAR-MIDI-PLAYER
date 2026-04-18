@@ -1,48 +1,99 @@
 /*
-  ==============================================================================
+==============================================================================
 
-    FILE: BankManager.h
-    PROJECT: SONAR MIDI PLAYER
-    MODULE: backend/BankManager
-    DESCRIPTION: Handles SF2 bank list management and XML persistence.
-                 This is a standalone logic module (Backend).
+  FILE: BankManager.h
+  PROJECT: SONAR MIDI PLAYER
+  MODULE: backend/BankManager
+  DESCRIPTION: Handles SF2 bank list management, BankDNA pipeline,
+               instrument mapping and FINAL UI model generation.
+               Produces frontend-ready snapshot (InstrumentModal input).
 
-  ==============================================================================
+==============================================================================
 */
 
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <vector>
+#include <functional>
+
+// ======================================================
+// BANKMANAGER - DATA PIPELINE ENGINE
+// ======================================================
 
 class BankManager
 {
 public:
-    // AI: Konstruktor automaticky načte uložená data
-    BankManager();
-    ~BankManager() = default;
+  // ======================================================
+  // LIFECYCLE
+  // ======================================================
 
-    // --- API pro správu bank ---
+  BankManager();
+  ~BankManager() = default;
 
-    // AI: Přidá banku do seznamu a uloží na disk
-    void addBank(const juce::File &file);
+  // ======================================================
+  // BANK REGISTRY API
+  // ======================================================
 
-    // AI: Smaže banku podle indexu a aktualizuje disk
-    void removeBank(int index);
+  void addBank(const juce::File &file);
+  void removeBank(int index);
 
-    // AI: Vrátí aktuální seznam pro potřeby Frontendu
-    const std::vector<juce::File> &getLoadedBanks() const { return loadedBanks; }
+  const std::vector<juce::File> &getLoadedBanks() const { return loadedBanks; }
 
-    // --- Persistence (Paměť) ---
+  // ======================================================
+  // PERSISTENCE
+  // ======================================================
 
-    void saveConfig();
-    void loadConfig();
+  void saveConfig();
+  void loadConfig();
 
-    // AI: Statická metoda pro získání cesty (univerzální pro EXE/Plugin)
-    static juce::File getSettingsFile();
+  static juce::File getSettingsFile();
+
+  // ======================================================
+  // PIPELINE
+  // ======================================================
+
+  void buildRuntimePipeline();
+
+  void loadBankDNA();
+  void loadInstrumentMap();
+  void loadTemplates();
+  void resolveCategories();
+  void buildUIModel();
+
+  // ======================================================
+  // RUNTIME
+  // ======================================================
+
+  void reloadAllBanksAndRebuildAndPush();
+  void pushModelToFrontend();
+
+  // 🔥 DOPLNĚNO (CHYBĚLO V .H)
+  void exportFinalJSON();
+
+  // ======================================================
+  // FRONTEND CALLBACK
+  // ======================================================
+
+  std::function<void(const juce::var &)> onFrontendModelReady;
+
+  // ======================================================
+  // STATE
+  // ======================================================
+
+  bool isReady() const { return pipelineReady; }
+
+  juce::var getUIModelSnapshot() const { return uiModel; }
 
 private:
-    std::vector<juce::File> loadedBanks;
+  // RAW DATA
+  std::vector<juce::File> loadedBanks;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BankManager)
+  // STATE
+  bool pipelineReady = false;
+
+  // 🔥 FIX: MUSÍ EXISTOVAT (jinak cpp padá / IntelliSense hlásí chybu)
+  juce::var uiModel;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BankManager)
 };
